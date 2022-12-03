@@ -1,5 +1,4 @@
-const GRAV_CONST: f64 = 6.6743015e-11; // N * m^2 * kg^-2
-
+mod constants;
 
 fn main() {
     let mass_0: f64 = 5.098e35; // kg
@@ -11,7 +10,7 @@ fn main() {
     let engine_isp: f64 = 543.123; // s
 
     let delta_v = delta_v(mass_0, radius_0, radius_f);
-    let g_0: f64 = GRAV_CONST * mass_0 / radius_0.powf(2.0);
+    let g_0: f64 = constants::GRAV_CONST * mass_0 / radius_0.powf(2.0);
     let mass_fuel = mass_fuel(delta_v, mass_1, engine_isp, g_0);    
     println!("{} kg of fuel", mass_fuel)
 }
@@ -32,11 +31,23 @@ fn orbital_velocity(
     velocity
 }
 
+// 1 dimensional, what about hohman transfer and similar?
 fn delta_v(
     mass_0: f64,
     radius_0: f64,
     radius_f: f64
 ) -> f64{
+    /*
+    mass_0 : float64
+        Mass of central body
+
+    radius_0 : float64
+        Initial radius
+    
+    radius_f : float64
+        Final velocity
+    */
+    
     let v_0: f64 = orbital_velocity(mass_0, radius_0);
     let v_f: f64 = orbital_velocity(mass_0, radius_f);
     let delta_v: f64 = v_f - v_0;
