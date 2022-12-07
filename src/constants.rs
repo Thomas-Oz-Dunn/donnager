@@ -8,7 +8,7 @@ TODO-TD: query JPL SSDs
 // pub const DEG_TO_RAD: f64 = PI / 180.0;
 
 // Space
-// pub const SUN_MASS: f64 = 1.9891e30; // kg
+pub const SUN_MASS: f64 = 1.9891e30; // kg
 pub const EARTH_MASS: f64 = 5.972e24; // kg
 pub const EARTH_RADIUS_EQUATOR: f64 = 6.378137e6; // m
 

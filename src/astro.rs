@@ -1,36 +1,29 @@
 use std::f64::consts::PI;
 #[path="./constants.rs"] mod constants;
 
+pub struct Body{
+    name: String,
+    mass: f64,
+    radius: f64,
+    period: f64
+}
+
+
 pub fn calc_grav_acc(
-    mass_0: f64,
+    mass: f64,
     radius: f64
 ) -> f64{
-    // Calculate gravitational acceleration
-    // 
-    // Parameters
-    // ---------
-    // mass_0: f64
-    //     Mass of object
-    // 
-    // radius: f64
-    //     Radial distance to object
-    // 
-    // Returns
-    // -------
-    // grav_acc
-    let grav_acc: f64 = constants::GRAV_CONST * mass_0 / radius.powi(2);
+    let grav_acc: f64 = constants::GRAV_CONST * mass / radius.powi(2);
     grav_acc
 }
 
 pub fn calc_orbital_velocity(
-    mass_0: f64,
+    mass: f64,
     radius: f64
 ) -> f64{
-    let energy: f64 = 2.0 * constants::GRAV_CONST * mass_0 / radius;
-    let velocity: f64 = energy.sqrt();
-    velocity
+    let vel: f64 = (2.0 * constants::GRAV_CONST * mass / radius).sqrt();
+    vel
 }
-
 
 pub fn calc_hohmann_transfer(
     radius_1: f64,
@@ -52,4 +45,13 @@ pub fn calc_stationary_orbit(
     let grav_param: f64 = mass * constants::GRAV_CONST;
     let r: f64 = (grav_param.sqrt() * period / (2.0 * PI)).powf(2.0 / 3.0);
     r
+}
+
+pub fn calc_sphere_of_influence(
+    mass_0: f64,
+    mass_1: f64,
+    distance: f64
+) -> f64 {
+    let radius: f64 = distance / (1.0 + (mass_1 / mass_0).sqrt());
+    radius
 }

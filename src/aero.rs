@@ -21,8 +21,8 @@ pub fn calc_mach_number(
     temperature: f64,
     gamma: f64
 ) -> f64 {
-    let c: f64 = (gamma * constants::GAS_CONST * temperature).sqrt();
-    let mach_number: f64 = velocity / c;
+    let speed_of_sound: f64 = (gamma * constants::GAS_CONST * temperature).sqrt();
+    let mach_number: f64 = velocity / speed_of_sound;
     mach_number 
 }
 
