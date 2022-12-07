@@ -35,4 +35,3 @@ pub fn calc_coast_height(
     coast_height
 }
 
-pub fn calc_multi_stage()->f64{}
