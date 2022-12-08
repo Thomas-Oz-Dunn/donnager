@@ -53,9 +53,18 @@ pub fn calc_grav_acc(
 pub fn calc_orbital_velocity(
     mass: f64,
     radius: f64
-) -> f64{
+) -> f64 {
     let vel: f64 = (2.0 * constants::GRAV_CONST * mass / radius).sqrt();
     vel
+}
+
+pub fn calc_period(
+    mass: f64,
+    semi_major_axis: f64
+) -> f64 {
+    let grav_param: f64 = mass * constants::GRAV_CONST;
+    let T: f64 = 2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt();
+    T
 }
 
 pub fn calc_hohmann_transfer(

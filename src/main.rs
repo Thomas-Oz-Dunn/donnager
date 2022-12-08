@@ -25,9 +25,9 @@ fn main() {
 
 /*
 TODO-TD: 
+Convert scalar pos, vel, acc into vectors.
 N-stage trade study plots
 TLE ingest
-Hohman Transfers
 Trans Lunar Injections
 Multithreading, Cloud Compute?
 RK45 propogator
