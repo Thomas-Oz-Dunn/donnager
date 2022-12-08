@@ -9,6 +9,39 @@ pub struct Body{
 }
 
 
+pub struct Orbit{
+    semi_major_axis: f64, 
+    eccentricity: f64,
+    inclination: f64,
+    argument_of_perigee: f64,
+    mean_anomaly: f64,
+    mean_motion: f64
+}
+
+pub fn read_tle(
+    tle_str: String
+) -> Orbit {
+    // parse the string
+    let a: f64 = 4.352;
+    let e: f64 = 4.352;
+    let i: f64 = 4.352;
+    let o: f64 = 4.352;
+    let u: f64 = 4.352;
+    let v: f64 = 4.352;
+
+    let tle_orbit = Orbit {
+        semi_major_axis: a,
+        eccentricity: e,
+        inclination: i,
+        argument_of_perigee: o,
+        mean_anomaly: u,
+        mean_motion: v,
+    };
+
+    tle_orbit
+}
+
+
 pub fn calc_grav_acc(
     mass: f64,
     radius: f64
