@@ -26,3 +26,14 @@ pub fn calc_mach_number(
     mach_number 
 }
 
+
+pub fn calc_aerodynamic_force(
+    density: f64,
+    velocity: f64,
+    coeff: f64,
+    normal_area: f64
+) -> f64 {
+    // Can be used for drag or lift or both
+    let drag: f64 = density * velocity.powi(2) * coeff * normal_area / 2.0;
+    drag
+}
