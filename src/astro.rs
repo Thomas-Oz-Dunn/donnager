@@ -1,4 +1,7 @@
 use std::f64::consts::PI;
+use nalgebra as na;
+use na::Vector3;
+
 #[path="./constants.rs"] mod constants;
 
 pub struct Body{
@@ -7,7 +10,6 @@ pub struct Body{
     radius: f64,
     period: f64
 }
-
 
 pub struct Orbit{
     semi_major_axis: f64, 
@@ -63,8 +65,8 @@ pub fn calc_period(
     semi_major_axis: f64
 ) -> f64 {
     let grav_param: f64 = mass * constants::GRAV_CONST;
-    let T: f64 = 2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt();
-    T
+    let time: f64 = 2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt();
+    time
 }
 
 pub fn calc_hohmann_transfer(
@@ -96,4 +98,38 @@ pub fn calc_sphere_of_influence(
 ) -> f64 {
     let radius: f64 = distance / (1.0 + (mass_1 / mass_0).sqrt());
     radius
+}
+
+pub fn calc_orbit_parameters(
+    mass: f64,
+    pos: Vector3<f64>,
+    vel: Vector3<f64>
+) -> Orbit {
+    // Turn into singular matrix
+    let grav_param: f64 = mass * constants::GRAV_CONST;
+
+    let ang_momentum: Vector3<f64> = pos.cross(&vel);
+    let ecc_vec: Vector3<f64> = 
+    ((vel.norm().powi(2) - grav_param / pos.norm())*pos 
+    - (pos.dot(&vel)*vel)) / grav_param;
+    let node_vec: Vector3<f64> = Vector3::z_axis().cross(&ang_momentum);
+
+    let semi_latus_rectum: f64 = ang_momentum.norm().powi(2) / grav_param;
+    
+    let semi_major: f64 = semi_latus_rectum * (1.0 - ecc_vec.norm_squared());
+    let eccentricity: f64 = ecc_vec.norm();
+    let inclination: f64 = (ang_momentum[2] / ang_momentum.norm()).acos();
+    let argument_of_perigee: f64 = node_vec.angle(&ecc_vec);
+    let true_anomaly: f64 = ecc_vec.angle(&pos);
+
+    let tle_orbit = Orbit {
+        semi_major_axis: semi_major,
+        eccentricity: eccentricity,
+        inclination: inclination,
+        argument_of_perigee: argument_of_perigee,
+        mean_anomaly: true_anomaly,
+        mean_motion: v,
+    };
+
+    tle_orbit
 }
