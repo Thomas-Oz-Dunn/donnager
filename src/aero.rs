@@ -1,19 +1,16 @@
+/*
+Fluid dynamics
+*/
 
 #[path="./constants.rs"] mod constants;
 
 pub fn calc_mass_flow(
     throat_area: f64,
-    pressure_chamber: f64,
-    temp_chamber: f64,
-    gamma: f64,
-    mol_weight: f64
+    p_chamber: f64,
+    c_star: f64
 ) -> f64 {
-    let a: f64 = (2.0/(gamma + 1.0)).powf((gamma + 1.0)/(2.0*(gamma - 1.0))); 
-    let b: f64 = ((constants::GAS_CONST * temp_chamber) / gamma * mol_weight).sqrt();
-    let c_star: f64 = b * a;
-
-    let mass_flow: f64 = pressure_chamber * throat_area / c_star; 
-    mass_flow
+    let mass_flow: f64 = p_chamber * throat_area / c_star; 
+    return mass_flow
 }
 
 pub fn calc_mach_number(
@@ -23,7 +20,7 @@ pub fn calc_mach_number(
 ) -> f64 {
     let speed_of_sound: f64 = (gamma * constants::GAS_CONST * temperature).sqrt();
     let mach_number: f64 = velocity / speed_of_sound;
-    mach_number 
+    return mach_number 
 }
 
 
@@ -34,6 +31,44 @@ pub fn calc_aerodynamic_force(
     normal_area: f64
 ) -> f64 {
     // Can be used for drag or lift or both
-    let drag: f64 = density * velocity.powi(2) * coeff * normal_area / 2.0;
-    drag
+    let force: f64 = density * velocity.powi(2) * coeff * normal_area / 2.0;
+    return force
+}
+
+
+pub fn calc_characteristic_vel(
+    gamma: f64,
+    t_chamber: f64,
+    molecular_weight: f64
+) -> f64 {
+    let a: f64 = (2.0/(gamma + 1.0)).powf(-(gamma + 1.0)/(2.0*(gamma - 1.0))); 
+    let b: f64 = ((constants::GAS_CONST * t_chamber) / gamma * molecular_weight).sqrt();
+    let c_star: f64 = b * a;
+    return c_star
+}
+
+
+pub fn calc_thrust_coeff(
+    gamma: f64, 
+    expansion_ratio: f64,
+    p_chamber: f64,
+    p_atm: f64,
+    p_exhaust: f64
+) -> f64 {
+    let a: f64 = 2.0 * gamma.powi(2) / (gamma - 1.0);
+    let b: f64 = (2.0 / (gamma + 1.0)).powf((gamma + 1.0)/(gamma - 1.0));
+    let c: f64 = 1.0 - (p_exhaust / p_chamber).powf((gamma - 1.0) / gamma);
+
+    let jet_thurst: f64 = (a * b * c).sqrt();
+    let press_thrust: f64 = (p_exhaust / p_chamber - p_atm / p_chamber) * expansion_ratio;
+    let c_f: f64 = jet_thurst + press_thrust;
+    return c_f
+}
+
+pub fn calc_engine_isp(
+    thrust_coeff: f64,
+    c_star: f64
+) -> f64 {
+    let isp: f64 = thrust_coeff * c_star;
+    return isp
 }

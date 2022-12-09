@@ -1,3 +1,7 @@
+/*
+Astrodynamics Functions
+*/
+
 use std::f64::consts::PI;
 use nalgebra as na;
 use na::Vector3;
@@ -40,7 +44,7 @@ pub fn read_tle(
         mean_motion: v,
     };
 
-    tle_orbit
+    return tle_orbit
 }
 
 
@@ -49,7 +53,7 @@ pub fn calc_grav_acc(
     radius: f64
 ) -> f64{
     let grav_acc: f64 = constants::GRAV_CONST * mass / radius.powi(2);
-    grav_acc
+    return grav_acc
 }
 
 pub fn calc_orbital_velocity(
@@ -57,7 +61,7 @@ pub fn calc_orbital_velocity(
     radius: f64
 ) -> f64 {
     let vel: f64 = (2.0 * constants::GRAV_CONST * mass / radius).sqrt();
-    vel
+    return vel
 }
 
 pub fn calc_period(
@@ -66,7 +70,7 @@ pub fn calc_period(
 ) -> f64 {
     let grav_param: f64 = mass * constants::GRAV_CONST;
     let time: f64 = 2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt();
-    time
+    return time
 }
 
 pub fn calc_hohmann_transfer(
@@ -79,7 +83,7 @@ pub fn calc_hohmann_transfer(
     let delta_v_2_den: f64 = (radius_2 *(1.0 + radius_2 / radius_1)).sqrt();
     let delta_v_2: f64 = vel_0 * delta_v_2_num / delta_v_2_den; 
     let delta_v_total: f64 = delta_v_1 + delta_v_2;
-    delta_v_total
+    return delta_v_total
 }
 
 pub fn calc_stationary_orbit(
@@ -88,7 +92,7 @@ pub fn calc_stationary_orbit(
 ) -> f64 {
     let grav_param: f64 = mass * constants::GRAV_CONST;
     let r: f64 = (grav_param.sqrt() * period / (2.0 * PI)).powf(2.0 / 3.0);
-    r
+    return r
 }
 
 pub fn calc_sphere_of_influence(
@@ -97,7 +101,7 @@ pub fn calc_sphere_of_influence(
     distance: f64
 ) -> f64 {
     let radius: f64 = distance / (1.0 + (mass_1 / mass_0).sqrt());
-    radius
+    return radius
 }
 
 pub fn calc_orbit_parameters(
@@ -105,31 +109,29 @@ pub fn calc_orbit_parameters(
     pos: Vector3<f64>,
     vel: Vector3<f64>
 ) -> Orbit {
-    // Turn into singular matrix
+    // Turn into singular matrix transformation?
     let grav_param: f64 = mass * constants::GRAV_CONST;
 
-    let ang_momentum: Vector3<f64> = pos.cross(&vel);
+    // Wedge product?
+    let spec_ang_moment: Vector3<f64> = pos.cross(&vel);
+    let spec_lin_moment: f64 = pos.dot(&vel);
+
     let ecc_vec: Vector3<f64> = 
-    ((vel.norm().powi(2) - grav_param / pos.norm())*pos 
-    - (pos.dot(&vel)*vel)) / grav_param;
+        ((vel.norm().powi(2) - grav_param / pos.norm())*pos 
+        - (spec_lin_moment*vel)) / grav_param;
     let node_vec: Vector3<f64> = Vector3::z_axis().cross(&ang_momentum);
 
-    let semi_latus_rectum: f64 = ang_momentum.norm().powi(2) / grav_param;
-    
-    let semi_major: f64 = semi_latus_rectum * (1.0 - ecc_vec.norm_squared());
-    let eccentricity: f64 = ecc_vec.norm();
-    let inclination: f64 = (ang_momentum[2] / ang_momentum.norm()).acos();
-    let argument_of_perigee: f64 = node_vec.angle(&ecc_vec);
-    let true_anomaly: f64 = ecc_vec.angle(&pos);
+    let semi_major_axis: f64 = 
+    spec_ang_moment.norm().powi(2) * (1.0 - ecc_vec.norm_squared()) / grav_param;
 
-    let tle_orbit = Orbit {
-        semi_major_axis: semi_major,
-        eccentricity: eccentricity,
-        inclination: inclination,
-        argument_of_perigee: argument_of_perigee,
-        mean_anomaly: true_anomaly,
-        mean_motion: v,
+    let orbit: Orbit = Orbit {
+        semi_major_axis: semi_major_axis,
+        eccentricity: ecc_vec.norm(),
+        inclination: (spec_ang_moment[2] / spec_ang_moment.norm()).acos(),
+        argument_of_perigee: node_vec.angle(&ecc_vec),
+        mean_anomaly: ecc_vec.angle(&pos),
+        mean_motion: 1.0 / calc_period(mass, semi_major_axis)
     };
 
-    tle_orbit
+    return orbit
 }
