@@ -17,11 +17,11 @@ fn main() {
     let mut engine_isp: f64 = 300.0; // ss
 
     let c_star: f64 = aero::calc_characteristic_vel(
-        gamma, 
+        heat_capacity_ratio, 
         t_chamber, 
         molecular_weight)
     let thrust_coeff: f64 = aero::calc_thrust_coeff(
-        gamma, 
+        heat_capacity_ratio, 
         expansion_ratio, 
         p_chamber, 
         p_atm, 
