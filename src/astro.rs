@@ -22,12 +22,27 @@ pub fn read_tle(
     tle_str: String
 ) -> Orbit {
     // parse the string
-    let a: f64 = 4.352;
-    let e: f64 = 4.352;
-    let i: f64 = 4.352;
-    let o: f64 = 4.352;
-    let u: f64 = 4.352;
-    let v: f64 = 4.352;
+    // Example
+    // ISS (ZARYA)
+    // 1 25544U 98067A   20045.18587073  .00000950  00000-0  25302-4 0  9990
+    // 2 25544  51.6443 242.0161 0004885 264.6060 207.3845 15.49165514212791
+    // name: String::from("ISS (ZARYA)"),
+    // satellite_number: 25544,
+    // classification: 'U',
+    // international_designator: String::from("98067A"),
+    // epoch: String::from("20045.18587073"),
+    // first_derivative_mean_motion: 0.00000950,
+    // second_derivative_mean_motion: 0.0,
+    // drag_term: 0.25302e-4,
+    // ephemeris_type: 0,
+    // element_number: 999,
+    // inclination: 51.6443,
+    // right_ascension: 242.0161,
+    // eccentricity: 0.0004885,
+    // argument_of_perigee: 264.6060,
+    // mean_anomaly: 207.3845,
+    // mean_motion: 15.49165514,
+    // revolution_number: 21279,
 
     let tle_orbit = Orbit {
         name: name,
@@ -46,7 +61,6 @@ pub fn calc_orbital_velocity(
     grav_param: f64,
     radius: f64
 ) -> f64 {
-    // vector?
     let vel: f64 = (2.0 * grav_param / radius).sqrt();
     return vel
 }
@@ -115,7 +129,7 @@ pub fn calc_orbit_parameters(
         inclination: (spec_ang_moment[2] / spec_ang_moment.norm()).acos(),
         argument_of_perigee: node_vec.angle(&ecc_vec),
         mean_anomaly: ecc_vec.angle(&pos),
-        mean_motion: 1.0 / calc_period(mass, semi_major_axis)
+        mean_motion: 1.0 / calc_period(grav_param, semi_major_axis)
     };
 
     return orbit
