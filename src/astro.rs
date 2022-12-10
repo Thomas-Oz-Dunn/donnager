@@ -1,21 +1,15 @@
 /*
-Astrodynamics Functions
+Astrodynamics
 */
 
-use std::f64::consts::PI;
 use nalgebra as na;
+use std::f64::consts::PI;
 use na::Vector3;
 
 #[path="./constants.rs"] mod constants;
 
-pub struct Body{
-    name: String,
-    mass: f64,
-    radius: f64,
-    period: f64
-}
-
 pub struct Orbit{
+    name: String,
     semi_major_axis: f64, 
     eccentricity: f64,
     inclination: f64,
@@ -36,6 +30,7 @@ pub fn read_tle(
     let v: f64 = 4.352;
 
     let tle_orbit = Orbit {
+        name: name,
         semi_major_axis: a,
         eccentricity: e,
         inclination: i,
@@ -47,28 +42,19 @@ pub fn read_tle(
     return tle_orbit
 }
 
-
-pub fn calc_grav_acc(
-    mass: f64,
-    radius: f64
-) -> f64{
-    let grav_acc: f64 = constants::GRAV_CONST * mass / radius.powi(2);
-    return grav_acc
-}
-
 pub fn calc_orbital_velocity(
-    mass: f64,
+    grav_param: f64,
     radius: f64
 ) -> f64 {
-    let vel: f64 = (2.0 * constants::GRAV_CONST * mass / radius).sqrt();
+    // vector?
+    let vel: f64 = (2.0 * grav_param / radius).sqrt();
     return vel
 }
 
 pub fn calc_period(
-    mass: f64,
+    grav_param: f64,
     semi_major_axis: f64
 ) -> f64 {
-    let grav_param: f64 = mass * constants::GRAV_CONST;
     let time: f64 = 2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt();
     return time
 }
@@ -87,10 +73,9 @@ pub fn calc_hohmann_transfer(
 }
 
 pub fn calc_stationary_orbit(
-    mass: f64,
+    grav_param: f64,
     period: f64
 ) -> f64 {
-    let grav_param: f64 = mass * constants::GRAV_CONST;
     let r: f64 = (grav_param.sqrt() * period / (2.0 * PI)).powf(2.0 / 3.0);
     return r
 }
@@ -105,13 +90,12 @@ pub fn calc_sphere_of_influence(
 }
 
 pub fn calc_orbit_parameters(
-    mass: f64,
+    name: String,
+    grav_param: f64,
     pos: Vector3<f64>,
     vel: Vector3<f64>
 ) -> Orbit {
     // Turn into singular matrix transformation?
-    let grav_param: f64 = mass * constants::GRAV_CONST;
-
     // Wedge product?
     let spec_ang_moment: Vector3<f64> = pos.cross(&vel);
     let spec_lin_moment: f64 = pos.dot(&vel);
@@ -119,12 +103,13 @@ pub fn calc_orbit_parameters(
     let ecc_vec: Vector3<f64> = 
         ((vel.norm().powi(2) - grav_param / pos.norm())*pos 
         - (spec_lin_moment*vel)) / grav_param;
-    let node_vec: Vector3<f64> = Vector3::z_axis().cross(&ang_momentum);
+    let node_vec: Vector3<f64> = Vector3::z_axis().cross(&spec_ang_moment);
 
     let semi_major_axis: f64 = 
     spec_ang_moment.norm().powi(2) * (1.0 - ecc_vec.norm_squared()) / grav_param;
 
     let orbit: Orbit = Orbit {
+        name: name,
         semi_major_axis: semi_major_axis,
         eccentricity: ecc_vec.norm(),
         inclination: (spec_ang_moment[2] / spec_ang_moment.norm()).acos(),

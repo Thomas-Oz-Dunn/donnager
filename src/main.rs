@@ -14,10 +14,23 @@ fn main() {
     let mass_1: f64 = 1.0; // kg
     let altitude: f64 = 3.0e6; // 300km, LEO
     let radius_f: f64 = radius_0 + altitude; // m
-    let engine_isp: f64 = 300.0; // s
+    let mut engine_isp: f64 = 300.0; // ss
 
-    let delta_v: f64 = astro::calc_orbital_velocity(mass_0, radius_f);
-    let grav_acc: f64 = astro::calc_grav_acc(mass_0, radius_0);
+    let c_star: f64 = aero::calc_characteristic_vel(
+        gamma, 
+        t_chamber, 
+        molecular_weight)
+    let thrust_coeff: f64 = aero::calc_thrust_coeff(
+        gamma, 
+        expansion_ratio, 
+        p_chamber, 
+        p_atm, 
+        p_exhaust)
+    engine_isp = aero::calc_engine_isp(thrust_coeff, c_star);
+
+    let grav_param: f64 = mass_0 * constants::GRAV_CONST;
+    let delta_v: f64 = astro::calc_orbital_velocity(grav_param, radius_f);
+    let grav_acc: f64 = grav_param / radius_f.powi(2);
     let mass_ratio: f64 = ballistics::calc_mass_ratio(delta_v, engine_isp, grav_acc);
     let mass_fuel: f64 = mass_1 * mass_ratio;    
     println!("{} kg of fuel", mass_fuel);
@@ -25,7 +38,6 @@ fn main() {
 
 /*
 TODO-TD: 
-Convert scalar pos, vel, acc into vectors.
 N-stage trade study plots
 TLE ingest
 Trans Lunar Injections

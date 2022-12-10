@@ -1,4 +1,8 @@
 
+use std::f64::consts::PI;
+use nalgebra as na;
+use na::Vector3;
+
 pub fn calc_mass_ratio(
     delta_v: f64,
     engine_isp: f64,

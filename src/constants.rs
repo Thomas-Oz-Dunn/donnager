@@ -2,6 +2,7 @@
 Constants
 
 TODO-TD: query JPL SSDs
+TODO-TD: load table of specific heats and molar weights
 */
 
 // Space
