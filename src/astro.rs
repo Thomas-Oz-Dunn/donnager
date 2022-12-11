@@ -22,14 +22,19 @@ pub struct Orbit{
 pub fn read_tle(
     tle_str: String
 ) -> Orbit {
-    let lines: Vec<&str> = tle_str.split('\n').collect();
+    let lines: Vec<&str> = tle_str.lines().collect();
     let name: &str = lines[0];
     let line1: Vec<&str> = lines[1].to_string()
-                                   .split(' ')
+                                   .split_whitespace()
                                    .collect();
+    let element_num: &str = line1[line1.len()];
     let line2: Vec<&str> = lines[2].to_string()
-                                    .split(' ')
+                                    .split_whitespace()
                                     .collect();
+    let ecc: &str = line2[line2.len() - 3];
+    let arg_perigee: &str = line2[line2.len() - 2];
+    let mean_anomaly: &str = line2[line2.len() - 1];
+    let mean_motion_rev_num: &str = line2[line2.len()];
 
     // parse the string
     // Example
@@ -40,7 +45,7 @@ pub fn read_tle(
     // satellite_number: 25544,
     // classification: 'U',
     // international_designator: String::from("98067A"),
-    // epoch: String::from("20045.18587073"),
+    // epoch: 20045.18587073,
     // first_derivative_mean_motion: 0.00000950,
     // second_derivative_mean_motion: 0.0,
     // drag_term: 0.25302e-4,
@@ -54,14 +59,18 @@ pub fn read_tle(
     // mean_motion: 15.49165514,
     // revolution_number: 21279,
 
-    let tle_orbit = Orbit {
+    let tle_orbit: Orbit = Orbit {
         name: name.to_string(),
         semi_major_axis: a,
         eccentricity: e,
         inclination: i,
-        argument_of_perigee: o,
-        mean_anomaly: u,
-        mean_motion: v,
+        argument_of_perigee: arg_perigee.to_string()
+                                        .parse::<f64>()
+                                        .unwrap(),
+        mean_anomaly: mean_anomaly.to_string()
+                                  .parse::<f64>()
+                                  .unwrap(),
+        mean_motion: teags,
     };
 
     return tle_orbit
