@@ -5,6 +5,7 @@ Astrodynamics
 use nalgebra as na;
 use std::f64::consts::PI;
 use na::Vector3;
+use regex;
 
 #[path="./constants.rs"] mod constants;
 
@@ -21,6 +22,15 @@ pub struct Orbit{
 pub fn read_tle(
     tle_str: String
 ) -> Orbit {
+    let lines: Vec<&str> = tle_str.split('\n').collect();
+    let name: &str = lines[0];
+    let line1: Vec<&str> = lines[1].to_string()
+                                   .split(' ')
+                                   .collect();
+    let line2: Vec<&str> = lines[2].to_string()
+                                    .split(' ')
+                                    .collect();
+
     // parse the string
     // Example
     // ISS (ZARYA)
@@ -45,7 +55,7 @@ pub fn read_tle(
     // revolution_number: 21279,
 
     let tle_orbit = Orbit {
-        name: name,
+        name: name.to_string(),
         semi_major_axis: a,
         eccentricity: e,
         inclination: i,
