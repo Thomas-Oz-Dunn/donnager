@@ -4,8 +4,7 @@ Astrodynamics
 
 use nalgebra as na;
 use std::f64::consts::PI;
-use na::Vector3;
-use regex;
+use na::{Vector3, Matrix3x5, U3, U5};
 
 #[path="./constants.rs"] mod constants;
 
@@ -152,4 +151,13 @@ pub fn calc_orbit_parameters(
     };
 
     return orbit
+}
+
+
+pub fn calc_lagrange_points(
+    mass_0: f64,
+    mass_1: f64,
+    radius: Vector3<f64>
+) -> na::Matrix<f64, na::U3, na::U5> {
+    return points
 }
