@@ -15,4 +15,7 @@ pub const EARTH_ECC: f64 = 0.08182;
 pub const GRAV_CONST: f64 = 6.6743015e-11; // m^3 * kg^-1 * s^-2
 pub const GAS_CONST: f64 = 8.317e3; // N * m * kg^-1 * mol^-1 * K^-1
 pub const SPEED_OF_LIGHT: f64 = 2.99792458e8; // m * s^-1
+pub const MASS_PROTON: f64 = 1.67262e-27; //kg
+pub const MASS_NEUTRON: f64 = 1.67492749e-27; //kg
+pub const ELECTRON_VOLT: f64 = 1.602e-19; // Joule
 pub const MOLE: f64 = 6.02e23; // molecules / mole
