@@ -70,7 +70,8 @@ pub fn calc_thrust_coeff(
             (heat_capacity_ratio - 1.0) / heat_capacity_ratio);
 
     let jet_thurst: f64 = (a * b * c).sqrt();
-    let press_thrust: f64 = (p_exhaust / p_chamber - p_atm / p_chamber) * expansion_ratio;
+    let press_thrust: f64 = 
+        (p_exhaust / p_chamber - p_atm / p_chamber) * expansion_ratio;
     let c_f: f64 = jet_thurst + press_thrust;
     return c_f
 }
