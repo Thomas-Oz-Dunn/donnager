@@ -30,6 +30,7 @@ pub fn read_tle(
     let line2: Vec<&str> = lines[2].to_string()
                                     .split_whitespace()
                                     .collect();
+    let inc &str = line2[2];
     let ecc: &str = line2[line2.len() - 3];
     let arg_perigee: &str = line2[line2.len() - 2];
     let mean_anomaly: &str = line2[line2.len() - 1];
@@ -62,7 +63,9 @@ pub fn read_tle(
         name: name.to_string(),
         semi_major_axis: a,
         eccentricity: e,
-        inclination: i,
+        inclination: inc.to_string()
+                        .parse::<f64>()
+                        .unwrap(),
         argument_of_perigee: arg_perigee.to_string()
                                         .parse::<f64>()
                                         .unwrap(),
@@ -108,8 +111,8 @@ pub fn calc_stationary_orbit(
     grav_param: f64,
     period: f64
 ) -> f64 {
-    let r: f64 = (grav_param.sqrt() * period / (2.0 * PI)).powf(2.0 / 3.0);
-    return r
+    let r_mag: f64 = (grav_param.sqrt() * period / (2.0 * PI)).powf(2.0 / 3.0);
+    return r_mag
 }
 
 pub fn calc_sphere_of_influence(
