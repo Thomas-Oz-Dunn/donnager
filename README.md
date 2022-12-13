@@ -2,6 +2,12 @@
 
 Until the rains fall on Olympus Mons.
 
-A library of functions I've found useful for space travel calculations. 
+A library of functions for astrodynamic calculations. 
+
+## Installation
+
+
+## Usage
+
 
 Ad astra, plus ultra
