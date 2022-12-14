@@ -8,11 +8,9 @@ pub struct Chemical{
     name: String,
     moles: f64,
     formula: String,
-    composition: [tuple(atom::Molecule, ui32)],
+    composition: [(atom::Element, i32)],
     molar_mass: f64,
-    thermal_conductivity: f64,
     heat_capacity_ratio: f64,
-    triple_point: tuple(f64, f64)
 }
 
 pub fn calc_combustion_heat(
@@ -22,19 +20,12 @@ pub fn calc_combustion_heat(
     // Minimize Gibbs free energy
 }
 
-pub fn mixture(
-    mix: [Chemical]
-) -> Chemical {
-    // First, check reaction
-    // If reaction, include products?
-    let mut mix_name: String = "";
-    for chemical in mix{
-        mix_name += chemical.name + " ";
-    }
-    // Place all the mole counts and heat capacities in Vectors
-    // Vectorized multiplication instead of serial
-
-    let mixture = Chemical {
-        name: mix_name,
+pub fn calc_chem_molar_mass(
+    composition: [(atom::Element, i32)]
+) -> f64 {
+    let mut chem_molar_mass: f64 = 0;
+    for i_element in composition{
+        chem_molar_mass += i_element[0].molar_mass * f64::from(i_element[1]);
     };
+    return chem_molar_mass;
 }

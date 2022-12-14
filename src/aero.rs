@@ -13,6 +13,7 @@ pub fn calc_mass_flow(
     return mass_flow
 }
 
+
 pub fn calc_mach_number(
     velocity: f64,
     temperature: f64,
@@ -39,16 +40,15 @@ pub fn calc_aerodynamic_force(
 
 pub fn calc_characteristic_vel(
     heat_capacity_ratio: f64,
-    t_chamber: f64,
-    molecular_weight: f64
+    t_chamber: f64
 ) -> f64 {
-    let a: f64 = 
+    let c_f: f64 = 
         (2.0/(heat_capacity_ratio + 1.0)).powf(
             -(heat_capacity_ratio + 1.0)/(2.0*(heat_capacity_ratio - 1.0))); 
-    let b: f64 = 
-        ((constants::GAS_CONST * t_chamber) / 
-        (heat_capacity_ratio * molecular_weight)).sqrt();
-    let c_star: f64 = b * a;
+    let exhaust_vel: f64 = 
+        (constants::GAS_CONST * t_chamber * heat_capacity_ratio).sqrt() / 
+        heat_capacity_ratio;
+    let c_star: f64 = exhaust_vel * c_f;
     return c_star
 }
 
@@ -76,10 +76,24 @@ pub fn calc_thrust_coeff(
     return c_f
 }
 
+
 pub fn calc_engine_isp(
-    thrust_coeff: f64,
-    c_star: f64
+    heat_capacity_ratio: f64, 
+    expansion_ratio: f64,
+    t_chamber: f64,
+    p_chamber: f64,
+    p_atm: f64,
+    p_exhaust: f64
 ) -> f64 {
+    let thrust_coeff: f64 = calc_thrust_coeff(
+        heat_capacity_ratio, 
+        expansion_ratio, 
+        p_chamber, 
+        p_atm, 
+        p_exhaust);
+    let c_star: f64 = calc_characteristic_vel(
+        heat_capacity_ratio, 
+        t_chamber);
     let isp: f64 = thrust_coeff * c_star;
     return isp
 }

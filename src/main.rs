@@ -2,10 +2,12 @@
 Orbital systems modelling in Rust
 
 */
-mod aero;
-mod astro;
 mod constants;
+mod atom;
+mod chem;
+mod aero;
 mod ballistics;
+mod astro;
 
 fn main() {
     let mass_0: f64 = constants::EARTH_MASS;
@@ -16,17 +18,41 @@ fn main() {
     let radius_f: f64 = radius_0 + altitude; // m
     let mut engine_isp: f64 = 300.0; // ss
 
-    let c_star: f64 = aero::calc_characteristic_vel(
-        heat_capacity_ratio, 
-        t_chamber, 
-        molecular_weight)
-    let thrust_coeff: f64 = aero::calc_thrust_coeff(
-        heat_capacity_ratio, 
-        expansion_ratio, 
-        p_chamber, 
-        p_atm, 
-        p_exhaust)
-    engine_isp = aero::calc_engine_isp(thrust_coeff, c_star);
+    let fuel_composition: [(atom::Element, i32)] = [(atom::HYDROGEN_1, 2)];
+    let molar_mass: f64 = chem::calc_chem_molar_mass(fuel_composition);
+    let fuel: chem::Chemical = chem::Chemical {
+        name: *"H2",
+        moles: 4,
+        formula: *"H2",
+        composition: fuel_composition,
+        molar_mass: molar_mass,
+        heat_capacity_ratio: 1.4
+    };
+
+    
+    let o2_composition: [(atom::Element, i32)] = [(atom::OXYGEN, 2)];
+    let molar_mass: f64 = chem::calc_chem_molar_mass(ox_composition);
+    let oxidizer: chem::Chemical = chem::Chemical {
+        name: *"LOX",
+        moles: 1,
+        formula: *"O2",
+        composition: ox_composition,
+        molar_mass: molar_mass,
+        heat_capacity_ratio: 1.4
+    };
+    
+    let mix_composition: [(atom::Element, i32)] = ox_composition + fuel_composition;
+    let molar_mass: f64 = chem::calc_chem_molar_mass(mix_composition);
+    let water: chem::Chemical = chem::Chemical {
+        name: *"Water",
+        moles: 2,
+        formula: *"H2O",
+        composition: mix_composition,
+        molar_mass: molar_mass,
+        heat_capacity_ratio: 1.4
+    };
+
+    engine_isp = aero::calc_engine_isp();
 
     let grav_param: f64 = mass_0 * constants::GRAV_CONST;
     let delta_v: f64 = astro::calc_orbital_velocity(grav_param, radius_f);
@@ -45,6 +71,13 @@ Multithreading, Cloud Compute?
 RK45 propogator
 J2 perturbation
 Launch cost calculator
+Comparitive propulsion techniques
+    Liquid
+        Monoprop
+        Biprop
+    Solid
+    Electric
+    Nuclear Thermal
 Solar System Mineralogical data base query
 Interplanetary Mission Plan (optimal launch windows, porkchop plot)
 $ / kg (mineral X)
