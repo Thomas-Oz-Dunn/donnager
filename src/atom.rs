@@ -10,9 +10,9 @@ pub struct Element{
     molar_mass: f64,
     triple_point: tuple(f64, f64),
     critical_point: tuple(f64, f64),
-    half_life: f64,
     van_der_waals_radius: f64,
     ionization_energies: [f64],
+    oxidation_states: [i32]
 }
 
 pub struct Molecule{

@@ -35,3 +35,17 @@ pub fn calc_time_dilation(
     let 2_d_time: f64 = 1_d_time / (lorentz);
     2_d_time
 }
+
+pub fn calc_spectral_radiance(
+    frequency: f64,
+    absolute_temp: f64
+) -> f64 {
+    let numerator: f64 = 2 * constants::PLANCKS_CONST * frequency.powi(3);
+    let exponent: f64 = 
+        constants::PLANCKS_CONST * frequency / 
+        (constants::BOLTZMAN_CONST * absolute_temp);
+    let denom: f64 = 
+        constants::SPEED_OF_LIGHT.powi(2)*(exponent.exp() - 1);
+    let radiance: f64 = numerator / denom;
+    return radiance
+}
