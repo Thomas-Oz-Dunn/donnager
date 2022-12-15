@@ -37,4 +37,4 @@ pub fn calc_coast_height(
     let v_bo: f64 = grav_acc * engine_isp * (x);
     let coast_height: f64 = v_bo.powi(2) / (2.0 * grav_acc);
     coast_height
-}
+};

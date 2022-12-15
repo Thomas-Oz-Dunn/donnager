@@ -5,11 +5,11 @@ Atomic physics functions
 #[path="./constants.rs"] mod constants;
 
 pub struct Element{
-    name: String,
-    number: i32,
-    molar_mass: f64,
-    isotope: i32,
-    decay_type: String
+    pub name: String,
+    pub number: i32,
+    pub molar_mass: f64,
+    pub isotope: i32,
+    pub decay_type: String
 }
 
 pub fn calc_binding_energy(

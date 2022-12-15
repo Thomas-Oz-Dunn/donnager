@@ -2,12 +2,8 @@
 Orbital systems modelling in Rust
 
 */
-mod constants;
-mod atom;
-mod chem;
-mod aero;
-mod ballistics;
-mod astro;
+mod donnager;
+use donnager::{constants, atom, chem, aero, ballistics, astro}
 
 fn main() {
     let mass_0: f64 = constants::EARTH_MASS;
@@ -30,7 +26,7 @@ fn main() {
     };
 
     
-    let o2_composition: [(atom::Element, i32)] = [(atom::OXYGEN, 2)];
+    let ox_composition: [(atom::Element, i32)] = [(atom::OXYGEN, 2)];
     let molar_mass: f64 = chem::calc_chem_molar_mass(ox_composition);
     let oxidizer: chem::Chemical = chem::Chemical {
         name: *"LOX",
@@ -40,19 +36,15 @@ fn main() {
         molar_mass: molar_mass,
         heat_capacity_ratio: 1.4
     };
-    
-    let mix_composition: [(atom::Element, i32)] = ox_composition + fuel_composition;
-    let molar_mass: f64 = chem::calc_chem_molar_mass(mix_composition);
-    let water: chem::Chemical = chem::Chemical {
-        name: *"Water",
-        moles: 2,
-        formula: *"H2O",
-        composition: mix_composition,
-        molar_mass: molar_mass,
-        heat_capacity_ratio: 1.4
-    };
 
-    engine_isp = aero::calc_engine_isp();
+    engine_isp = aero::calc_engine_isp(
+        fuel.heat_capacity_ratio,
+        expansion_ratio,
+        t_chamber,
+        p_chamber,
+        p_atm,
+        p_exhaust
+    );
 
     let grav_param: f64 = mass_0 * constants::GRAV_CONST;
     let delta_v: f64 = astro::calc_orbital_velocity(grav_param, radius_f);

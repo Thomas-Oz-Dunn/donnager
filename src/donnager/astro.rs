@@ -9,13 +9,13 @@ use na::{Vector3, Matrix3x5, U3, U5};
 #[path="./constants.rs"] mod constants;
 
 pub struct Orbit{
-    name: String,
-    semi_major_axis: f64, 
-    eccentricity: f64,
-    inclination: f64,
-    argument_of_perigee: f64,
-    mean_anomaly: f64,
-    mean_motion: f64
+    pub name: String,
+    pub semi_major_axis: f64, 
+    pub eccentricity: f64,
+    pub inclination: f64,
+    pub argument_of_perigee: f64,
+    pub mean_anomaly: f64,
+    pub mean_motion: f64
 }
 
 pub fn read_tle(
@@ -130,8 +130,6 @@ pub fn calc_orbit_parameters(
     pos: Vector3<f64>,
     vel: Vector3<f64>
 ) -> Orbit {
-    // Turn into singular matrix transformation?
-    // Wedge product?
     let spec_ang_moment: Vector3<f64> = pos.cross(&vel);
     let spec_lin_moment: f64 = pos.dot(&vel);
 
@@ -154,13 +152,4 @@ pub fn calc_orbit_parameters(
     };
 
     return orbit
-}
-
-
-pub fn calc_lagrange_points(
-    mass_0: f64,
-    mass_1: f64,
-    radius: Vector3<f64>
-) -> na::Matrix<f64, na::U3, na::U5> {
-    return points
 }

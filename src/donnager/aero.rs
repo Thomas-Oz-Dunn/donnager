@@ -14,6 +14,20 @@ pub fn calc_mass_flow(
 }
 
 
+pub fn calc_atmos_pressure(
+    p_ref: f64,
+    t_ref: f64,
+    delta_h: f64,
+    molar_mass: f64
+) -> f64 {
+    let exp: f64 = 
+        constants::GRAV_CONST * molar_mass * delta_h / 
+        (constants::GAS_CONST * t_ref);
+    let pressure: f64 = p_ref * exp.exp();
+    return pressure
+}
+
+
 pub fn calc_mach_number(
     velocity: f64,
     temperature: f64,
