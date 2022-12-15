@@ -124,6 +124,16 @@ pub fn calc_sphere_of_influence(
     return radius
 }
 
+pub fn calc_surface_vel(
+    rotation_rate: f64,
+    equatorial_radius: f64,
+    pos_llh: Vector3<f64>
+) -> f64 {
+    let equatorial_vel: f64 = rotation_rate * equatorial_radius;
+    let tan_vel: f64 = pos_llh[0].cos() * equatorial_vel;
+    return tan_vel
+}
+
 pub fn calc_orbit_parameters(
     name: String,
     grav_param: f64,
