@@ -115,12 +115,14 @@ pub fn calc_stationary_orbit(
     return r_mag
 }
 
-pub fn calc_sphere_of_influence(
+pub fn calc_hill_sphere(
     mass_0: f64,
     mass_1: f64,
-    distance: f64
+    semi_major_axis: f64,
+    eccentricity: f64
 ) -> f64 {
-    let radius: f64 = distance / (1.0 + (mass_1 / mass_0).sqrt());
+    let radius: f64 = 
+        semi_major_axis * (1.0 - eccentricity) * (mass_0 / (3 * mass_1)).powf(1.0/3.0);
     return radius
 }
 
@@ -164,3 +166,10 @@ pub fn calc_orbit_parameters(
 
     return orbit
 }
+
+
+pub calc_lagrange_points(
+    mass_1: f64,
+    mass_2: f64,
+    radius: f64
+)
