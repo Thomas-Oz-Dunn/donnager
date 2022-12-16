@@ -4,7 +4,7 @@ Astrodynamics
 
 use nalgebra as na;
 use std::f64::consts::PI;
-use na::{Vector3, Matrix3x5, U3, U5};
+use na::{Vector3};
 
 #[path="./constants.rs"] mod constants;
 
@@ -13,6 +13,7 @@ pub struct Orbit{
     pub semi_major_axis: f64, 
     pub eccentricity: f64,
     pub inclination: f64,
+    pub raan: f64,
     pub argument_of_perigee: f64,
     pub mean_anomaly: f64,
     pub mean_motion: f64
@@ -21,58 +22,35 @@ pub struct Orbit{
 pub fn read_tle(
     tle_str: String
 ) -> Orbit {
+    /// TODO- Create test
+    let grav_param: f64 = constants::GRAV_CONST * constants::EARTH_MASS;
     let lines: Vec<&str> = tle_str.lines().collect();
     let name: &str = lines[0];
-    let line1: Vec<&str> = lines[1].to_string()
-                                   .split_whitespace()
-                                   .collect();
+    let line1: Vec<&str> = lines[1].to_string().split_whitespace().collect();
     let element_num: &str = line1[line1.len()];
-    let line2: Vec<&str> = lines[2].to_string()
-                                    .split_whitespace()
-                                    .collect();
-    let inc &str = line2[2];
-    let ecc: &str = line2[line2.len() - 3];
-    let arg_perigee: &str = line2[line2.len() - 2];
-    let mean_anomaly: &str = line2[line2.len() - 1];
-    let mean_motion_rev_num: &str = line2[line2.len()];
-
-    // parse the string
-    // Example
-    // ISS (ZARYA)
-    // 1 25544U 98067A   20045.18587073  .00000950  00000-0  25302-4 0  9990
-    // 2 25544  51.6443 242.0161 0004885 264.6060 207.3845 15.49165514212791
-    // name: String::from("ISS (ZARYA)"),
-    // satellite_number: 25544,
-    // classification: 'U',
-    // international_designator: String::from("98067A"),
-    // epoch: 20045.18587073,
-    // first_derivative_mean_motion: 0.00000950,
-    // second_derivative_mean_motion: 0.0,
-    // drag_term: 0.25302e-4,
-    // ephemeris_type: 0,
-    // element_number: 999,
-    // inclination: 51.6443,
-    // right_ascension: 242.0161,
-    // eccentricity: 0.0004885,
-    // argument_of_perigee: 264.6060,
-    // mean_anomaly: 207.3845,
-    // mean_motion: 15.49165514,
-    // revolution_number: 21279,
-
+    let epoch: &str = line1[3];
+    let mean_motion_prime: &str = line1[4];
+    let mean_motion_2: &str = line1[5];
+    let drag: &str = lines[6];
+    let line2: Vec<&str> = lines[2].to_string().split_whitespace().collect();
+    let inc: f64 = line2[2].to_string().parse::<f64>().unwrap();
+    let raan: &str = line2[3].to_string().parse::<f64>().unwrap();
+    let ecc: f64 = line2[4].to_string().parse::<f64>().unwrap() * 10e-7;
+    let arg_perigee: &str = line2[5].to_string().parse::<f64>().unwrap();
+    let mean_anomaly: &str = line2[6].to_string().parse::<f64>().unwrap();
+    let end_str: &str = line2[line2.len()];
+    let mean_motion: f64 = end_str[..11].to_string().parse::<f64>().unwrap();
+    let rev_num: f64 = end_str[12..].to_string().parse::<f64>().unwrap();
+    let semi_major_axis: f64 = (mean_motion.powi(2) / (grav_param)).powf(1.0/3.0);
     let tle_orbit: Orbit = Orbit {
         name: name.to_string(),
-        semi_major_axis: a,
-        eccentricity: e,
-        inclination: inc.to_string()
-                        .parse::<f64>()
-                        .unwrap(),
-        argument_of_perigee: arg_perigee.to_string()
-                                        .parse::<f64>()
-                                        .unwrap(),
-        mean_anomaly: mean_anomaly.to_string()
-                                  .parse::<f64>()
-                                  .unwrap(),
-        mean_motion: teags,
+        semi_major_axis: semi_major_axis,
+        raan: raan,
+        eccentricity: ecc,
+        inclination: inc,
+        argument_of_perigee: arg_perigee,
+        mean_anomaly: mean_anomaly,
+        mean_motion: mean_motion,
     };
 
     return tle_orbit
@@ -155,6 +133,7 @@ pub fn calc_orbit_parameters(
         name: name,
         semi_major_axis: semi_major_axis,
         eccentricity: ecc_vec.norm(),
+        raan: (node_vec[0] / node_vec.norm()).acos(),
         inclination: (spec_ang_moment[2] / spec_ang_moment.norm()).acos(),
         argument_of_perigee: node_vec.angle(&ecc_vec),
         mean_anomaly: ecc_vec.angle(&pos),
