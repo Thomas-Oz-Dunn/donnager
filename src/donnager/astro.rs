@@ -45,23 +45,24 @@ pub fn read_tle(
 
     let lines: Vec<&str> = tle_str.lines().collect();
     let name: &str = lines[0];
-    let line1: Vec<&str> = lines[1].to_string().split_whitespace().collect();
+    // let line1: Vec<&str> = lines[1].to_string().split_whitespace().collect();
+    let bindind
     let line2: Vec<&str> = lines[2].to_string().split_whitespace().collect();
 
-    let element_num: &str = line1[line1.len()];
-    let epoch: &str = line1[3];
-    let mean_motion_prime: &str = line1[4];
-    let mean_motion_2: &str = line1[5];
-    let drag: &str = lines[6];
+    // let element_num: &str = line1[line1.len()];
+    // let epoch: &str = line1[3];
+    // let mean_motion_prime: &str = line1[4];
+    // let mean_motion_2: &str = line1[5];
+    // let drag: &str = lines[6];
     let inc: f64 = line2[2].to_string().parse::<f64>().unwrap();
-    let raan: &str = line2[3].to_string().parse::<f64>().unwrap();
+    let raan: f64 = line2[3].to_string().parse::<f64>().unwrap();
     let ecc: f64 = line2[4].to_string().parse::<f64>().unwrap() * 10e-7;
-    let arg_perigee: &str = line2[5].to_string().parse::<f64>().unwrap();
-    let mean_anomaly: &str = line2[6].to_string().parse::<f64>().unwrap();
+    let arg_perigee: f64 = line2[5].to_string().parse::<f64>().unwrap();
+    let mean_anomaly: f64 = line2[6].to_string().parse::<f64>().unwrap();
 
     let end_str: &str = line2[line2.len()];
     let mean_motion: f64 = end_str[..11].to_string().parse::<f64>().unwrap();
-    let rev_num: f64 = end_str[12..].to_string().parse::<f64>().unwrap();
+    // let rev_num: f64 = end_str[12..].to_string().parse::<f64>().unwrap();
     let semi_major_axis: f64 = (mean_motion.powi(2) / (grav_param)).powf(1.0/3.0);
 
     let tle_orbit: Orbit = Orbit {
@@ -122,7 +123,7 @@ pub fn calc_hill_sphere(
     eccentricity: f64
 ) -> f64 {
     let radius: f64 = 
-        semi_major_axis * (1.0 - eccentricity) * (mass_0 / (3 * mass_1)).powf(1.0/3.0);
+        semi_major_axis * (1.0 - eccentricity) * (mass_0 / (3.0 * mass_1)).powf(1.0/3.0);
     return radius
 }
 
@@ -166,10 +167,3 @@ pub fn calc_orbit_parameters(
 
     return orbit
 }
-
-
-pub calc_lagrange_points(
-    mass_1: f64,
-    mass_2: f64,
-    radius: f64
-)

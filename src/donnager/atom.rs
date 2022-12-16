@@ -34,25 +34,25 @@ pub fn rest_mass_to_ev(
 
 // TODO-TD: autogen every element and isotope from a database
 pub const HYDROGEN_1: Element = Element {
-    name: *"Hydrogen",
+    name: (*"Hydrogen").to_string(),
     number: 1,
     molar_mass: 1.0,
     isotope: 1,
-    decay_type: *"stable"
+    decay_type: (*"stable").to_string()
 };
 
 pub const DEUTRIUM: Element = Element {
-    name: *"Deutrium",
+    name: (*"Deutrium").to_string(),
     number: 1,
     molar_mass: 2.014,
     isotope: 2,
-    decay_type: *"stable"
+    decay_type: (*"stable").to_string()
 };
 
 pub const OXYGEN: Element = Element {
-    name: *"Oxygen",
+    name: (*"Oxygen").to_string(),
     number: 8,
     molar_mass: 16.0,
     isotope: 16,
-    decay_type: *"stable"
+    decay_type: (*"stable").to_string()
 };
