@@ -19,6 +19,24 @@ pub struct Orbit{
     pub mean_motion: f64
 }
 
+pub struct SolarOrbit{
+    pub name: String,
+    pub apheliion: f64,
+    pub perihelion: f64,
+    pub orbit: Orbit
+}
+
+pub struct SolarBody{
+    pub name: String,
+    pub orbit: SolarOrbit,
+    pub mass: f64,
+    pub eq_radius: f64,
+    pub pol_radius: f64,
+    pub synodic_period: f64,
+    pub sidereal_period: f64,
+    pub axial_tilt: f64
+}
+
 pub fn read_tle(
     tle_str: String
 ) -> Orbit {
