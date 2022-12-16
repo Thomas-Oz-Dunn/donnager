@@ -46,8 +46,8 @@ pub fn read_tle(
     let lines: Vec<&str> = tle_str.lines().collect();
     let name: &str = lines[0];
     // let line1: Vec<&str> = lines[1].to_string().split_whitespace().collect();
-    let bindind
-    let line2: Vec<&str> = lines[2].to_string().split_whitespace().collect();
+    let binding: String = lines[2].to_string();
+    let line2: Vec<&str> = binding.split_whitespace().collect();
 
     // let element_num: &str = line1[line1.len()];
     // let epoch: &str = line1[3];
