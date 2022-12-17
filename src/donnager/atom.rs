@@ -5,11 +5,11 @@ Atomic physics functions
 #[path="./constants.rs"] mod constants;
 
 pub struct Element{
-    pub name: String,
+    pub name: &'static str,
     pub number: i32,
     pub molar_mass: f64,
     pub isotope: i32,
-    pub decay_type: String
+    pub decay_type: &'static str
 }
 
 pub fn calc_binding_energy(
@@ -34,25 +34,25 @@ pub fn rest_mass_to_ev(
 
 // TODO-TD: autogen every element and isotope from a database
 pub const HYDROGEN_1: Element = Element {
-    name: (*"Hydrogen").to_string(),
+    name: "Hydrogen",
     number: 1,
     molar_mass: 1.0,
     isotope: 1,
-    decay_type: (*"stable").to_string()
+    decay_type: "stable"
 };
 
 pub const DEUTRIUM: Element = Element {
-    name: (*"Deutrium").to_string(),
+    name: "Deutrium",
     number: 1,
     molar_mass: 2.014,
     isotope: 2,
-    decay_type: (*"stable").to_string()
+    decay_type: "stable"
 };
 
 pub const OXYGEN: Element = Element {
-    name: (*"Oxygen").to_string(),
+    name: "Oxygen",
     number: 8,
     molar_mass: 16.0,
     isotope: 16,
-    decay_type: (*"stable").to_string()
+    decay_type: "stable"
 };
