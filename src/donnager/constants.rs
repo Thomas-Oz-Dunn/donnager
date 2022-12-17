@@ -8,9 +8,13 @@ TODO-TD: load table of specific heats and molar weights
 // Space
 pub const GRAV_CONST: f64 = 6.6743015e-11; // m^3 * kg^-1 * s^-2
 pub const SUN_MASS: f64 = 1.9891e30; // kg
+
+// Earth
 pub const EARTH_MASS: f64 = 5.972e24; // kg
 pub const EARTH_RADIUS_EQUATOR: f64 = 6.378137e6; // m
 pub const EARTH_ECC: f64 = 0.08182;
+pub const EARTH_ROT_RATE: f64 = 7.2921150e-5; // radians per second;
+pub const EARTH_GRAV_PARAM: f64 = EARTH_MASS * GRAV_CONST; // m^3 * s^-2
 
 // Electromagnetism
 pub const SPEED_OF_LIGHT: f64 = 2.99792458e8; // m * s^-1

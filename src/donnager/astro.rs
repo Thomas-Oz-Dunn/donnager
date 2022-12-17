@@ -132,8 +132,8 @@ pub fn calc_surface_vel(
     equatorial_radius: f64,
     pos_llh: Vector3<f64>
 ) -> f64 {
-    let equatorial_vel: f64 = rotation_rate * equatorial_radius;
-    let tan_vel: f64 = pos_llh[0].cos() * equatorial_vel;
+    let equatorial_vel: f64 = rotation_rate * equatorial_radius; // units
+    let tan_vel: f64 = (pos_llh[0].cos() * equatorial_vel).abs();
     return tan_vel
 }
 
