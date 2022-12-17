@@ -16,6 +16,7 @@ fn main() {
     let rotation_rate: f64 = constants::EARTH_ROT_RATE; // rad / s
     
     // Inputs
+    let n_stage: i32 = 1;
     let mass_1: f64 = 1.0; // kg
     let engine_isp: f64 = 300.0; // s
     let launch_pos_llh: Vector3<f64> = Vector3::new(28.396837, -80.605659, 0.0); // Cape Kennedy Lat Lon Height
@@ -35,7 +36,7 @@ fn main() {
     let mass_fuel: f64 = mass_1 * mass_ratio;    
 
     // Results
-    println!("{} kg of fuel to get {} kg to {} m alt", mass_fuel, mass_1, altitude);
+    println!("{} kg of fuel to get {} kg to {} m alt on {} stage", mass_fuel, mass_1, altitude, n_stage);
 
 }
 

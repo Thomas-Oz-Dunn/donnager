@@ -4,6 +4,17 @@ Ballistics calculations
 
 // TODO-TD: mutlistage trade studies
 
+pub fn optimize_staging(
+    delta_v: f64,
+    engine_isp: f64,
+    grav_acc: f64,
+    n_stage_lim: i32
+) -> Vec<f64> {
+    for i_stage in (1..n_stage_lim) {
+
+    }
+}
+
 pub fn calc_mass_ratio(
     delta_v: f64,
     engine_isp: f64,

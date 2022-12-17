@@ -112,7 +112,8 @@ pub fn calc_stationary_orbit(
     grav_param: f64,
     period: f64
 ) -> f64 {
-    let r_mag: f64 = (grav_param.sqrt() * period / (2.0 * PI)).powf(2.0 / 3.0);
+    let a: f64 = grav_param * period.powi(2); // 
+    let r_mag: f64 = (a / (4.0 * PI.powi(2))).powf(1.0 / 3.0); // 
     return r_mag
 }
 
