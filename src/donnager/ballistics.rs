@@ -1,3 +1,8 @@
+/*
+Ballistics calculations
+*/
+
+// TODO-TD: mutlistage trade studies
 
 pub fn calc_mass_ratio(
     delta_v: f64,
