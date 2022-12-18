@@ -11,6 +11,7 @@ pub const GRAV_CONST: f64 = 6.6743015e-11; // m^3 * kg^-1 * s^-2
 pub const SUN_RADIUS_EQUATOR: f64 = 9.6e7;
 pub const SUN_MASS: f64 = 1.9891e30; // kg
 pub const SUN_GRAV_PARAM: f64 = SUN_MASS * GRAV_CONST;
+pub const SUN_LUMINOSITY: f64 = 3.828e26; // Watts
 
 // Earth
 pub const EARTH_MASS: f64 = 5.972e24; // kg
