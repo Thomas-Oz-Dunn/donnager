@@ -83,6 +83,7 @@ pub fn calc_orbital_velocity(
     grav_param: f64,
     radius: f64
 ) -> f64 {
+    // TODO-TD: Vectorize
     let vel: f64 = (2.0 * grav_param / radius).sqrt();
     return vel
 }

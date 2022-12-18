@@ -49,3 +49,19 @@ pub fn calc_spectral_radiance(
     let radiance: f64 = numerator / denom;
     return radiance
 }
+
+pub fn calc_angular_size(
+    object_radius: f64,
+    radial_distance: f64
+) -> f64 (
+    let arc_rads: f64 = (object_radius / radial_distance).atan(); 
+    return arc_rads
+)
+
+pub fn calc_apparent_brightness(
+    surface_radiance: f64,
+    radial_distance: f64
+) -> f64 {
+
+    // dB calculation
+}
