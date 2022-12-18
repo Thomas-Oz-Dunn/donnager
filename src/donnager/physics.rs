@@ -7,6 +7,7 @@ use std::f64::consts::PI;
 pub fn calc_radial_distance(
     time_delay: f64
 ) -> f64 {
+    // Two way speed of light
     let r: f64 = constants::SPEED_OF_LIGHT * time_delay / 2;
     return r
 }
@@ -15,6 +16,7 @@ pub fn calc_radial_vel(
     tx_wavelength: f64,
     rx_wavelength: f64
 ) -> f64 {
+    // Doppler effect
     let wavelength_shift: f64 = rx_wavelength - tx_wavelength;
     let v_r: f64 = wavelength_shift * constants::SPEED_OF_LIGHT / tx_wavelength;
     return v_r
@@ -36,32 +38,10 @@ pub fn calc_time_dilation(
     return 2_d_time
 }
 
-pub fn calc_spectral_radiance(
-    frequency: f64,
-    absolute_temp: f64
-) -> f64 {
-    let numerator: f64 = 2 * constants::PLANCKS_CONST * frequency.powi(3);
-    let exponent: f64 = 
-        constants::PLANCKS_CONST * frequency / 
-        (constants::BOLTZMAN_CONST * absolute_temp);
-    let denom: f64 = 
-        constants::SPEED_OF_LIGHT.powi(2)*(exponent.exp() - 1);
-    let radiance: f64 = numerator / denom;
-    return radiance
-}
-
 pub fn calc_angular_size(
     object_radius: f64,
     radial_distance: f64
-) -> f64 (
+) -> f64 {
     let arc_rads: f64 = (object_radius / radial_distance).atan(); 
     return arc_rads
-)
-
-pub fn calc_apparent_brightness(
-    surface_radiance: f64,
-    radial_distance: f64
-) -> f64 {
-
-    // dB calculation
 }
