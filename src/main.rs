@@ -6,8 +6,8 @@ use nalgebra as na;
 use na::{Vector3};
 use std::f64::consts::PI;
 
-mod donnager;
-use donnager::{constants, ballistics, astro};
+mod cosmos;
+use cosmos::{constants, ballistics, orbit};
 
 fn main() {
     // Constants
@@ -23,10 +23,10 @@ fn main() {
     
     // Calculation
     let period: f64 = 2.0 * PI / rotation_rate; // s / 2* pi rad 
-    let gso_radius: f64 = astro::calc_stationary_orbit(grav_param, period);
+    let gso_radius: f64 = orbit::calc_stationary_orbit(grav_param, period);
     let altitude: f64 = gso_radius - equatorial_radius;
-    let delta_v: f64 = astro::calc_orbital_velocity(grav_param, gso_radius);
-    let surface_vel: f64 = astro::calc_surface_vel(
+    let delta_v: f64 = orbit::calc_orbital_velocity(grav_param, gso_radius);
+    let surface_vel: f64 = orbit::calc_surface_vel(
         rotation_rate, 
         equatorial_radius, 
         launch_pos_llh);
@@ -39,24 +39,3 @@ fn main() {
     println!("{} kg of fuel to get {} kg to {} m alt on {} stage", mass_fuel, mass_1, altitude, n_stage);
 
 }
-
-/*
-TODO-TD: 
-N-stage trade study plots
-TLE ingest
-Trans Lunar Injections
-Multithreading, Cloud Compute?
-RK45 propogator
-J2 perturbation
-Launch cost calculator
-Comparitive propulsion techniques
-    Liquid
-        Monoprop
-        Biprop
-    Solid
-    Electric
-    Nuclear Thermal
-Solar System Mineralogical data base query
-Interplanetary Mission Plan (optimal launch windows, porkchop plot)
-$ / kg (mineral X)
-*/
