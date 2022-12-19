@@ -1,7 +1,7 @@
 
 
 use std::f64::consts::PI;
-#[path="./constants.rs"] mod constants;
+use crate::constants;
 
 pub fn calc_apparent_brightness(
     luminosity: f64,

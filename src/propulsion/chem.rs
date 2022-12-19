@@ -1,8 +1,7 @@
 /*
 Chemistry calculations
 */
-
-#[path="./atom.rs"] mod atom;
+use crate::propulsion::atom;
 
 pub struct Chemical{
     name: String,

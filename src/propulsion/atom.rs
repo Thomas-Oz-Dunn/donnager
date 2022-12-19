@@ -2,7 +2,7 @@
 Atomic physics functions
 */
 
-#[path="./constants.rs"] mod constants;
+use crate::constants;
 
 pub struct Element{
     pub name: &'static str,
@@ -12,16 +12,17 @@ pub struct Element{
     pub decay_type: &'static str
 }
 
-pub fn calc_binding_energy(
-    element: Element
-) -> f64 {
-    let num_protons: i32 = element.number;
-    let num_neutrons: i32 = element.isotope - num_protons;
-    let mass_protons: f64 = f64::from(num_protons) * constants::MASS_PROTON;
-    let mass_neutrons: f64 = f64::from(num_neutrons) * constants::MASS_NEUTRON;
-    let mass_defect: f64 = element.molar_mass - (mass_protons + mass_neutrons);
-    let binding_energy: f64 = mass_defect * constants::SPEED_OF_LIGHT.powi(2);
-    return binding_energy
+impl Element {
+    pub fn calc_binding_energy(self) -> f64 {
+        let num_protons: i32 = element.number;
+        let num_neutrons: i32 = element.isotope - num_protons;
+        let mass_protons: f64 = f64::from(num_protons) * constants::MASS_PROTON;
+        let mass_neutrons: f64 = f64::from(num_neutrons) * constants::MASS_NEUTRON;
+        let mass_defect: f64 = element.molar_mass - (mass_protons + mass_neutrons);
+        let binding_energy: f64 = mass_defect * constants::SPEED_OF_LIGHT.powi(2);
+        return binding_energy
+    }
+
 }
 
 pub fn rest_mass_to_ev(
