@@ -8,6 +8,7 @@ use na::{Vector3};
 
 use crate::constants;
 
+#[derive()]
 pub struct Orbit{
     pub name: String,
     pub semi_major_axis: f64, 
@@ -36,6 +37,7 @@ pub struct SolarBody{
     pub sidereal_period: f64,
     pub axial_tilt: f64
 }
+
 impl Orbit {
 
     // Populate Orbit from standard Two Line Element
