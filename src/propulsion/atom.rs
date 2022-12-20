@@ -13,12 +13,14 @@ pub struct Element{
 }
 
 impl Element {
-    pub fn calc_binding_energy(self) -> f64 {
-        let num_protons: i32 = element.number;
-        let num_neutrons: i32 = element.isotope - num_protons;
+
+    // Calculate binding energy of nucleus
+    pub fn calc_binding_energy(&self) -> f64 {
+        let num_protons: i32 = self.number;
+        let num_neutrons: i32 = self.isotope - num_protons;
         let mass_protons: f64 = f64::from(num_protons) * constants::MASS_PROTON;
         let mass_neutrons: f64 = f64::from(num_neutrons) * constants::MASS_NEUTRON;
-        let mass_defect: f64 = element.molar_mass - (mass_protons + mass_neutrons);
+        let mass_defect: f64 = self.molar_mass - (mass_protons + mass_neutrons);
         let binding_energy: f64 = mass_defect * constants::SPEED_OF_LIGHT.powi(2);
         return binding_energy
     }
@@ -34,6 +36,7 @@ pub fn rest_mass_to_ev(
 }
 
 // TODO-TD: autogen every element and isotope from a database
+
 pub const HYDROGEN_1: Element = Element {
     name: "Hydrogen",
     number: 1,

@@ -41,9 +41,9 @@ impl Orbit {
     // Populate Orbit from standard Two Line Element
     pub fn from_tle(
         tle_str: String
-    ) -> Orbit {
+    ) -> Self {
         // Two Line element usage assumes Earth Centered
-        let grav_param: f64 = constants::GRAV_CONST * constants::EARTH_MASS;
+        let grav_param: f64 = constants::EARTH_GRAV_PARAM;
     
         let lines: Vec<&str> = tle_str.lines().collect();
         let name: &str = lines[0];
@@ -66,7 +66,7 @@ impl Orbit {
         // let rev_num: f64 = end_str[12..].to_string().parse::<f64>().unwrap();
         let semi_major_axis: f64 = (mean_motion.powi(2) / (grav_param)).powf(1.0/3.0);
     
-        let tle_orbit: Orbit = Orbit {
+        Orbit {
             name: name.to_string(),
             semi_major_axis: semi_major_axis,
             raan: raan,
@@ -75,7 +75,7 @@ impl Orbit {
             argument_of_perigee: arg_perigee,
             mean_anomaly: mean_anomaly,
             mean_motion: mean_motion,
-        };
+        }
     
     }
 
@@ -85,7 +85,7 @@ impl Orbit {
         grav_param: f64,
         pos: Vector3<f64>,
         vel: Vector3<f64>
-    ) -> Orbit {
+    ) -> Self {
         let spec_ang_moment: Vector3<f64> = pos.cross(&vel);
         let spec_lin_moment: f64 = pos.dot(&vel);
 
@@ -95,9 +95,10 @@ impl Orbit {
         let node_vec: Vector3<f64> = Vector3::z_axis().cross(&spec_ang_moment);
 
         let semi_major_axis: f64 = 
-        spec_ang_moment.norm().powi(2) * (1.0 - ecc_vec.norm_squared()) / grav_param;
+            spec_ang_moment.norm().powi(2) * 
+            (1.0 - ecc_vec.norm_squared()) / grav_param;
 
-        let orbit: Orbit = Orbit {
+        Orbit {
             name: name,
             semi_major_axis: semi_major_axis,
             eccentricity: ecc_vec.norm(),
@@ -106,7 +107,7 @@ impl Orbit {
             argument_of_perigee: node_vec.angle(&ecc_vec),
             mean_anomaly: ecc_vec.angle(&pos),
             mean_motion: 1.0 / calc_period(grav_param, semi_major_axis)
-        };
+        }
 
     }
 

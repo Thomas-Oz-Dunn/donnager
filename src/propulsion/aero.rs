@@ -2,7 +2,7 @@
 Fluid dynamics
 */
 
-use crate::constants;s
+use crate::constants;
 
 pub fn calc_mass_flow(
     throat_area: f64,

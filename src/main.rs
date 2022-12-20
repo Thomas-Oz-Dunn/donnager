@@ -2,12 +2,14 @@
 Orbital systems modelling in Rust
 
 */
+
 use nalgebra as na;
 use na::{Vector3};
 use std::f64::consts::PI;
 
-mod cosmos;
-use cosmos::{constants, ballistics, orbit};
+use donnager::cosmos::orbit;
+use donnager::propulsion::ballistics;
+use donnager::constants;
 
 fn main() {
     // Constants

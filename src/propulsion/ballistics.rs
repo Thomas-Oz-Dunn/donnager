@@ -3,6 +3,7 @@ Ballistics calculations
 */
 
 // TODO-TD: mutlistage trade studies
+
 pub fn calc_mass_ratio(
     delta_v: f64,
     engine_isp: f64,
@@ -23,15 +24,6 @@ pub fn calc_burnout_height(
     let y: f64 = z * (z).ln() + mass_ratio - mass_ratio.powi(2) / 2.0;
     let burnout_height: f64 = grav_acc * engine_isp.powi(2) * y;
     burnout_height
-}
-
-
-pub fn calc_burnout_velocity(
-    mass_ratio: f64,
-    grav_acc: f64,
-    engine_isp: f64
-) -> f64 {
-
 }
 
 pub fn calc_coast_height(
