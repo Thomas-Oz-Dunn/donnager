@@ -24,12 +24,9 @@ pub struct Orbit{
 #[derive(Clone, Debug, PartialEq)]
 pub struct Body{
     pub name: String,
-    pub mass: f64,
+    pub grav_param: f64,
     pub eq_radius: f64,
-    pub pol_radius: Option<f64>,
-    pub synodic_period: f64,
-    pub sidereal_period: Option<f64>,
-    pub axial_tilt: Option<f64>
+    pub rotation_rate: f64,
 }
 
 impl Orbit {
@@ -129,7 +126,7 @@ impl Orbit {
             inclination: (spec_ang_moment[2] / spec_ang_moment.norm()).acos(),
             argument_of_perigee: node_vec.angle(&ecc_vec),
             mean_anomaly: ecc_vec.angle(&pos),
-            mean_motion: 1.0 / calc_period(grav_param, semi_major_axis)
+            mean_motion: 1.0 / (2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt())
         }
 
     }
@@ -139,21 +136,13 @@ impl Orbit {
 
 impl Body {
 
-    // Calculate gravitational parameter
-    pub fn calc_grav_param(
-        &self
-    ) -> f64 {
-        return constants::GRAV_CONST * self.mass
-    }
-
     // Calculate required orbital velocity at radial distance
     pub fn calc_orbital_velocity(
         &self,
         radius: f64
     ) -> f64 {
         // TODO-TD: Vectorize
-        let grav_param: f64 = self.calc_grav_param();
-        let vel: f64 = (2.0 * grav_param / radius).sqrt();
+        let vel: f64 = (2.0 * self.grav_param / radius).sqrt();
         return vel
     }
 
@@ -162,15 +151,14 @@ impl Body {
         &self,
         semi_major_axis: f64
     ) -> f64 {
-        let grav_param: f64 = self.calc_grav_param();
-        let time: f64 = 2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt();
+        let time: f64 = 2.0 * PI * (semi_major_axis.powi(3)/self.grav_param).sqrt();
         return time
     }
     
     // Calculate radius for stationary orbit above body surface
-    pub fn calc_stationary_orbit_radius(&self) -> f64 {
-        let grav_param: f64 = self.calc_grav_param();
-        let a: f64 = grav_param * self.synodic_period.powi(2); // 
+    pub fn calc_stationary_orbit(&self) -> f64 {
+        let period: f64 = 2.0 * PI / self.rotation_rate;
+        let a: f64 = self.grav_param * period.powi(2); // 
         let r_mag: f64 = (a / (4.0 * PI.powi(2))).powf(1.0 / 3.0); // 
         return r_mag
     }
@@ -180,8 +168,7 @@ impl Body {
         &self,
         pos_llh: Vector3<f64>
     ) -> f64 {
-        let rotation_rate: f64 = 2.0 * PI / self.synodic_period;
-        let equatorial_vel: f64 = rotation_rate * self.eq_radius;
+        let equatorial_vel: f64 = self.rotation_rate * self.eq_radius;
         let tan_vel: f64 = (pos_llh[0].cos() * equatorial_vel).abs();
         return tan_vel
     }
