@@ -8,9 +8,10 @@ use na::{Vector3};
 
 use crate::constants;
 
-#[derive()]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Orbit{
     pub name: String,
+    pub grav_param: f64,
     pub semi_major_axis: f64, 
     pub eccentricity: f64,
     pub inclination: f64,
@@ -20,16 +21,9 @@ pub struct Orbit{
     pub mean_motion: f64
 }
 
-pub struct SolarOrbit{
+#[derive(Clone, Debug, PartialEq)]
+pub struct Body{
     pub name: String,
-    pub apheliion: f64,
-    pub perihelion: f64,
-    pub orbit: Orbit
-}
-
-pub struct SolarBody{
-    pub name: String,
-    pub orbit: SolarOrbit,
     pub mass: f64,
     pub eq_radius: f64,
     pub pol_radius: f64,
@@ -39,6 +33,31 @@ pub struct SolarBody{
 }
 
 impl Orbit {
+
+    // Populate Orbit from Keplerian parameters
+    pub fn from_keplerian(
+        name: String,
+        grav_param: f64,
+        semi_major_axis: f64, 
+        eccentricity: f64,
+        inclination: f64,
+        raan: f64,
+        argument_of_perigee: f64,
+        mean_anomaly: f64,
+        mean_motion: f64
+    ) -> Self {
+        Orbit {
+            name,
+            grav_param,
+            semi_major_axis,
+            eccentricity,
+            inclination,
+            raan,
+            argument_of_perigee,
+            mean_anomaly,
+            mean_motion
+        }
+    }
 
     // Populate Orbit from standard Two Line Element
     pub fn from_tle(
@@ -70,6 +89,7 @@ impl Orbit {
     
         Orbit {
             name: name.to_string(),
+            grav_param,
             semi_major_axis: semi_major_axis,
             raan: raan,
             eccentricity: ecc,
@@ -102,6 +122,7 @@ impl Orbit {
 
         Orbit {
             name: name,
+            grav_param: grav_param,
             semi_major_axis: semi_major_axis,
             eccentricity: ecc_vec.norm(),
             raan: (node_vec[0] / node_vec.norm()).acos(),
@@ -115,23 +136,55 @@ impl Orbit {
 
 }
 
-// Calculate required orbital velocity at radial distance
-pub fn calc_orbital_velocity(
-    grav_param: f64,
-    radius: f64
-) -> f64 {
-    // TODO-TD: Vectorize
-    let vel: f64 = (2.0 * grav_param / radius).sqrt();
-    return vel
-}
 
-// Calculate period of orbit
-pub fn calc_period(
-    grav_param: f64,
-    semi_major_axis: f64
-) -> f64 {
-    let time: f64 = 2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt();
-    return time
+impl Body {
+
+    // Calculate gravitational parameter
+    pub fn calc_grav_param(
+        &self
+    ) -> f64 {
+        return constants::GRAV_CONST * self.mass
+    }
+
+    // Calculate required orbital velocity at radial distance
+    pub fn calc_orbital_velocity(
+        &self,
+        radius: f64
+    ) -> f64 {
+        // TODO-TD: Vectorize
+        let grav_param: f64 = self.calc_grav_param();
+        let vel: f64 = (2.0 * grav_param / radius).sqrt();
+        return vel
+    }
+
+    // Calculate period of orbit
+    pub fn calc_period(
+        &self,
+        semi_major_axis: f64
+    ) -> f64 {
+        let grav_param: f64 = self.calc_grav_param();
+        let time: f64 = 2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt();
+        return time
+    }
+    
+    // Calculate radius for stationary orbit above body surface
+    pub fn calc_stationary_orbit_radius(&self) -> f64 {
+        let grav_param: f64 = self.calc_grav_param();
+        let a: f64 = grav_param * self.synodic_period.powi(2); // 
+        let r_mag: f64 = (a / (4.0 * PI.powi(2))).powf(1.0 / 3.0); // 
+        return r_mag
+    }
+
+    // Calculate tangential velocity on surface of body
+    pub fn calc_surface_vel(
+        &self,
+        pos_llh: Vector3<f64>
+    ) -> f64 {
+        let rotation_rate: f64 = 2.0 * PI / self.synodic_period;
+        let equatorial_vel: f64 = rotation_rate * self.eq_radius;
+        let tan_vel: f64 = (pos_llh[0].cos() * equatorial_vel).abs();
+        return tan_vel
+    }
 }
 
 // Calculate total delta v for hohmann transfer
@@ -148,15 +201,6 @@ pub fn calc_hohmann_transfer(
     return delta_v_total
 }
 
-// Calculate radius for stationary orbit above body surface
-pub fn calc_stationary_orbit(
-    grav_param: f64,
-    period: f64
-) -> f64 {
-    let a: f64 = grav_param * period.powi(2); // 
-    let r_mag: f64 = (a / (4.0 * PI.powi(2))).powf(1.0 / 3.0); // 
-    return r_mag
-}
 
 // Calculate sphere of influence for a body
 pub fn calc_hill_sphere(
@@ -170,13 +214,3 @@ pub fn calc_hill_sphere(
     return radius
 }
 
-// Calculate tangential velocity on surface of body
-pub fn calc_surface_vel(
-    rotation_rate: f64,
-    equatorial_radius: f64,
-    pos_llh: Vector3<f64>
-) -> f64 {
-    let equatorial_vel: f64 = rotation_rate * equatorial_radius; // units
-    let tan_vel: f64 = (pos_llh[0].cos() * equatorial_vel).abs();
-    return tan_vel
-}
