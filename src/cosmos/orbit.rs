@@ -26,10 +26,10 @@ pub struct Body{
     pub name: String,
     pub mass: f64,
     pub eq_radius: f64,
-    pub pol_radius: f64,
+    pub pol_radius: Option<f64>,
     pub synodic_period: f64,
-    pub sidereal_period: f64,
-    pub axial_tilt: f64
+    pub sidereal_period: Option<f64>,
+    pub axial_tilt: Option<f64>
 }
 
 impl Orbit {
