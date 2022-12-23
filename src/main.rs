@@ -22,12 +22,12 @@ fn main() {
     
     // Inputs
     let n_stage: i32 = 1;
-    let mass_1: f64 = 1.0; // kg
+    let mass_1: f64 = 5.0; // kg
     let engine_isp: f64 = 300.0; // s
+    let altitude: f64 = 408000.0;
     let launch_pos_llh: Vector3<f64> = Vector3::new(28.396837, -80.605659, 0.0); // Cape Kennedy Lat Lon Height
     
     // Calculation
-    let altitude: f64 = 408000.0;
     let radius: f64 = altitude + earth.eq_radius;
     let delta_v: f64 = earth.calc_orbital_velocity(radius);
     let surface_vel: f64 = earth.calc_surface_vel(launch_pos_llh);
@@ -37,6 +37,6 @@ fn main() {
     let mass_fuel: f64 = mass_1 * mass_ratio;    
 
     // Results
-    println!("{} kg of fuel to get {} kg to {} m alt on {} stage", mass_fuel, mass_1, altitude, n_stage);
+    println!("\n{:.4} kg of fuel to get {} kg to {} m alt on {} stage", mass_fuel, mass_1, altitude, n_stage);
 
 }
