@@ -136,6 +136,16 @@ impl Orbit {
 
 impl Body {
 
+    // Calculate gravitational acceleration at radial distance
+    pub fn calc_grav_acc(
+        &self, 
+        radius: f64
+    ) -> f64 {
+        let grav_acc: f64 = self.grav_param / radius.powi(2);
+        return grav_acc
+    }
+    
+
     // Calculate required orbital velocity at radial distance
     pub fn calc_orbital_velocity(
         &self,

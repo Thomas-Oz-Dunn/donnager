@@ -30,10 +30,9 @@ fn main() {
     let altitude: f64 = 408000.0;
     let radius: f64 = altitude + earth.eq_radius;
     let delta_v: f64 = earth.calc_orbital_velocity(radius);
-    let surface_vel: f64 = earth.calc_surface_vel(
-        launch_pos_llh);
+    let surface_vel: f64 = earth.calc_surface_vel(launch_pos_llh);
     let net_delta_v: f64 = delta_v - surface_vel;
-    let grav_acc: f64 = earth.grav_param / radius.powi(2);
+    let grav_acc: f64 = earth.calc_grav_acc(radius);
     let mass_ratio: f64 = ballistics::calc_mass_ratio(net_delta_v, engine_isp, grav_acc);
     let mass_fuel: f64 = mass_1 * mass_ratio;    
 
