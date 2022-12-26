@@ -84,38 +84,3 @@ impl KalmanFilter{
     }
 
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::dynamics::filters;
-
-    #[test]
-    fn test_kf() {
-
-        let sys_tm: Matrix3<f64> = Matrix3::<f64>::identity();
-        let obsv_tm: Matrix3<f64> = Matrix3::<f64>::zeros();
-        let ctrl_tm: Matrix3<f64> = Matrix3::<f64>::zeros();
-        let prcx_noise_cov: Matrix3<f64> = Matrix3::<f64>::zeros();
-        let obsv_noise_cov: Matrix3<f64> = Matrix3::<f64>::zeros();
-        let syst_noise_cov: Matrix3<f64> = Matrix3::<f64>::zeros();
-        let system: Matrix3<f64> = Matrix3::<f64>::zeros();
-
-        let KF: KalmanFilter = filters::KalmanFilter::new(
-            sys_tm,
-            obsv_tm,
-            ctrl_tm,
-            prcx_noise_cov,
-            obsv_noise_cov,
-            syst_noise_cov,
-        system);
-
-        for measurement in measurements {
-            let system: DVector<f64> = KF.predict();
-            KF.update(measurement);
-        }
-
-        let result = [0, 0, 1];
-        assert_eq!(result, [0, 0, 1]);
-    }
-}
