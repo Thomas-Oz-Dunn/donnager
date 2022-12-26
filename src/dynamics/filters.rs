@@ -16,6 +16,27 @@ pub struct KalmanFilter{
 
 impl KalmanFilter{
     
+    // Create a new KF
+    pub fn new(
+        syst_tm: DMatrix<f64>,
+        obsv_tm: DMatrix<f64>,
+        ctrl_tm: DMatrix<f64>,
+        prcx_noise_cov: DMatrix<f64>,
+        obsv_noise_cov: DMatrix<f64>,
+        syst_noise_cov: DMatrix<f64>,
+        system_0: DMatrix<f64>
+    ) -> KalmanFilter {
+        KalmanFilter {
+            syst_tm: (syst_tm), 
+            obsv_tm: (obsv_tm), 
+            ctrl_tm: (ctrl_tm), 
+            prcx_noise_cov: (prcx_noise_cov), 
+            obsv_noise_cov: (obsv_noise_cov), 
+            syst_noise_cov: (syst_noise_cov), 
+            system: (system_0) }
+    }
+
+    // Predict step
     pub fn predict(&mut self, control: DVector<f64>) -> DMatrix<f64> {
 
         // System (x) := stm * x + ctm * controls
@@ -31,6 +52,7 @@ impl KalmanFilter{
         return system
     }
 
+    // Update step
     pub fn update(&mut self, measurement: DVector<f64>) {
 
         // y = observed - inner(otm, system)
@@ -61,4 +83,28 @@ impl KalmanFilter{
             (&kalman_gain * self.obsv_noise_cov.transpose()) * &kalman_gain;
     }
 
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::dynamics::filters;
+
+    #[test]
+    fn test_kf() {
+
+        let sys_tm: Matrix3<f64> = Matrix3::<f64>::new(
+            1., 0., 0., 
+            0., 1., 0., 
+            0., 0., 1.);
+
+        
+        let KF: KalmanFilter = filters::KalmanFilter::new(
+            sys_tm,
+
+        );
+
+        let result = ;
+        assert_eq!(result, 4);
+    }
 }
