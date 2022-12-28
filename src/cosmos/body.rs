@@ -14,6 +14,7 @@ pub struct Body{
     pub grav_param: f64,
     pub eq_radius: f64,
     pub rotation_rate: f64,
+    pub oblateness: f64
 }
 
 pub struct SurfacePoint{
@@ -72,21 +73,33 @@ impl Body {
 
     // Calculate transformation matrix from fixed to inertial frame
     // E.g. ECEF to ECI
-    pub fn calc_fixed_to_inertial_matrix(
+    pub fn fixed_to_inertial(
         &self,
         datetime_utc: NaiveDateTime
-    ) -> Matrix3<f64> {
-        // Datetime to julian time
-
-        // Sidereal time
-
+    ) -> Vector3<f64> {
+        // Datetime to julian date
+        // Days since 2000 January 1, 12 h UTl?
+        // GMST
+        // Local Sidereal time = Greenwich sidereal time + lattitude 
+        // Precession
+        // Nutation
         // Turn angle
         
-        // Assemble matrix from angle
     }
 
-    pub fn calc_lla_to_fixed_matrix(&self) -> Matrix3<f64> {
-        // Ellipsoid, how detailed?
+    // Geodetic to rectangular coordinates
+    // E.g. Lattitude, Longitude, Altitude to ECEF
+    pub fn geodetic_to_rect(&self, pos_lla: Vector3<f64>) -> Vector3<f64> {
+        let semi_major: f64 = self.eq_radius;
+        let ecc: f64 = self.oblateness;
+
+        let prime_vertical: f64 = semi_major / (1.0 - (ecc * pos_lla[0].sin()).powi(2)).sqrt();
+
+        let x: f64 = (prime_vertical + pos_lla[2]) * pos_lla[0].cos() * pos_lla[1].cos();
+        let y: f64 = (prime_vertical + pos_lla[2]) * pos_lla[0].cos() * pos_lla[1].sin();
+        let z: f64 = ((1.0 - ecc.powi(2)) * prime_vertical + pos_lla[0]) * pos_lla[0].sin();
+        let pos_xyz: Vector3<f64> = Vector3::new(x, y, z); 
+        return pos_xyz
     }
 }
 
