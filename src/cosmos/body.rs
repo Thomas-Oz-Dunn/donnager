@@ -1,9 +1,11 @@
-use chrono::{DateTime, TimeZone, NaiveDateTime, Offset};
+/*
+Gravitational Bodies
+*/
 
-use crate::cosmos::orbit::Orbit;
+use chrono::*;
 use nalgebra as na;
 use std::f64::consts::PI;
-use na::{Vector3};
+use na::{Vector3, Matrix3};
 
 
 #[derive(Clone, Debug, PartialEq)]
@@ -68,18 +70,23 @@ impl Body {
         return tan_vel
     }
 
+    // Calculate transformation matrix from fixed to inertial frame
+    // E.g. ECEF to ECI
     pub fn calc_fixed_to_inertial_matrix(
         &self,
-        datetime: DateTime<Tz>
+        datetime_utc: NaiveDateTime
     ) -> Matrix3<f64> {
+        // Datetime to julian time
 
+        // Sidereal time
+
+        // Turn angle
+        
+        // Assemble matrix from angle
     }
 
-    pub fn calc_lla_to_fixed_matrix(
-        &self,
-        datetime: DateTime<Tz>
-    ) -> Matrix3<f64> {
-
+    pub fn calc_lla_to_fixed_matrix(&self) -> Matrix3<f64> {
+        // Ellipsoid, how detailed?
     }
 }
 
@@ -87,11 +94,24 @@ impl Body {
 impl SurfacePoint{
 
     pub fn find_time_zone(&self) -> TimeZone<Offset = > {
+        let lla: Vector3<f64> = self.pos_lla;
 
+        // Look up table?? Ideal timezones at long
+
+        // Real timezones ughhhh
     }
 
+    // Mapping between fixed frame and enu
     pub fn enu_matrix(&self, datetime_utc: NaiveDateTime) {
-        
+        let lla: Vector3<f64> = self.pos_lla;
+
+        let fixed: Vector3<f64> = ;
+
+        // Up == radial direction
+
+        // North == 90 degree from lattitude
+
+        // East == 90 degrees from longitude
     }
 
     pub fn next_overhead_pass(
@@ -99,6 +119,15 @@ impl SurfacePoint{
         orbit: Orbit, 
         datetime_utc: NaiveDateTime
     ) -> NaiveDateTime {
+        let lla: Vector3<f64> = self.pos_lla;
+
+        // Current datetime to julian
+
+        // Pos vel at current julian
+
+        // ENU at current julian
+
+        // Proportion step to angle between Up vector and pos vector
 
 
     }
