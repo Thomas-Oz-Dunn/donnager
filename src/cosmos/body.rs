@@ -92,19 +92,42 @@ impl Body {
 
     // Geodetic to rectangular coordinates
     // E.g. Lattitude, Longitude, Altitude to ECEF
-    pub fn geodetic_to_rect(&self, pos_lla: Vector3<f64>) -> Vector3<f64> {
+    pub fn geodetic_to_xyz(&self, lla: Vector3<f64>) -> Vector3<f64> {
         let semi_major: f64 = self.eq_radius;
         let ecc: f64 = self.oblateness;
-        let prime_vertical: f64 = semi_major / (1.0 - (ecc * pos_lla[0].sin()).powi(2)).sqrt();
-
-        let x: f64 = (prime_vertical + pos_lla[2]) * pos_lla[0].cos() * pos_lla[1].cos();
-        let y: f64 = (prime_vertical + pos_lla[2]) * pos_lla[0].cos() * pos_lla[1].sin();
-        let z: f64 = ((1.0 - ecc.powi(2)) * prime_vertical + pos_lla[0]) * pos_lla[0].sin();
-        let pos_xyz: Vector3<f64> = Vector3::new(x, y, z); 
-        return pos_xyz
+        let prime_vertical: f64 = semi_major / (1.0 - (ecc * lla[0].sin()).powi(2)).sqrt();
+        
+        let x: f64 = (prime_vertical + lla[2]) * lla[0].cos() * lla[1].cos();
+        let y: f64 = (prime_vertical + lla[2]) * lla[0].cos() * lla[1].sin();
+        let z: f64 = ((1.0 - ecc.powi(2)) * prime_vertical + lla[2]) * lla[0].sin();
+        let xyz: Vector3<f64> = Vector3::new(x, y, z); 
+        return xyz
     }
 
-    pub fn tect_to_geodetic(&self, cartesian: Vector3<f64>)
+    // Rectangular coordinates to geodetic
+    // E.g. ECEF to LLH
+    pub fn xyz_to_geodetic(&self, xyz: Vector3<f64>) -> Vector3<f64> {
+        let semi_major: f64 = self.eq_radius;
+        let ecc: f64 = self.oblateness;
+
+        let radius: f64 = xyz.magnitude();
+
+        // x / a = cos(lat) * cos(lon) / sqrt(1 - e^2sin^2(lat)) + alt)
+        // y / a = cos(lat) * sin(lon) / sqrt(1 - e^2sin^2(lat)) + alt)
+        // z / ((1 - e^2)) * a  = sin(lat) * sqrt(1 - e^2sin^2(lat)) + alt)
+
+        // x / y = cos(lon) / sin(lon) 
+        // y / x = tan(lon)
+        // lon = atan(y/x)
+        // 
+
+
+        let longitude: f64 = (xyz[1] / xyz[0]).atan();
+        let lattitude: f64 = ;
+        let altitude: f64 = radius - prime_vertical;
+        let lla: Vector3<f64> = Vector3::new(lattitude, longitude, altitude);
+        return lla
+    }
 
 }
 
@@ -141,11 +164,11 @@ impl SurfacePoint{
     ) -> NaiveDateTime {
         let lla: Vector3<f64> = self.pos_lla;
 
-        // Current datetime to julian
+        // Current datetime to julian date
 
-        // Pos vel at current julian
+        // Calculate orbital pos vel at current julian
 
-        // ENU at current julian
+        // ENU of surface point at current julian
 
         // Proportion step to angle between Up vector and pos vector
 
