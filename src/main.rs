@@ -1,6 +1,5 @@
 /*
 Orbital systems modelling in Rust
-
 */
 
 use nalgebra as na;
@@ -10,6 +9,23 @@ use donnager as dgr;
 use dgr::cosmos::orbit;
 use dgr::propulsion::ballistics;
 use dgr::constants;
+
+// TODO-TD:
+// Create issues for: 
+//      Lift Thrust Drag Weight
+//      Phugoid mode feedback control
+//      CFD sim
+//      Thermochemistry
+//      Carnot cycle etc
+//      3d model support for nozzles and plumbing
+//      Docking algorithm
+//      Multiple "DEMO" main.rs:
+//          ISS intercept mission
+//          SSO mission
+//          Lunar Gateway intercept
+//          Aldrin cycler
+//          Lagrange point
+//          
 
 fn main() {
     // Constants
