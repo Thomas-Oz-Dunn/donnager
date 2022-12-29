@@ -71,16 +71,19 @@ impl Body {
         return tan_vel
     }
 
-    // Calculate transformation matrix from fixed to inertial frame
+    // Transform from fixed to inertial frame
     // E.g. ECEF to ECI
     pub fn fixed_to_inertial(
         &self,
+        ecef: Vector3<f64>,
         datetime_utc: NaiveDateTime
     ) -> Vector3<f64> {
         // Datetime to julian date
+        datetime_utc.
         // Days since 2000 January 1, 12 h UTl?
         // GMST
         // Local Sidereal time = Greenwich sidereal time + lattitude 
+        let lcl_sidereal_time: f64 = gmst + ecef
         // Precession
         // Nutation
         // Turn angle
@@ -92,7 +95,6 @@ impl Body {
     pub fn geodetic_to_rect(&self, pos_lla: Vector3<f64>) -> Vector3<f64> {
         let semi_major: f64 = self.eq_radius;
         let ecc: f64 = self.oblateness;
-
         let prime_vertical: f64 = semi_major / (1.0 - (ecc * pos_lla[0].sin()).powi(2)).sqrt();
 
         let x: f64 = (prime_vertical + pos_lla[2]) * pos_lla[0].cos() * pos_lla[1].cos();
@@ -101,6 +103,9 @@ impl Body {
         let pos_xyz: Vector3<f64> = Vector3::new(x, y, z); 
         return pos_xyz
     }
+
+    pub fn tect_to_geodetic(&self, cartesian: Vector3<f64>)
+
 }
 
 
@@ -115,10 +120,12 @@ impl SurfacePoint{
     }
 
     // Mapping between fixed frame and enu
-    pub fn enu_matrix(&self, datetime_utc: NaiveDateTime) {
-        let lla: Vector3<f64> = self.pos_lla;
+    pub fn enu_ecef(&self, datetime_utc: NaiveDateTime) {
+        let pos_lla: Vector3<f64> = self.pos_lla;
+        let pos_ecef: Vector3<f64> = self.Body.geodetic_to_rect(pos_lla);
 
-        let fixed: Vector3<f64> = ;
+        // Assumes spherical, handle z?
+        let up: Vector3<f64> = pos_ecef / pos_ecef.magnitude();
 
         // Up == radial direction
 
