@@ -5,7 +5,6 @@ Until the rains fall on Olympus Mons.
 A library of functions for astrodynamic calculations. 
 
 ## Installation
----
 ```
 cargo install donnager
 ```
@@ -18,16 +17,13 @@ donnager = "0.1.0"
 ```
 
 ## Modules
----
 - `cosmos`
 - `dynamics`
 - `propulsion`
 
 ## Usage
----
 
 ```
-use donnager as dgr;
-use dgr::*;
+use donnager::*;
 ```
 Ad astra, plus ultra
