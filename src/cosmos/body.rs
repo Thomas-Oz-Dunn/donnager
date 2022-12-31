@@ -14,7 +14,7 @@ pub struct Body{
     pub grav_param: f64,
     pub eq_radius: f64,
     pub rotation_rate: f64,
-    pub oblateness: f64
+    pub eccentricity: f64
 }
 
 pub struct SurfacePoint{
@@ -83,23 +83,26 @@ impl Body {
         // Days since 2000 January 1, 12 h UTl?
         // GMST
         // Local Sidereal time = Greenwich sidereal time + lattitude 
-        let lcl_sidereal_time: f64 = gmst + ecef
+        let lcl_sidereal_time: f64 = gmst + ecef;
+
         // Precession
-        // Nutation
+
+        // Nutation 
+
         // Turn angle
         
     }
 
     // Geodetic to rectangular coordinates
-    // E.g. Lattitude, Longitude, Altitude to ECEF
+    // E.g. Latitude, Longitude, Altitude to ECEF
     pub fn geodetic_to_xyz(&self, lla: Vector3<f64>) -> Vector3<f64> {
         let semi_major: f64 = self.eq_radius;
-        let ecc: f64 = self.oblateness;
-        let prime_vertical: f64 = semi_major / (1.0 - (ecc * lla[0].sin()).powi(2)).sqrt();
+        let eccentricity: f64 = self.eccentricity;
+        let radius: f64 = semi_major / (1.0 - (eccentricity * lla[0].sin()).powi(2)).sqrt();
         
-        let x: f64 = (prime_vertical + lla[2]) * lla[0].cos() * lla[1].cos();
-        let y: f64 = (prime_vertical + lla[2]) * lla[0].cos() * lla[1].sin();
-        let z: f64 = ((1.0 - ecc.powi(2)) * prime_vertical + lla[2]) * lla[0].sin();
+        let x: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].cos();
+        let y: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].sin();
+        let z: f64 = ((1.0 - eccentricity.powi(2)) * radius + lla[2]) * lla[0].sin();
         let xyz: Vector3<f64> = Vector3::new(x, y, z); 
         return xyz
     }
@@ -108,24 +111,34 @@ impl Body {
     // E.g. ECEF to LLH
     pub fn xyz_to_geodetic(&self, xyz: Vector3<f64>) -> Vector3<f64> {
         let semi_major: f64 = self.eq_radius;
-        let ecc: f64 = self.oblateness;
+        let ecc: f64 = self.eccentricity;
 
         let radius: f64 = xyz.magnitude();
 
-        // x / a = cos(lat) * cos(lon) / sqrt(1 - e^2sin^2(lat)) + alt)
-        // y / a = cos(lat) * sin(lon) / sqrt(1 - e^2sin^2(lat)) + alt)
-        // z / ((1 - e^2)) * a  = sin(lat) * sqrt(1 - e^2sin^2(lat)) + alt)
+        // x = a * cos(lat) * cos(lon) / sqrt(1 - e^2sin^2(lat)) + alt)
+        // y = a * cos(lat) * sin(lon) / sqrt(1 - e^2sin^2(lat)) + alt)
+        // z = ((1 - e^2) * R + alt) * sin(lat)
+        // R = a / sqrt(1 - e^2*sin^2(lat))
+        // z = ((1 - e^2) * a / (sqrt(1 - e^2*sin^2(lat))) + alt) * sin(lat)
 
         // x / y = cos(lon) / sin(lon) 
         // y / x = tan(lon)
         // lon = atan(y/x)
-        // 
 
 
-        let longitude: f64 = (xyz[1] / xyz[0]).atan();
-        let lattitude: f64 = ;
+        // z / y = sin(lat) / cos(lat) * ((1 - e^2) * a / (sqrt(1 - e^2*sin^2(lat))) + alt) / (a * sin(lon) / sqrt(1 - e^2sin^2(lat)) + alt))
+        // z / y = tan(lat) * ((1-e^2) * R + alt)) / 
+                        //      (sin(atan(y/x)) * (radius))
+        // z / y = tan(lat) * (1 - e^2 + alt / R) / (sin(atan(y/x)))
+        // lat = atan(z/y * (sin(atan(y/x)) / (1 - e^2 + alt / R))
+
+        let prime_verical:f64 = ;
+
+        let x: f64 = (xyz[1] / xyz[0]).atan();
+        let longitude: f64 = ;
         let altitude: f64 = radius - prime_vertical;
-        let lla: Vector3<f64> = Vector3::new(lattitude, longitude, altitude);
+        let lla: Vector3<f64> = Vector3::new(x, longitude, altitude);
+
         return lla
     }
 
