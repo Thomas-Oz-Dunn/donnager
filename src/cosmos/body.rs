@@ -7,6 +7,7 @@ use nalgebra as na;
 use std::f64::consts::PI;
 use na::{Vector3, Matrix3};
 
+pub const TOLERANCE: f64 = 1e-8;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Body{
@@ -96,15 +97,20 @@ impl Body {
     // Geodetic to rectangular coordinates
     // E.g. Latitude, Longitude, Altitude to ECEF
     pub fn geodetic_to_xyz(&self, lla: Vector3<f64>) -> Vector3<f64> {
-        let semi_major: f64 = self.eq_radius;
-        let eccentricity: f64 = self.eccentricity;
-        let radius: f64 = semi_major / (1.0 - (eccentricity * lla[0].sin()).powi(2)).sqrt();
-        
+        let radius: f64 = self.calc_prime_vertical(lla[0]);
         let x: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].cos();
         let y: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].sin();
-        let z: f64 = ((1.0 - eccentricity.powi(2)) * radius + lla[2]) * lla[0].sin();
+        let z: f64 = ((1.0 - self.eccentricity.powi(2)) * radius + lla[2]) * lla[0].sin();
         let xyz: Vector3<f64> = Vector3::new(x, y, z); 
         return xyz
+    }
+
+    // Calculate prime vertical radius to surface at latitude
+    pub fn calc_prime_vertical(&self, lat_deg: f64) -> f64 {
+        let lat_radians: f64 = PI * lat_deg / 180.0;
+        let radius: f64 = 
+            self.eq_radius / (1.0 - (self.eccentricity * lat_radians.sin()).powi(2)).sqrt();
+        return radius
     }
 
     // Rectangular coordinates to geodetic
@@ -112,30 +118,19 @@ impl Body {
     pub fn xyz_to_geodetic(&self, xyz: Vector3<f64>) -> Vector3<f64> {
         let semi_major: f64 = self.eq_radius;
         let ecc: f64 = self.eccentricity;
-
         let radius: f64 = xyz.magnitude();
+        // radians
+        let y: f64 = (xyz[1] / xyz[0]).atan();
+        let p: f64 = (xyz[0].powi(2) + xyz[1].powi(2)).sqrt();
+        let centric_lat: f64 = (p / xyz[2]).atan();
+        
+        let mut lat: f64;
+        let mut r: f64;
+        while err > TOLERANCE{
+            lat = 
+            r = self.calc_prime_vertical(lat)
+        }
 
-        // x = a * cos(lat) * cos(lon) / sqrt(1 - e^2sin^2(lat)) + alt)
-        // y = a * cos(lat) * sin(lon) / sqrt(1 - e^2sin^2(lat)) + alt)
-        // z = ((1 - e^2) * R + alt) * sin(lat)
-        // R = a / sqrt(1 - e^2*sin^2(lat))
-        // z = ((1 - e^2) * a / (sqrt(1 - e^2*sin^2(lat))) + alt) * sin(lat)
-
-        // x / y = cos(lon) / sin(lon) 
-        // y / x = tan(lon)
-        // lon = atan(y/x)
-
-
-        // z / y = sin(lat) / cos(lat) * ((1 - e^2) * a / (sqrt(1 - e^2*sin^2(lat))) + alt) / (a * sin(lon) / sqrt(1 - e^2sin^2(lat)) + alt))
-        // z / y = tan(lat) * ((1-e^2) * R + alt)) / 
-                        //      (sin(atan(y/x)) * (radius))
-        // z / y = tan(lat) * (1 - e^2 + alt / R) / (sin(atan(y/x)))
-        // lat = atan(z/y * (sin(atan(y/x)) / (1 - e^2 + alt / R))
-
-        let prime_verical:f64 = ;
-
-        let x: f64 = (xyz[1] / xyz[0]).atan();
-        let longitude: f64 = ;
         let altitude: f64 = radius - prime_vertical;
         let lla: Vector3<f64> = Vector3::new(x, longitude, altitude);
 
