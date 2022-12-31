@@ -126,13 +126,20 @@ impl Orbit {
 
     }
 
-    pub fn calc_pos_vel(
+    pub fn propogate_motion(
         &self,
         NaiveDateTime
     ) -> Vector6<f64> {
         // mean anomaly time of flight? 
         //or
         // cartesian ode? with known pos, vel, and acc?
+    }
+
+    pub calc_mean_anomaly_time_of_flight(
+        &self, 
+        NaiveDateTime
+    ) -> f64 {
+        
     }
 
 }
