@@ -130,7 +130,7 @@ impl Orbit {
         &self,
         NaiveDateTime
     ) -> Vector6<f64> {
-        // Propogate using mean anomaly time of flight 
+        // mean anomaly time of flight? 
         //or
         // cartesian ode? with known pos, vel, and acc?
     }
