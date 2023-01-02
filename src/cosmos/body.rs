@@ -116,20 +116,24 @@ impl Body {
     // Rectangular coordinates to geodetic
     // E.g. ECEF to LLH
     pub fn xyz_to_geodetic(&self, xyz: Vector3<f64>) -> Vector3<f64> {
-        let semi_major: f64 = self.eq_radius;
-        let ecc: f64 = self.eccentricity;
+        // Zhu and Heikkinen
+        let a: f64 = self.eq_radius;
+        let ecc_2: f64 = self.eccentricity.powi(2);
+        let b: f64 = (a.powi(2)*(1.0 - ecc_2)).sqrt();
+        let ecc_2_prime: f64 = a.powi(2) / b.powi(2) - 1.0;
+        
+
+        let p: f64 = (xyz[0].powi(2) + xyz[1].powi(2)).sqrt();
+        let f: f64 = 54.0 * b.powi(2)*xyz[2].powi(2);
+        let g: f64 = 
+            p.powi(2) + (1.0 - ecc_2) * xyz[2].powi(2) - ecc_2 * (a.powi(2) - b.powi(2));
+        let c: f64 = ecc_2.powi(2) * f * p.powi(2) / (g.powi(3));
+
         let radius: f64 = xyz.magnitude();
         // radians
         let y: f64 = (xyz[1] / xyz[0]).atan();
         let p: f64 = (xyz[0].powi(2) + xyz[1].powi(2)).sqrt();
         let centric_lat: f64 = (p / xyz[2]).atan();
-        
-        let mut lat: f64;
-        let mut r: f64;
-        while err > TOLERANCE{
-            lat = 
-            r = self.calc_prime_vertical(lat)
-        }
 
         let altitude: f64 = radius - prime_vertical;
         let lla: Vector3<f64> = Vector3::new(x, longitude, altitude);
