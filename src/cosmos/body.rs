@@ -154,19 +154,17 @@ impl SurfacePoint{
         // Real timezones ughhhh
     }
 
-    // Mapping between fixed frame and enu
-    pub fn enu_ecef(&self, datetime_utc: NaiveDateTime) {
+    // Mapping between fixed frame observation to enu
+    pub fn ecef_to_enu(&self, ecef: Vector3<f64>) -> Vector3<f64> {
         let pos_lla: Vector3<f64> = self.pos_lla;
-        let pos_ecef: Vector3<f64> = self.Body.geodetic_to_rect(pos_lla);
-
-        // Assumes spherical, handle z?
-        let up: Vector3<f64> = pos_ecef / pos_ecef.magnitude();
-
-        // Up == radial direction
-
-        // North == 90 degree from lattitude
-
-        // East == 90 degrees from longitude
+        let pos_ecef: Vector3<f64> = self.Body.geodetic_to_xyz(pos_lla);
+        let vec_ecef: Vector3<f64> = ecef - pos_ecef;
+        let ecef_enu: Matrix3<f64> = Matrix3::new(
+            -pos_lla[1].sin(), pos_lla[1].cos(), 0,
+            -pos_lla[1].cos()*pos_lla[0].sin(), -pos_lla[1].sin()*pos_lla[0].sin(), pos_lla[0].cos(),
+            pos_lla[1].cos()*pos_lla[0].cos(), pos_lla[1].sin()*pos_lla[0].cos(), pos_lla[0].sin());
+        let enu: Vector3<f64> = ecef_enu * vec_ecef;
+        return enu
     }
 
     pub fn next_overhead_pass(
