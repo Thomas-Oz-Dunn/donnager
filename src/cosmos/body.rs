@@ -116,26 +116,22 @@ impl Body {
     // Rectangular coordinates to geodetic
     // E.g. ECEF to LLH
     pub fn xyz_to_geodetic(&self, xyz: Vector3<f64>) -> Vector3<f64> {
-        // Zhu and Heikkinen
+        // Zhu and Heikkinen method
         let a: f64 = self.eq_radius;
         let ecc_2: f64 = self.eccentricity.powi(2);
         let b: f64 = (a.powi(2)*(1.0 - ecc_2)).sqrt();
         let ecc_2_prime: f64 = a.powi(2) / b.powi(2) - 1.0;
-        
-
         let p: f64 = (xyz[0].powi(2) + xyz[1].powi(2)).sqrt();
         let f: f64 = 54.0 * b.powi(2)*xyz[2].powi(2);
         let g: f64 = 
             p.powi(2) + (1.0 - ecc_2) * xyz[2].powi(2) - ecc_2 * (a.powi(2) - b.powi(2));
         let c: f64 = ecc_2.powi(2) * f * p.powi(2) / (g.powi(3));
+        let s: f64 = (1.0 + c + (c.powi(2) + 2.0 * c).sqrt()).powf(1.0 / 3.0);
+        let k: f64 = s + 1.0 + 1.0 / s;
+        let capP: f64;
 
-        let radius: f64 = xyz.magnitude();
-        // radians
-        let y: f64 = (xyz[1] / xyz[0]).atan();
-        let p: f64 = (xyz[0].powi(2) + xyz[1].powi(2)).sqrt();
-        let centric_lat: f64 = (p / xyz[2]).atan();
 
-        let altitude: f64 = radius - prime_vertical;
+        let longitude: f64 = (xyz[1] / xyz[0]).atan();
         let lla: Vector3<f64> = Vector3::new(x, longitude, altitude);
 
         return lla
@@ -169,14 +165,13 @@ impl SurfacePoint{
 
     // Map between enu and fixed frame
     pub fn enu_to_ecef(&self, enu: Vector3<f64>) -> Vector3<f64> {
-        let pos_lla: Vector3<f64> = self.pos_lla;
-        let pos_ecef: Vector3<f64> = self.Body.geodetic_to_xyz(pos_lla);
         let enu_ecef: Matrix3<f64> = Matrix3::new(
             -pos_lla[1].sin(), -pos_lla[1].cos()*pos_lla[0].sin(), pos_lla[1].cos()*pos_lla[0].cos(),
             pos_lla[1].cos(), -pos_lla[1].sin()*pos_lla[0].sin(), pos_lla[1].sin()*pos_lla[0].cos(),
             0, pos_lla[0].cos(), pos_lla[0].sin()
         );
         let vec_ecef: Vector3<f64> = enu_ecef * enu;
+        let pos_ecef: Vector3<f64> = self.Body.geodetic_to_xyz(self.pos_lla);
         let ecef: Vector<f64> = vec_ecef - pos_ecef;
         return ecef
     }
