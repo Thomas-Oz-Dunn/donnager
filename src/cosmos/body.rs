@@ -128,8 +128,8 @@ impl Body {
         let c: f64 = ecc_2.powi(2) * f * p.powi(2) / (g.powi(3));
         let s: f64 = (1.0 + c + (c.powi(2) + 2.0 * c).sqrt()).powf(1.0 / 3.0);
         let k: f64 = s + 1.0 + 1.0 / s;
-        let capP: f64;
-
+        let capP: f64 = f / (3.0 * k.powi(2) * g.powi(2));
+        let q: f64 = (1.0 + 2.0 * ecc_2.powi(2) * capP).sqrt();
 
         let longitude: f64 = (xyz[1] / xyz[0]).atan();
         let lla: Vector3<f64> = Vector3::new(x, longitude, altitude);
