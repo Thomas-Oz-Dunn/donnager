@@ -2,7 +2,6 @@
 Gravitational Bodies
 */
 
-use chrono::*;
 use nalgebra as na;
 use std::f64::consts::PI;
 use na::{Vector3, Matrix3};
@@ -19,7 +18,7 @@ pub struct Body{
 }
 
 pub struct SurfacePoint{
-    pub Body: Body,
+    pub body: Body,
     pub pos_lla: Vector3<f64>,
 }
 
@@ -62,38 +61,6 @@ impl Body {
         return r_mag
     }
 
-    // Calculate tangential velocity on surface of body
-    pub fn calc_surface_vel(
-        &self,
-        pos_llh: Vector3<f64>
-    ) -> f64 {
-        let equatorial_vel: f64 = self.rotation_rate * self.eq_radius;
-        let tan_vel: f64 = (pos_llh[0].cos() * equatorial_vel).abs();
-        return tan_vel
-    }
-
-    // Transform from fixed to inertial frame
-    // E.g. ECEF to ECI
-    pub fn fixed_to_inertial(
-        &self,
-        ecef: Vector3<f64>,
-        datetime_utc: NaiveDateTime
-    ) -> Vector3<f64> {
-        // Datetime to julian date
-        datetime_utc.
-        // Days since 2000 January 1, 12 h UTl?
-        // GMST
-        // Local Sidereal time = Greenwich sidereal time + lattitude 
-        let lcl_sidereal_time: f64 = gmst + ecef;
-
-        // Precession
-
-        // Nutation 
-
-        // Turn angle
-        
-    }
-
     // Geodetic to rectangular coordinates
     // E.g. Latitude, Longitude, Altitude to ECEF
     pub fn geodetic_to_xyz(&self, lla: Vector3<f64>) -> Vector3<f64> {
@@ -119,7 +86,7 @@ impl Body {
         // Zhu's method
         let a: f64 = self.eq_radius;
         let ecc_2: f64 = self.eccentricity.powi(2);
-        
+
         let b: f64 = (a.powi(2)*(1.0 - ecc_2)).sqrt();
         let ecc_2_prime: f64 = a.powi(2) / b.powi(2) - 1.0;
         let p: f64 = (xyz[0].powi(2) + xyz[1].powi(2)).sqrt();
@@ -149,22 +116,20 @@ impl Body {
 
 
 impl SurfacePoint{
-
-    pub fn find_time_zone(&self) -> TimeZone<Offset = > {
-        let lla: Vector3<f64> = self.pos_lla;
-
-        // Look up table?? Ideal timezones at long
-
-        // Real timezones ughhhh
+    // Calculate tangential velocity on surface of body
+    pub fn calc_surface_vel(&self) -> f64 {
+        let equatorial_vel: f64 = self.body.rotation_rate * self.body.eq_radius;
+        let tan_vel: f64 = (self.pos_lla[0].cos() * equatorial_vel).abs();
+        return tan_vel
     }
 
     // Map between fixed frame observation to enu
-    pub fn ecef_to_enu(&self, ecef: Vector3<f64>) -> Vector3<f64> {
+    pub fn ecef_to_enu(&self, ecef_2: Vector3<f64>) -> Vector3<f64> {
         let pos_lla: Vector3<f64> = self.pos_lla;
-        let pos_ecef: Vector3<f64> = self.Body.geodetic_to_xyz(pos_lla);
-        let vec_ecef: Vector3<f64> = ecef - pos_ecef;
+        let pos_ecef: Vector3<f64> = self.body.geodetic_to_xyz(pos_lla);
+        let vec_ecef: Vector3<f64> = ecef_2 - pos_ecef;
         let ecef_enu: Matrix3<f64> = Matrix3::new(
-            -pos_lla[1].sin(), pos_lla[1].cos(), 0,
+            -pos_lla[1].sin(), pos_lla[1].cos(), 0.0,
             -pos_lla[1].cos()*pos_lla[0].sin(), -pos_lla[1].sin()*pos_lla[0].sin(), pos_lla[0].cos(),
             pos_lla[1].cos()*pos_lla[0].cos(), pos_lla[1].sin()*pos_lla[0].cos(), pos_lla[0].sin());
         let enu: Vector3<f64> = ecef_enu * vec_ecef;
@@ -173,33 +138,17 @@ impl SurfacePoint{
 
     // Map between enu and fixed frame
     pub fn enu_to_ecef(&self, enu: Vector3<f64>) -> Vector3<f64> {
+        let pos_lla: Vector3<f64> = self.pos_lla;
         let enu_ecef: Matrix3<f64> = Matrix3::new(
             -pos_lla[1].sin(), -pos_lla[1].cos()*pos_lla[0].sin(), pos_lla[1].cos()*pos_lla[0].cos(),
             pos_lla[1].cos(), -pos_lla[1].sin()*pos_lla[0].sin(), pos_lla[1].sin()*pos_lla[0].cos(),
-            0, pos_lla[0].cos(), pos_lla[0].sin()
+            0.0, pos_lla[0].cos(), pos_lla[0].sin()
         );
         let vec_ecef: Vector3<f64> = enu_ecef * enu;
-        let pos_ecef: Vector3<f64> = self.Body.geodetic_to_xyz(self.pos_lla);
-        let ecef: Vector<f64> = vec_ecef - pos_ecef;
+        let pos_ecef: Vector3<f64> = self.body.geodetic_to_xyz(self.pos_lla);
+        let ecef: Vector3<f64> = vec_ecef - pos_ecef;
         return ecef
     }
 
 
-    pub fn next_overhead_pass(
-        &self, 
-        orbit: Orbit, 
-        datetime_utc: NaiveDateTime
-    ) -> NaiveDateTime {
-        let lla: Vector3<f64> = self.pos_lla;
-
-        // Current datetime to julian date
-
-        // Calculate orbital pos vel at current julian
-
-        // ENU of surface point at current julian
-
-        // Proportion step to angle between Up vector and pos vector
-
-
-    }
 }

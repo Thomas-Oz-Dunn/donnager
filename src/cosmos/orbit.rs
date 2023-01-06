@@ -2,10 +2,9 @@
 Astrodynamics
 */
 
-use chrono::NaiveDateTime;
 use nalgebra as na;
 use std::f64::consts::PI;
-use na::{Vector3, Vector6};
+use na::{Vector3};
 
 use crate::constants;
 
@@ -124,22 +123,6 @@ impl Orbit {
             mean_motion: 1.0 / (2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt())
         }
 
-    }
-
-    pub fn propogate_motion(
-        &self,
-        NaiveDateTime
-    ) -> Vector6<f64> {
-        // mean anomaly time of flight? 
-        //or
-        // cartesian ode? with known pos, vel, and acc?
-    }
-
-    pub calc_mean_anomaly_time_of_flight(
-        &self, 
-        NaiveDateTime
-    ) -> f64 {
-        
     }
 
 }
