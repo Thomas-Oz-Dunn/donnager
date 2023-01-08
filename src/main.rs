@@ -42,10 +42,10 @@ fn main() {
     let surface_vel: f64 = launch_site.calc_surface_vel();
     let net_delta_v: f64 = delta_v - surface_vel;
     let grav_acc: f64 = earth.calc_grav_acc(radius);
-    let mass_ratio: f64 = propulsion::ballistics::calc_mass_ratio(net_delta_v, engine_isp, grav_acc);
+    let mass_ratio: f64 = propulsion::ballistics::calc_mass_ratio(net_delta_v, launch_engine_isp, grav_acc);
     let mass_fuel: f64 = sat_1.mass * mass_ratio;    
 
     // Results
-    println!("\n{:.4} kg of fuel to get {} kg to {} m alt on {} stage", mass_fuel, mass_1, altitude, n_stage);
+    println!("\n{:.4} kg of fuel to get {} kg to {} m alt on {} stage", mass_fuel, sat_1.mass , altitude, n_stage);
 
 }
