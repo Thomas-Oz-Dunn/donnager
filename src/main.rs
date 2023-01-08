@@ -5,7 +5,6 @@ Orbital systems modelling in Rust
 use nalgebra as na;
 use na::Vector3;
 
-use donnager::propulsion as prop;
 use donnager::constants as cst;
 use donnager::cosmos as cosm;
 use donnager::dynamics as dynam;
@@ -30,7 +29,6 @@ fn main() {
     let payload: dynam::vehicle::Vehicle = dynam::vehicle::Vehicle {
         name: "Satellite_1".to_string(),
         mass_0: 5.0,
-        mass_prop: 0.001,
         engine_type: "Electric Ion".to_string(),
         engine_isp: 500.0,
     };
@@ -38,7 +36,6 @@ fn main() {
     let stage_1: dynam::vehicle::Vehicle = dynam::vehicle::Vehicle {
         name: "Stage_1".to_string(),
         mass_0: 250.0, // TODO: tune
-        mass_prop: 500.0, // TODO: tune
         engine_type: "Hydrolox".to_string(),
         engine_isp: 300.0,
     };
@@ -54,9 +51,9 @@ fn main() {
     // Calculation
     let delta_v: f64 = launch_site.calc_delta_v(altitude);
     let grav_acc: f64 = earth.calc_grav_acc(altitude + launch_site.calc_surface_radius());
-    let mass_fuel: f64 = launch_vehicle.calc_mass_fuel(delta_v, grav_acc);
-    
+    let mass_fuel: Vec<f64> = launch_vehicle.calc_mass_fuel(delta_v, launch_site);
+
     // Results
-    println!("\n{:.4} kg of fuel to get {} kg to {} m alt", mass_fuel, launch_vehicle.stages[1].mass_0 , altitude);
+    println!("\n{:.4} kg of fuel to get {} kg to {} m alt", mass_fuel[0], launch_vehicle.stages[1].mass_0 , altitude);
     
 }
