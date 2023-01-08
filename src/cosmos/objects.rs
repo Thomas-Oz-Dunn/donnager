@@ -4,9 +4,7 @@ Gravitational Bodies
 
 use nalgebra as na;
 use std::f64::consts::PI;
-use na::{Vector3, Matrix3};
-
-use crate::cosmos::space;
+use na::Vector3;
 
 pub const TOLERANCE: f64 = 1e-8;
 
@@ -20,9 +18,10 @@ pub struct Body{
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Craft{
+pub struct Vehicle{
     pub name: String,
-    pub mass: f64,
+    pub mass_0: f64,
+    pub mass_prop: f64,
     pub engine_type: String,
     pub engine_isp: f64,
 }
@@ -30,30 +29,21 @@ pub struct Craft{
 impl Body {
 
     // Calculate gravitational acceleration at radial distance
-    pub fn calc_grav_acc(
-        &self, 
-        radius: f64
-    ) -> f64 {
+    pub fn calc_grav_acc(&self, radius: f64) -> f64 {
         let grav_acc: f64 = self.grav_param / radius.powi(2);
         return grav_acc
     }
     
 
     // Calculate required orbital velocity at radial distance
-    pub fn calc_orbital_velocity(
-        &self,
-        radius: f64
-    ) -> f64 {
+    pub fn calc_orbital_velocity(&self, radius: f64) -> f64 {
         // TODO-TD: Vectorize
         let vel: f64 = (2.0 * self.grav_param / radius).sqrt();
         return vel
     }
 
     // Calculate period of orbit
-    pub fn calc_period(
-        &self,
-        semi_major_axis: f64
-    ) -> f64 {
+    pub fn calc_period(&self, semi_major_axis: f64) -> f64 {
         let time: f64 = 2.0 * PI * (semi_major_axis.powi(3)/self.grav_param).sqrt();
         return time
     }
