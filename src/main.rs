@@ -35,18 +35,28 @@ fn main() {
         engine_isp: 500.0,
     };
 
+    let stage_1: dynam::vehicle::Vehicle = dynam::vehicle::Vehicle {
+        name: "Stage_1".to_string(),
+        mass_0: 250.0, // TODO: tune
+        mass_prop: 500.0, // TODO: tune
+        engine_type: "Hydrolox".to_string(),
+        engine_isp: 300.0,
+    };
+
+    let launch_vehicle: dynam::vehicle::Multistage = dynam::vehicle::Multistage{
+        name: "Launcher_7".to_string(),
+        stages: [stage_1, payload].to_vec()
+    };
+
     // Inputs
-    let n_stage: i32 = 1;
-    let launch_engine_isp: f64 = 300.0; // s
     let altitude: f64 = 408000.0;  // LEO
 
     // Calculation
     let delta_v: f64 = launch_site.calc_delta_v(altitude);
     let grav_acc: f64 = earth.calc_grav_acc(altitude + launch_site.calc_surface_radius());
-    let mass_ratio: f64 = prop::ballistics::calc_mass_ratio(delta_v, launch_engine_isp, grav_acc);
-    let mass_fuel: f64 = (payload.mass_0 + payload.mass_prop) * mass_ratio;    
-
+    let mass_fuel: f64 = launch_vehicle.calc_mass_fuel(delta_v, grav_acc);
+    
     // Results
-    println!("\n{:.4} kg of fuel to get {} kg to {} m alt on {} stage", mass_fuel, payload.mass_0 , altitude, n_stage);
-
+    println!("\n{:.4} kg of fuel to get {} kg to {} m alt", mass_fuel, launch_vehicle.stages[1].mass_0 , altitude);
+    
 }
