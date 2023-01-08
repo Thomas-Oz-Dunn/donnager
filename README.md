@@ -1,5 +1,8 @@
 # donnager.rs
 
+
+# Warning: still under active development, updating structure frequently. Stable release TBD.
+
 Until the rains fall on Olympus Mons.
 
 A library of functions for astrodynamic calculations. 
