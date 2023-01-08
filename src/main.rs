@@ -8,10 +8,12 @@ use na::Vector3;
 use donnager::propulsion as prop;
 use donnager::constants as cst;
 use donnager::cosmos as cosm;
+use donnager::dynamics as dynam;
+
 
 fn main() {
     // Config
-    let earth: cosm::objects::Body = cosm::objects::Body {
+    let earth: cosm::grav::Body = cosm::grav::Body {
         name: "Earth".to_string(),
         grav_param: cst::EARTH_GRAV_PARAM,
         eq_radius: cst::EARTH_RADIUS_EQUATOR,
@@ -25,7 +27,7 @@ fn main() {
         pos_lla: Vector3::new(28.396837, -80.605659, 0.0)
     };
 
-    let payload: cosm::objects::Vehicle = cosm::objects::Vehicle {
+    let payload: dynam::vehicle::Vehicle = dynam::vehicle::Vehicle {
         name: "Satellite_1".to_string(),
         mass_0: 5.0,
         mass_prop: 0.001,

@@ -17,15 +17,6 @@ pub struct Body{
     pub eccentricity: f64
 }
 
-#[derive(Clone, Debug, PartialEq)]
-pub struct Vehicle{
-    pub name: String,
-    pub mass_0: f64,
-    pub mass_prop: f64,
-    pub engine_type: String,
-    pub engine_isp: f64,
-}
-
 impl Body {
 
     // Calculate gravitational acceleration at radial distance
