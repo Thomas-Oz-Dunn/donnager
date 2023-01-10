@@ -17,10 +17,10 @@ pub struct Multistage{
 
 impl Vehicle {
     /// Calculate fuel mass to reach delta v
-    pub fn calc_mass_fuel(&self, delta_v: f64, grav_acc: f64, mass_n: f64) -> f64 {
+    pub fn calc_mass_fuel(&self, delta_v: f64, grav_acc: f64, external_mass: f64) -> f64 {
         let engine_isp: f64 = self.engine.isp;
         let mass_ratio: f64 = ballistics::calc_mass_ratio(delta_v, engine_isp, grav_acc);
-        let mass_fuel: f64 = (self.mass + mass_n) * mass_ratio;    
+        let mass_fuel: f64 = (self.mass + external_mass) * mass_ratio;    
         return mass_fuel
     }
 }
@@ -29,38 +29,39 @@ impl Vehicle {
 impl Multistage {
     /// Calculate total fuel mass
     pub fn calc_mass_fuel(&self, delta_v: f64, launch_site: SurfacePoint) -> Vec<f64> {
-        let mut radius_0: f64 = launch_site.calc_surface_radius();
-        let mut grav_acc: f64 = launch_site.body.calc_grav_acc(radius_0);
-        
+        let n_stage: usize = self.stages.len();
+        let mut radius: f64 = launch_site.calc_surface_radius();
+        let mut grav_acc: f64 = launch_site.body.calc_grav_acc(radius);
         let mut fuel_mass_mut: Vec<f64> = Vec::<f64>::new();
-        let mut i_stage: usize = 0;
         let mut total_mass_0: f64 = 0.0;
 
-        
-        for stage in self.stages.iter() {
+        // Calculate total mass
+        for stage in self.stages.iter().rev() {
             total_mass_0 += stage.mass;
         }
 
-        for stage in self.stages.iter(){
-            // For each stage, break the total delta v down proportionally
-            let delta_v_stage: f64 = delta_v * stage.mass / total_mass_0;
-            let mass_ratio: f64 = ballistics::calc_mass_ratio(
-                delta_v_stage, stage.engine.isp, grav_acc);
-            let radius_f: f64 = ballistics::calc_burnout_height(
-                mass_ratio, grav_acc, stage.engine.isp);
+        for (stage, i_stage) in self.stages.iter().zip((0..n_stage).into_iter()) {
             
-            grav_acc = launch_site.body.calc_grav_acc(radius_f);
-            let mass_n: f64 = 0.0;
-
-            if i_stage > 0{
-                // iterate through all previous stages and fuel for additional mass
-                mass_n += stage.mass;
+            let mut external_mass: f64 = 0.0;
+            if i_stage > 0 {
+                for i_mass in (0..i_stage).rev(){
+                    external_mass += self.stages[i_mass].mass + fuel_mass_mut[i_mass];
+                }
             };
+            
+            // For each stage, break the total delta v down proportionally
+            let delta_v_stage: f64 = delta_v * (stage.mass + external_mass) / total_mass_0;
+            let mass_ratio: f64 = ballistics::calc_mass_ratio(
+                delta_v_stage, 
+                stage.engine.isp, 
+                grav_acc);
 
+            radius = ballistics::calc_burnout_height(mass_ratio, grav_acc, stage.engine.isp);
+            grav_acc = launch_site.body.calc_grav_acc(radius);
             fuel_mass_mut[i_stage] = stage.calc_mass_fuel(
-                delta_v_stage, grav_acc, mass_n);
-            radius_0 = radius_f;
-            i_stage += 1;
+                delta_v_stage, 
+                grav_acc, 
+                external_mass);
         }
 
         let fuel_mass: Vec<f64> = fuel_mass_mut;

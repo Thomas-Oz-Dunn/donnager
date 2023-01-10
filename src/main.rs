@@ -35,7 +35,7 @@ fn main() {
 
     let payload: dynam::vehicle::Vehicle = dynam::vehicle::Vehicle {
         name: "Satellite_1".to_string(),
-        mass_0: 5.0,
+        mass: 5.0,
         engine: payload_eng
     };
 
@@ -47,7 +47,7 @@ fn main() {
 
     let stage_1: dynam::vehicle::Vehicle = dynam::vehicle::Vehicle {
         name: "Stage_1".to_string(),
-        mass_0: 250.0, // TODO: tune
+        mass: 250.0, // TODO: tune
         engine: stage1_eng
     };
 
@@ -64,6 +64,6 @@ fn main() {
     let mass_fuel: Vec<f64> = launch_vehicle.calc_mass_fuel(delta_v, launch_site);
 
     // Results
-    println!("\n{:.4} kg of fuel to get {} kg to {} m alt", mass_fuel[0], launch_vehicle.stages[1].mass_0 , altitude);
+    println!("\n{:.4} kg of fuel to get {} kg to {} m alt", mass_fuel[0], launch_vehicle.stages[1].mass, altitude);
     
 }
