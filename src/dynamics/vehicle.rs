@@ -1,12 +1,14 @@
+/*
+Vehicle modelling
+*/
 
-
-use crate::{propulsion::{ballistics, engine}, cosmos::space::SurfacePoint};
+use crate::{propulsion as prop, cosmos};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vehicle{
     pub name: String,
     pub mass: f64,
-    pub engine: engine::Engine
+    pub engine: prop::engine::Engine
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -19,7 +21,7 @@ impl Vehicle {
     /// Calculate fuel mass to reach delta v
     pub fn calc_mass_fuel(&self, delta_v: f64, grav_acc: f64, external_mass: f64) -> f64 {
         let engine_isp: f64 = self.engine.isp;
-        let mass_ratio: f64 = ballistics::calc_mass_ratio(delta_v, engine_isp, grav_acc);
+        let mass_ratio: f64 = prop::ballistics::calc_mass_ratio(delta_v, engine_isp, grav_acc);
         let mass_fuel: f64 = (self.mass + external_mass) * mass_ratio;    
         return mass_fuel
     }
@@ -27,15 +29,20 @@ impl Vehicle {
 
 
 impl Multistage {
-    /// Calculate total fuel mass
-    pub fn calc_mass_fuel(&self, delta_v: f64, launch_site: SurfacePoint) -> Vec<f64> {
+
+    /// Calculate total fuel mass required for delta v
+    pub fn calc_mass_fuel(
+        &self, 
+        delta_v: f64, 
+        launch_site: cosmos::space::SurfacePoint
+    ) -> Vec<f64> {
         let n_stage: usize = self.stages.len();
         let mut radius: f64 = launch_site.calc_surface_radius();
         let mut grav_acc: f64 = launch_site.body.calc_grav_acc(radius);
         let mut fuel_mass_mut: Vec<f64> = Vec::<f64>::new();
-        let mut total_mass_0: f64 = 0.0;
-
+        
         // Calculate total mass
+        let mut total_mass_0: f64 = 0.0;
         for stage in self.stages.iter().rev() {
             total_mass_0 += stage.mass;
         }
@@ -51,12 +58,15 @@ impl Multistage {
             
             // For each stage, break the total delta v down proportionally
             let delta_v_stage: f64 = delta_v * (stage.mass + external_mass) / total_mass_0;
-            let mass_ratio: f64 = ballistics::calc_mass_ratio(
+            let mass_ratio: f64 = prop::ballistics::calc_mass_ratio(
                 delta_v_stage, 
                 stage.engine.isp, 
                 grav_acc);
 
-            radius = ballistics::calc_burnout_height(mass_ratio, grav_acc, stage.engine.isp);
+            radius = prop::ballistics::calc_burnout_height(
+                mass_ratio, 
+                grav_acc, 
+                stage.engine.isp);
             grav_acc = launch_site.body.calc_grav_acc(radius);
             fuel_mass_mut[i_stage] = stage.calc_mass_fuel(
                 delta_v_stage, 
