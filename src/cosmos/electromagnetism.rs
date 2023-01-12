@@ -1,7 +1,7 @@
 
 
 use std::f64::consts::PI;
-use crate::constants;
+use crate::constants as cst;
 
 pub fn calc_apparent_brightness(
     luminosity: f64,
@@ -15,12 +15,10 @@ pub fn calc_spectral_radiance(
     frequency: f64,
     absolute_temp: f64
 ) -> f64 {
-    let numerator: f64 = 2.0 * constants::PLANCKS_CONST * frequency.powi(3);
+    let numerator: f64 = 2.0 * cst::PLANCKS_CONST * frequency.powi(3);
     let exponent: f64 = 
-        constants::PLANCKS_CONST * frequency / 
-        (constants::BOLTZMAN_CONST * absolute_temp);
-    let denom: f64 = 
-        constants::SPEED_OF_LIGHT.powi(2)*(exponent.exp() - 1.0);
+        cst::PLANCKS_CONST * frequency / (cst::BOLTZMAN_CONST * absolute_temp);
+    let denom: f64 = cst::SPEED_OF_LIGHT.powi(2)*(exponent.exp() - 1.0);
     let radiance: f64 = numerator / denom;
     return radiance
 }

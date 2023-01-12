@@ -4,7 +4,7 @@ Gravitational Bodies
 
 use nalgebra as na;
 use std::f64::consts::PI;
-use na::{Vector3, Matrix3};
+use na::Vector3;
 
 pub const TOLERANCE: f64 = 1e-8;
 
@@ -17,38 +17,24 @@ pub struct Body{
     pub eccentricity: f64
 }
 
-pub struct SurfacePoint{
-    pub body: Body,
-    pub pos_lla: Vector3<f64>,
-}
-
 impl Body {
 
     // Calculate gravitational acceleration at radial distance
-    pub fn calc_grav_acc(
-        &self, 
-        radius: f64
-    ) -> f64 {
+    pub fn calc_grav_acc(&self, radius: f64) -> f64 {
         let grav_acc: f64 = self.grav_param / radius.powi(2);
         return grav_acc
     }
     
 
     // Calculate required orbital velocity at radial distance
-    pub fn calc_orbital_velocity(
-        &self,
-        radius: f64
-    ) -> f64 {
+    pub fn calc_orbital_velocity(&self, radius: f64) -> f64 {
         // TODO-TD: Vectorize
         let vel: f64 = (2.0 * self.grav_param / radius).sqrt();
         return vel
     }
 
     // Calculate period of orbit
-    pub fn calc_period(
-        &self,
-        semi_major_axis: f64
-    ) -> f64 {
+    pub fn calc_period(&self, semi_major_axis: f64) -> f64 {
         let time: f64 = 2.0 * PI * (semi_major_axis.powi(3)/self.grav_param).sqrt();
         return time
     }
@@ -114,41 +100,3 @@ impl Body {
 
 }
 
-
-impl SurfacePoint{
-    // Calculate tangential velocity on surface of body
-    pub fn calc_surface_vel(&self) -> f64 {
-        let equatorial_vel: f64 = self.body.rotation_rate * self.body.eq_radius;
-        let tan_vel: f64 = (self.pos_lla[0].cos() * equatorial_vel).abs();
-        return tan_vel
-    }
-
-    // Map between fixed frame observation to enu
-    pub fn ecef_to_enu(&self, ecef_2: Vector3<f64>) -> Vector3<f64> {
-        let pos_lla: Vector3<f64> = self.pos_lla;
-        let pos_ecef: Vector3<f64> = self.body.geodetic_to_xyz(pos_lla);
-        let vec_ecef: Vector3<f64> = ecef_2 - pos_ecef;
-        let ecef_enu: Matrix3<f64> = Matrix3::new(
-            -pos_lla[1].sin(), pos_lla[1].cos(), 0.0,
-            -pos_lla[1].cos()*pos_lla[0].sin(), -pos_lla[1].sin()*pos_lla[0].sin(), pos_lla[0].cos(),
-            pos_lla[1].cos()*pos_lla[0].cos(), pos_lla[1].sin()*pos_lla[0].cos(), pos_lla[0].sin());
-        let enu: Vector3<f64> = ecef_enu * vec_ecef;
-        return enu
-    }
-
-    // Map between enu and fixed frame
-    pub fn enu_to_ecef(&self, enu: Vector3<f64>) -> Vector3<f64> {
-        let pos_lla: Vector3<f64> = self.pos_lla;
-        let enu_ecef: Matrix3<f64> = Matrix3::new(
-            -pos_lla[1].sin(), -pos_lla[1].cos()*pos_lla[0].sin(), pos_lla[1].cos()*pos_lla[0].cos(),
-            pos_lla[1].cos(), -pos_lla[1].sin()*pos_lla[0].sin(), pos_lla[1].sin()*pos_lla[0].cos(),
-            0.0, pos_lla[0].cos(), pos_lla[0].sin()
-        );
-        let vec_ecef: Vector3<f64> = enu_ecef * enu;
-        let pos_ecef: Vector3<f64> = self.body.geodetic_to_xyz(self.pos_lla);
-        let ecef: Vector3<f64> = vec_ecef - pos_ecef;
-        return ecef
-    }
-
-
-}

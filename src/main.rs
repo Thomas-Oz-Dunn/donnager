@@ -3,42 +3,67 @@ Orbital systems modelling in Rust
 */
 
 use nalgebra as na;
-use na::{Vector3};
+use na::Vector3;
 
-use donnager as dgr;
-use dgr::*;
+use donnager::constants as cst;
+use donnager::cosmos as cosm;
+use donnager::propulsion as prop;
+use donnager::dynamics as dynam;
+
 
 fn main() {
-    // Constants
-    let earth: cosmos::body::Body = cosmos::body::Body {
+    // Config
+    let earth: cosm::grav::Body = cosm::grav::Body {
         name: "Earth".to_string(),
-        grav_param: constants::EARTH_GRAV_PARAM,
-        eq_radius: constants::EARTH_RADIUS_EQUATOR,
-        rotation_rate: constants::EARTH_ROT_RATE,
-        eccentricity: constants::EARTH_ECC
+        grav_param: cst::EARTH_GRAV_PARAM,
+        eq_radius: cst::EARTH_RADIUS_EQUATOR,
+        rotation_rate: cst::EARTH_ROT_RATE,
+        eccentricity: cst::EARTH_ECC
     };
     
-    let cape_canaveral: cosmos::body::SurfacePoint = cosmos::body::SurfacePoint {
+    let launch_site: cosm::space::SurfacePoint = cosm::space::SurfacePoint {
+        name: "Cape Canaveral Launch Site".to_string(),
         body: earth.clone(),
         pos_lla: Vector3::new(28.396837, -80.605659, 0.0)
     };
 
+    let payload_eng: prop::engine::Engine = prop::engine::Engine{
+        name: "Payload_Engine".to_string(),
+        engine_type: prop::engine::EngineType::Electric,
+        isp: 500.0
+    };
+
+    let payload: dynam::vehicle::Vehicle = dynam::vehicle::Vehicle {
+        name: "Satellite_1".to_string(),
+        mass: 5.0,
+        engine: payload_eng
+    };
+
+    let stage1_eng: prop::engine::Engine = prop::engine::Engine{
+        name: "Hydrolox Dual Flow".to_string(),
+        engine_type: prop::engine::EngineType::Chemical,
+        isp: 300.0
+    };
+
+    let stage_1: dynam::vehicle::Vehicle = dynam::vehicle::Vehicle {
+        name: "Stage_1".to_string(),
+        mass: 250.0, // TODO: tune
+        engine: stage1_eng
+    };
+
+    let launch_vehicle: dynam::vehicle::Multistage = dynam::vehicle::Multistage{
+        name: "Launcher_7".to_string(),
+        stages: [stage_1, payload].to_vec()
+    };
+
     // Inputs
-    let n_stage: i32 = 1;
-    let mass_1: f64 = 5.0; // kg
-    let engine_isp: f64 = 300.0; // s
-    let altitude: f64 = 408000.0;
+    let altitude: f64 = 408000.0;  // LEO
 
     // Calculation
-    let radius: f64 = altitude + earth.eq_radius;
-    let delta_v: f64 = earth.calc_orbital_velocity(radius);
-    let surface_vel: f64 = cape_canaveral.calc_surface_vel();
-    let net_delta_v: f64 = delta_v - surface_vel;
-    let grav_acc: f64 = earth.calc_grav_acc(radius);
-    let mass_ratio: f64 = propulsion::ballistics::calc_mass_ratio(net_delta_v, engine_isp, grav_acc);
-    let mass_fuel: f64 = mass_1 * mass_ratio;    
+    let delta_v: f64 = launch_site.calc_delta_v(altitude);
+    let mass_fuel: Vec<f64> = launch_vehicle.calc_mass_fuel(delta_v, launch_site);
 
     // Results
-    println!("\n{:.4} kg of fuel to get {} kg to {} m alt on {} stage", mass_fuel, mass_1, altitude, n_stage);
-
+    println!("\n{:.4} kg of fuel to get {} kg to {} m alt", mass_fuel[0], launch_vehicle.stages[1].mass, altitude);
+    
 }

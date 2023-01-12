@@ -2,7 +2,7 @@
 Fluid dynamics
 */
 
-use crate::constants;
+use crate::constants as cst;
 
 pub fn calc_mass_flow(
     throat_area: f64,
@@ -21,8 +21,7 @@ pub fn calc_atmos_pressure(
     molar_mass: f64
 ) -> f64 {
     let exp: f64 = 
-        constants::GRAV_CONST * molar_mass * delta_h / 
-        (constants::GAS_CONST * t_ref);
+        cst::GRAV_CONST * molar_mass * delta_h / (cst::GAS_CONST * t_ref);
     let pressure: f64 = p_ref * exp.exp();
     return pressure
 }
@@ -34,7 +33,7 @@ pub fn calc_mach_number(
     heat_capacity_ratio: f64
 ) -> f64 {
     let speed_of_sound: f64 = 
-        (heat_capacity_ratio * constants::GAS_CONST * temperature).sqrt();
+        (heat_capacity_ratio * cst::GAS_CONST * temperature).sqrt();
     let mach_number: f64 = velocity / speed_of_sound;
     return mach_number 
 }
@@ -60,7 +59,7 @@ pub fn calc_characteristic_vel(
         (2.0/(heat_capacity_ratio + 1.0)).powf(
             -(heat_capacity_ratio + 1.0)/(2.0*(heat_capacity_ratio - 1.0))); 
     let exhaust_vel: f64 = 
-        (constants::GAS_CONST * t_chamber * heat_capacity_ratio).sqrt() / 
+        (cst::GAS_CONST * t_chamber * heat_capacity_ratio).sqrt() / 
         heat_capacity_ratio;
     let c_star: f64 = exhaust_vel * c_f;
     return c_star
