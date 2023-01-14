@@ -3,7 +3,7 @@ n-body simulation demonstration
 Barnes Hut
 */
 
-use std::ops::Add;
+use std::fs;
 
 use plotters::prelude::*;
 use nalgebra as na;
@@ -40,6 +40,7 @@ fn calc_acceleration(
     particles: Vec<Particle>,
     field_strength: f64
 ) -> Vec<Vector3<f64>> {
+
     let mut distance: Vector3<f64>;
     let mut radius: f64;
     let mut force: f64;
@@ -86,19 +87,21 @@ fn main() {
         mass: 5.0
     };
 
+    match fs::create_dir("./images") {
+        Err(why) => println!("! {:?}", why.kind()),
+        Ok(_) => {},
+    }
     let root_drawing_area = BitMapBackend::gif(
-        "images/animated.gif", 
-        (320, 100), 
+        "./images/animated.gif", 
+        (500, 500), 
         1_000  /* Each frame show 1s */
     ).unwrap().into_drawing_area();
 
     root_drawing_area.fill(&WHITE).unwrap();
 
     let mut ctx = ChartBuilder::on(&root_drawing_area)
-        // enables Y axis, the size is 40 px
-        .set_label_area_size(LabelAreaPosition::Left, 40)
-        // enable X axis, the size is 40 px
-        .set_label_area_size(LabelAreaPosition::Bottom, 40)
+        .set_label_area_size(LabelAreaPosition::Left, 30)
+        .set_label_area_size(LabelAreaPosition::Bottom, 30)
         .build_cartesian_2d(0..100, 0..100)
         .unwrap();
 
@@ -115,16 +118,16 @@ fn main() {
     let mut acc_2: Vector3<f64>;
 
     // Control duration and precision
-    for dt in [0..t_end].iter(){
+    for _ in [0..t_end].iter(){
 
         distance = particle1.pos - particle2.pos;
         radius = distance.norm();
         force = field_strength * (particle1.mass + particle2.mass) / radius.powi(2);
         dir = distance / radius;
-
+        
         acc_1 = -force / particle1.mass * dir;
         acc_2 = force / particle2.mass * dir;
-
+        
         particle1.pos += particle1.vel;
         particle2.pos += particle2.vel;
 
@@ -143,15 +146,23 @@ fn main() {
     let mut particles: Vec<Particle> = Vec::new();
     particles = [particle1, particle2, particle3].to_vec();
 
-    for dt in [0..t_end].iter(){
-        let accel: Vec<Vector3<f64>> = calc_acceleration(particles.clone(), field_strength);
-        particles.iter_mut()
-            .zip(accel)
-            .for_each(|(particle, accel)| {
-            particle.pos += particle.vel;
-            particle.vel += accel;
-        });
+    for _ in [0..t_end].iter(){
+        
+        ctx.draw_series(LineSeries::new(
+                (0..).zip(particles.iter())
+                    .map(|(idx, particle)| (particle.pos[0], particle.pos[1])), 
+                    &Palette99::pick(idx)
+                )
+                .label(format!("Particle {}", idx));
 
+        let accel: Vec<Vector3<f64>> = calc_acceleration(particles.clone(), field_strength);
+        ctx.draw_series(LineSeries::new((0..).zip(particles.iter_mut())
+            .zip(accel)
+            .for_each(|((idx, particle), accel)| {
+                particle.pos += particle.vel;
+                particle.vel += accel;
+                (particle.pos[0], particle.pos[1])}, &Palette99::pick(idx)
+    );
     }
 
 
