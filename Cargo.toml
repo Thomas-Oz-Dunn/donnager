@@ -4,6 +4,16 @@ version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "donnager"
+
+[[bin]]
+name = "launch_sim"
+path = "src/launch_sim/main.rs"
+
+[[bin]]
+name = "n_body_sim"
+path = "src/n_body_sim/main.rs"
 
 [dependencies]
 nalgebra = "0.31.4"
