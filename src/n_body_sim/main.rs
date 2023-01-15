@@ -4,8 +4,10 @@ Barnes Hut
 */
 
 use std::fs;
+use std::ops::Range;
 
 use plotters::prelude::*;
+use plotters::coord::types::*;
 use nalgebra as na;
 use na::Vector3;
 
@@ -98,11 +100,10 @@ fn main() {
     ).unwrap().into_drawing_area();
 
     root_drawing_area.fill(&WHITE).unwrap();
-
     let mut ctx = ChartBuilder::on(&root_drawing_area)
         .set_label_area_size(LabelAreaPosition::Left, 30)
         .set_label_area_size(LabelAreaPosition::Bottom, 30)
-        .build_cartesian_2d(0..100, 0..100)
+        .build_cartesian_2d::<Range<i32>, Range<i32>>(0..100, 0..100)
         .unwrap();
 
     ctx.configure_mesh().draw().unwrap();
@@ -148,21 +149,20 @@ fn main() {
 
     for _ in [0..t_end].iter(){
         
-        ctx.draw_series(LineSeries::new(
-                (0..).zip(particles.iter())
-                    .map(|(idx, particle)| (particle.pos[0], particle.pos[1])), 
-                    &Palette99::pick(idx)
-                )
-                .label(format!("Particle {}", idx));
-
         let accel: Vec<Vector3<f64>> = calc_acceleration(particles.clone(), field_strength);
-        ctx.draw_series(LineSeries::new((0..).zip(particles.iter_mut())
-            .zip(accel)
-            .for_each(|((idx, particle), accel)| {
+        (0..).zip(
+            accel.iter().zip(
+                particles.iter()))
+                .map(|(i_point, (acc, particle))| {
+            
+                ctx.draw_series(LineSeries::new(
+                    [particle.pos[0], particle.pos[1]].iter(), &Palette99::pick(i_point)
+                )).unwrap();
+            
                 particle.pos += particle.vel;
-                particle.vel += accel;
-                (particle.pos[0], particle.pos[1])}, &Palette99::pick(idx)
-    );
+                particle.vel += acc;
+            });
+
     }
 
 
