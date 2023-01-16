@@ -9,7 +9,7 @@ use plotters::prelude::*;
 use nalgebra as na;
 use na::Vector3;
 
-use donnager::cosmos as cosm;
+use donnager::cosmos::grav as grav;
 
 /// Simulation builds to n body
 /// 
@@ -20,6 +20,7 @@ use donnager::cosmos as cosm;
 
 fn main() {
 
+    // Render plot
     match fs::create_dir("./images") {
         Err(why) => println!("! {:?}", why.kind()),
         Ok(_) => {},
@@ -46,43 +47,43 @@ fn main() {
 
     // Run
     // 1 body
-    let particle1: cosm::grav::Particle = cosm::grav::Particle {
+    let particle1: grav::Particle = grav::Particle {
+        mass: 30.0,
         pos: Vector3::new(0.9,2.8,0.),
         vel: Vector3::new(0.2,-0.1, 0.),
-        acc: Vector3::new(0.,0., 0.),
-        mass: 30.0
+        acc: Vector3::zeros()
     };
 
     // 2 body
-    let mut particle2: cosm::grav::Particle = cosm::grav::Particle {
+    let mut particle2: grav::Particle = grav::Particle {
+        mass: 50.0,
         pos: Vector3::new(0.7,0.5,0.),
         vel: Vector3::new(-0.1,0.07,0.),
-        acc: Vector3::new(0.,0., 0.),
-        mass: 50.0
+        acc: Vector3::zeros()
     };
 
     let t_end: i32 = 60;
-    let field_strength: f64 = 500.0;
 
     // Control duration and precision
     for _ in [0..t_end].iter(){
-        particle2 = particle1.update(particle2, field_strength, 1.0);
+        particle2 = particle1.update(particle2, 1.0);
     }
 
+
+
     // 3 body - initial vectorization
-    let particle3: cosm::grav::Particle = cosm::grav::Particle {
+    let particle3: grav::Particle = grav::Particle {
+        mass: 0.0,
         pos: Vector3::new(0.,0.,0.),
         vel: Vector3::new(2.,0.,0.),
         acc: Vector3::new(0.,0., 0.),
-        mass: 0.0
     };
 
-    let mut particles: Vec<cosm::grav::Particle> = Vec::new();
-    particles = [particle1, particle2, particle3].to_vec();
+    let mut particles: Vec<grav::Particle> = [particle1, particle2, particle3].to_vec();
 
     for _ in [0..t_end].iter(){
         
-        let accel: Vec<Vector3<f64>> = cosm::grav::calc_acceleration(particles.clone(), field_strength);
+        let accel: Vec<Vector3<f64>> = grav::calc_acceleration(particles.clone());
         (0..).zip(
             accel.iter().zip(
                 particles.iter_mut()))

@@ -2,7 +2,7 @@
 Constants
 */
 
-// Gravitational parameter
+// Newtonian Gravitational constant
 pub const GRAV_CONST: f64 = 6.6743015e-11; // m^3 * kg^-1 * s^-2
 
 // Mass of the Sun in kilograms

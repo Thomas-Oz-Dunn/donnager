@@ -6,6 +6,8 @@ use nalgebra as na;
 use std::f64::consts::PI;
 use na::Vector3;
 
+use crate::constants as cst;
+
 pub const TOLERANCE: f64 = 1e-8;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -17,13 +19,6 @@ pub struct Body{
     pub eccentricity: f64
 }
 
-#[derive(Clone, Debug, PartialEq, Copy)]
-pub struct Particle {
-    pub mass: f64,
-    pub pos: Vector3<f64>,
-    pub vel: Vector3<f64>,
-    pub acc: Vector3<f64>,
-}
 
 impl Body {
 
@@ -108,17 +103,25 @@ impl Body {
 
 }
 
+#[derive(Clone, Debug, PartialEq, Copy)]
+pub struct Particle {
+    pub mass: f64,
+    pub motion: Vec<Vector3<f64>>,
+    // pub pos: Vector3<f64>,
+    // pub vel: Vector3<f64>,
+    // pub acc: Vector3<f64>,
+}
+
 
 impl Particle {
    
     pub fn update(
         mut self, 
         mut particle2: Particle,
-        field_strength: f64,
         time_step: f64
     ) -> Particle {
 
-        self.pos += self.vel*time_step;
+        self.motion[0] += self.motion[1] * time_step;
         particle2.pos += particle2.vel*time_step;
         
         self.vel += self.acc * time_step;
@@ -127,7 +130,7 @@ impl Particle {
 
         let distance: Vector3<f64> = self.pos - particle2.pos;
         let radius: f64 = distance.norm();
-        let force: f64 = field_strength * (self.mass + particle2.mass) / radius.powi(2);
+        let force: f64 = cst::GRAV_CONST * (self.mass + particle2.mass) / radius.powi(2);
         let dir: Vector3<f64> = distance / radius;
         
         self.acc += -force / self.mass * dir;
@@ -155,8 +158,7 @@ impl Particle {
 /// accelerations: `Vec<Vector3<f64>>` [N, 3]
 ///     Net accleration vector for each particle
 pub fn calc_acceleration(
-    particles: Vec<Particle>,
-    field_strength: f64
+    particles: Vec<Particle>
 ) -> Vec<Vector3<f64>> {
 
     let mut distance: Vector3<f64>;
@@ -171,7 +173,7 @@ pub fn calc_acceleration(
         for (idx2, particle2) in particles[idx1..particles.len()].iter().enumerate(){
             distance = particle1.pos - particle2.pos;
             radius = distance.norm();
-            force =  field_strength * (particle1.mass + particle2.mass) / radius.powi(2);
+            force =  cst::GRAV_CONST * (particle1.mass + particle2.mass) / radius.powi(2);
             acc_mut[idx1] -= force / particle1.mass * distance / radius;
             acc_mut[idx2] += force / particle2.mass * distance / radius;
         }
