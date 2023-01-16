@@ -19,9 +19,10 @@ pub struct Body{
 
 #[derive(Clone, Debug, PartialEq, Copy)]
 pub struct Particle {
+    pub mass: f64,
     pub pos: Vector3<f64>,
     pub vel: Vector3<f64>,
-    pub mass: f64,
+    pub acc: Vector3<f64>,
 }
 
 impl Body {
@@ -109,45 +110,28 @@ impl Body {
 
 
 impl Particle {
-    /// Calculate 2 body acceleration
-    /// 
-    /// Inputs
-    /// ------
-    /// self: `Particle`
-    ///     
-    /// particle2: `Particle`
-    /// 
-    /// field_strength: `f64`
-    /// 
-    /// Outputs
-    /// -------
-    /// accelerations: `Vec<Vector3<f64>>`: [2, 3]
-    /// 
-    pub fn calc_2_body_acc(
-        &self,
-        particle2: Particle,
-        field_strength: f64
-    ) -> Vec<Vector3<f64>>{
+   
+    pub fn update(
+        mut self, 
+        mut particle2: Particle,
+        field_strength: f64,
+        time_step: f64
+    ) -> Particle {
+
+        self.pos += self.vel*time_step;
+        particle2.pos += particle2.vel*time_step;
+        
+        self.vel += self.acc * time_step;
+        particle2.vel += particle2.acc * time_step;
+
+
         let distance: Vector3<f64> = self.pos - particle2.pos;
         let radius: f64 = distance.norm();
         let force: f64 = field_strength * (self.mass + particle2.mass) / radius.powi(2);
         let dir: Vector3<f64> = distance / radius;
         
-        let acc_1 = -force / self.mass * dir;
-        let acc_2 = force / particle2.mass * dir;
-        return vec![acc_1, acc_2]
-    }
-
-    pub fn update(
-        mut self, 
-        mut particle2: Particle,
-        accelerations: Vec<Vector3<f64>>
-    ) -> Particle {
-        self.pos = self.vel + self.pos;
-        particle2.pos += particle2.vel;
-        
-        self.vel += accelerations[0];
-        particle2.vel += accelerations[1];
+        self.acc += -force / self.mass * dir;
+        particle2.acc += force / particle2.mass * dir;
         particle2
     }
 

@@ -49,6 +49,7 @@ fn main() {
     let particle1: cosm::grav::Particle = cosm::grav::Particle {
         pos: Vector3::new(0.9,2.8,0.),
         vel: Vector3::new(0.2,-0.1, 0.),
+        acc: Vector3::new(0.,0., 0.),
         mass: 30.0
     };
 
@@ -56,23 +57,23 @@ fn main() {
     let mut particle2: cosm::grav::Particle = cosm::grav::Particle {
         pos: Vector3::new(0.7,0.5,0.),
         vel: Vector3::new(-0.1,0.07,0.),
+        acc: Vector3::new(0.,0., 0.),
         mass: 50.0
     };
 
     let t_end: i32 = 60;
     let field_strength: f64 = 500.0;
-    let mut accelerations: Vec<Vector3<f64>>; 
 
     // Control duration and precision
     for _ in [0..t_end].iter(){
-        accelerations = particle1.calc_2_body_acc(particle2, field_strength);
-        particle2 = particle1.update(particle2, accelerations);
+        particle2 = particle1.update(particle2, field_strength, 1.0);
     }
 
     // 3 body - initial vectorization
     let particle3: cosm::grav::Particle = cosm::grav::Particle {
         pos: Vector3::new(0.,0.,0.),
         vel: Vector3::new(2.,0.,0.),
+        acc: Vector3::new(0.,0., 0.),
         mass: 0.0
     };
 
