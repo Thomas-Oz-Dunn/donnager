@@ -49,17 +49,17 @@ fn main() {
     // 1 body
     let particle1: grav::Particle = grav::Particle {
         mass: 30.0,
-        pos: Vector3::new(0.9,2.8,0.),
-        vel: Vector3::new(0.2,-0.1, 0.),
-        acc: Vector3::zeros()
+        motion: vec![Vector3::new(0.9,2.8,0.),
+                     Vector3::new(0.2,-0.1, 0.),
+                     Vector3::zeros()]
     };
 
     // 2 body
     let mut particle2: grav::Particle = grav::Particle {
         mass: 50.0,
-        pos: Vector3::new(0.7,0.5,0.),
-        vel: Vector3::new(-0.1,0.07,0.),
-        acc: Vector3::zeros()
+        motion: vec![Vector3::new(0.7,0.5,0.),
+                     Vector3::new(-0.1,0.07,0.),
+                     Vector3::zeros()]
     };
 
     let t_end: i32 = 60;
@@ -74,9 +74,9 @@ fn main() {
     // 3 body - initial vectorization
     let particle3: grav::Particle = grav::Particle {
         mass: 0.0,
-        pos: Vector3::new(0.,0.,0.),
-        vel: Vector3::new(2.,0.,0.),
-        acc: Vector3::new(0.,0., 0.),
+        motion: vec![Vector3::new(0.,0.,0.),
+                     Vector3::new(2.,0.,0.),
+                     Vector3::new(0.,0., 0.)]
     };
 
     let mut particles: Vec<grav::Particle> = [particle1, particle2, particle3].to_vec();
@@ -91,12 +91,12 @@ fn main() {
                         ctx.draw_series(
                             // PLot idea, circle at point!
                             LineSeries::new(
-                                [(particle.pos[0], particle.pos[1]), (particle.pos[0] + particle.vel[0], particle.pos[1] + particle.vel[1])], 
+                                [(particle.motion[0][0], particle.motion[0][1]), (particle.motion[0][0] + particle.motion[1][0], particle.motion[0][1] + particle.motion[0][1])], 
                                 Palette99::pick(i_point))
                             ).unwrap().label(format!("Particle {}", i_point));
 
-                particle.pos += particle.vel;
-                particle.vel += acc;
+                particle.motion[0] += particle.motion[1];
+                particle.motion[1] += acc;
             });
 
     }

@@ -103,13 +103,10 @@ impl Body {
 
 }
 
-#[derive(Clone, Debug, PartialEq, Copy)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Particle {
     pub mass: f64,
     pub motion: Vec<Vector3<f64>>,
-    // pub pos: Vector3<f64>,
-    // pub vel: Vector3<f64>,
-    // pub acc: Vector3<f64>,
 }
 
 
@@ -120,21 +117,27 @@ impl Particle {
         mut particle2: Particle,
         time_step: f64
     ) -> Particle {
-
-        self.motion[0] += self.motion[1] * time_step;
-        particle2.pos += particle2.vel*time_step;
+        let mut delta = (self.motion[1] + 0.5 * self.motion[2] * time_step) * time_step;
+        self.motion[0] += delta;
         
-        self.vel += self.acc * time_step;
-        particle2.vel += particle2.acc * time_step;
+        delta = (particle2.motion[1] + 0.5 * particle2.motion[2] * time_step) * time_step;
+        particle2.motion[0] += delta;
+        
+        
+        delta = particle2.motion[2] * time_step;
+        self.motion[1] += delta;
+        
+        delta = particle2.motion[2] * time_step;
+        particle2.motion[1] += delta;
 
 
-        let distance: Vector3<f64> = self.pos - particle2.pos;
+        let distance: Vector3<f64> = self.motion[0] - particle2.motion[0];
         let radius: f64 = distance.norm();
         let force: f64 = cst::GRAV_CONST * (self.mass + particle2.mass) / radius.powi(2);
         let dir: Vector3<f64> = distance / radius;
         
-        self.acc += -force / self.mass * dir;
-        particle2.acc += force / particle2.mass * dir;
+        self.motion[2] += -force / self.mass * dir;
+        particle2.motion[2] += force / particle2.mass * dir;
         particle2
     }
 
@@ -171,7 +174,7 @@ pub fn calc_acceleration(
     // Dude there is a lot of redundant code, binary sort this shit
     for (idx1, particle1) in particles.iter().enumerate(){
         for (idx2, particle2) in particles[idx1..particles.len()].iter().enumerate(){
-            distance = particle1.pos - particle2.pos;
+            distance = particle1.motion[0] - particle2.motion[0];
             radius = distance.norm();
             force =  cst::GRAV_CONST * (particle1.mass + particle2.mass) / radius.powi(2);
             acc_mut[idx1] -= force / particle1.mass * distance / radius;
