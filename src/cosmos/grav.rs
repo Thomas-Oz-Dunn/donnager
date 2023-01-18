@@ -218,11 +218,49 @@ impl Tree {
     // Tree from vector of particles
 
     pub fn new(particles: Vec<Particle>, theta: f64) -> Self {
+        let range = find_range(particles);
+        let mut tree = Tree::empty(range, theta, particles.len());
         
+    }
+
+    pub fn empty(range: (Vector3<f64>,Vector3<f64>), theta: f64, n_nodes: usize) -> Self
+    {
+        let mut tr = Tree {
+            nodes: Vec::with_capacity(n_nodes),
+            mins: Vec::with_capacity(n_nodes),
+            maxs: Vec::with_capacity(n_nodes),
+            center_of_mass: Vec::with_capacity(n_nodes),
+            theta_sq: theta.powi(2)
+        };
+        tr.nodes.push(Node::new(range.0, range.1));
+        tr.mins.push(range.0);
+        tr.maxs.push(range.1);
+        return tr
+
     }
 }
 
 
 pub fn barnes_hut_gravity(
     particles: Vec<Particle>
-)
+){
+
+}
+
+
+pub fn find_range(particles: Vec<Particle>) -> (Vector3<f64>, Vector3<f64>) {
+    let mut min: Vector3<f64> = Vector3::zeros();
+    let mut max: Vector3<f64> = Vector3::zeros();
+
+    particles.iter().for_each(
+        |particle| {
+            particle.motion[0].iter_mut().zip(
+                min.iter_mut().zip(max.iter_mut())).for_each(
+                |(pos, (min_val, max_val))| { 
+                    if pos < min_val{min_val=pos;}
+                    if pos < max_val{max_val=pos;}
+                })
+            }
+        );
+    return (min, max)
+    }
