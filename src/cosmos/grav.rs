@@ -117,16 +117,16 @@ impl Particle {
         mut particle2: Particle,
         time_step: f64
     ) -> Particle {
-        let mut delta = (self.motion[1] + 0.5 * self.motion[2] * time_step) * time_step;
+        let mut delta : Vector3<f64>; 
+        delta = (self.motion[1] + 0.5 * self.motion[2] * time_step) * time_step;
         self.motion[0] += delta;
         
         delta = (particle2.motion[1] + 0.5 * particle2.motion[2] * time_step) * time_step;
         particle2.motion[0] += delta;
         
-        
         delta = particle2.motion[2] * time_step;
         self.motion[1] += delta;
-        
+
         delta = particle2.motion[2] * time_step;
         particle2.motion[1] += delta;
 
@@ -185,3 +185,44 @@ pub fn calc_acceleration(
     return acc
 }
 
+
+
+pub struct Node {
+    pub child_base: usize,
+    pub child_mask: u16,
+    pub quad_size: f64,
+    pub mass: f64
+}
+
+impl Node {
+    fn new(min: Vector3<f64>, max: Vector3<f64>) -> Self {
+        let q_size = (max - min).abs();
+        Node {
+            child_base: 0,
+            child_mask: 0,
+            mass: 0,
+            quad_size: q_size
+        }
+    }
+}
+
+pub struct Tree {
+    pub nodes: Vec<Node>,
+    pub center_of_mass: Vec<Vector3<f64>>,
+    pub mins: Vec<Vector3<f64>>,
+    pub maxs: Vec<Vector3<f64>>,
+    pub theta_sq: f64
+}
+
+impl Tree {
+    // Tree from vector of particles
+
+    pub fn new(particles: Vec<Particle>, theta: f64) -> Self {
+        
+    }
+}
+
+
+pub fn barnes_hut_gravity(
+    particles: Vec<Particle>
+)
