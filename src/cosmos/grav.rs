@@ -220,11 +220,71 @@ impl Tree {
     pub fn new(particles: Vec<Particle>, theta: f64) -> Self {
         let range = find_range(particles);
         let mut tree = Tree::empty(range, theta, particles.len());
-        
+        tree.add_particles_to_node(particles, 0);
+        tree
     }
 
-    pub fn empty(range: (Vector3<f64>,Vector3<f64>), theta: f64, n_nodes: usize) -> Self
-    {
+    pub fn add_particles_to_node(
+        self, 
+        particles: Vec<Particle>, 
+        node: usize
+    ) {
+        if particles.len() == 1 {
+            self.nodes[node].mass += particles[0].mass;
+            return self;
+        };
+
+        let center_point = (self.mins[node] + self.maxs[node]) / 2.0;
+
+        let mut particle_trees: [Vec<&Particle>; 8] = [
+            Vec::with_capacity(particles.len() / 4),
+            Vec::with_capacity(particles.len() / 4),
+            Vec::with_capacity(particles.len() / 4),
+            Vec::with_capacity(particles.len() / 4),
+            Vec::with_capacity(particles.len() / 4),
+            Vec::with_capacity(particles.len() / 4),
+            Vec::with_capacity(particles.len() / 4),
+            Vec::with_capacity(particles.len() / 4),
+        ];
+
+        for &particle in particles {
+            self.nodes[node].mass += particle.mass;
+            let index = Tree::get_id_from_center(center_point, particle.position);
+            particle_trees[index].push(particle);
+        }
+
+        //Recurse
+        self.nodes[node].child_base = self.nodes.len();
+        for (idx, particle_tree) in particle_trees.iter().enumerate() {
+            if !particle_tree.is_empty() {
+                let (min, max) = Tree::get_bounding_box_from_id(
+                    self.mins[node],
+                    self.maxs[node],
+                    center_point,
+                    idx,
+                );
+
+                self.nodes.push(Node::new(min, max));
+                self.mins.push(min);
+                self.maxs.push(max);
+                self.nodes[node].children_mask |= 1 << i;
+            }
+        }
+
+        let mut child_node = self.nodes[node].child_base;
+        for particle_tree in particle_trees.iter() {
+            if !particle_tree.is_empty() {
+                self.add_particles_to_node(particle_tree, child_node);
+                child_node += 1;
+            }
+        }
+    }
+
+    pub fn empty(
+        range: (Vector3<f64>,Vector3<f64>), 
+        theta: f64, 
+        n_nodes: usize
+    ) -> Self {
         let mut tr = Tree {
             nodes: Vec::with_capacity(n_nodes),
             mins: Vec::with_capacity(n_nodes),
@@ -236,8 +296,18 @@ impl Tree {
         tr.mins.push(range.0);
         tr.maxs.push(range.1);
         return tr
+    }
+
+    pub fn get_bounding_box_from_id(
+        min: Vector3<f64>, 
+        max: Vector3<f64>, 
+        center: Vector3<f64>, 
+        idx: usize
+    ) -> (Vector3<f64>, Vector3<f64>) {
 
     }
+
+
 }
 
 
