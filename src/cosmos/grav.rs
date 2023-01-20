@@ -112,6 +112,20 @@ pub struct Particle {
 
 impl Particle {
    
+    /// Update state of Particle and secondary with gravitational acceleration
+    /// 
+    /// Inputs
+    /// ------
+    /// particle2: `Particle`
+    ///     Secondary particle for 2-body attraction
+    /// 
+    /// time_step: f64
+    ///     Increment of time for update
+    /// 
+    /// Outputs
+    /// -------
+    /// particle2: `Particle`
+    ///     Updated Particle state
     pub fn update(
         mut self, 
         mut particle2: Particle,
@@ -195,14 +209,26 @@ pub struct Node {
 }
 
 impl Node {
-    fn new(min: Vector3<f64>, max: Vector3<f64>) -> Self {
-        let q_size = (max - min).abs();
-        Node {
+
+    /// Initialize new Node
+    /// 
+    /// Inputs
+    /// ------
+    /// range: `(Vector3<f64>, Vector3<f64>)`
+    ///     Min and max position vectors
+    /// 
+    /// Outputs
+    /// -------
+    /// node: `Node`
+    ///     Initialized `Node` struct
+    fn new(range: (Vector3<f64>,Vector3<f64>)) -> Self {
+        let node: Node = Node {
             child_base: 0,
             child_mask: 0,
             mass: 0.,
-            quad_size: q_size
-        }
+            quad_size: (range.0 - range.1).norm()
+        };
+        node
     }
 }
 
@@ -215,27 +241,51 @@ pub struct Tree {
 }
 
 impl Tree {
-    // Tree from vector of particles
 
+    /// Initialize new `Tree`
+    /// 
+    /// Inputs
+    /// ------
+    /// particles: `Vector<Particle>`
+    ///     List of particles to store
+    /// 
+    /// theta: `f64`
+    ///     Angular precision
+    /// 
+    /// Outputs
+    /// -------
+    /// tree: `Tree`
+    ///     Initialized `Tree` struct
     pub fn new(particles: Vec<Particle>, theta: f64) -> Self {
-        let range = find_range(particles);
+        let range = calc_range(particles);
         let mut tree = Tree::empty(range, theta, particles.len());
         tree.add_particles_to_node(particles, 0);
         tree
     }
 
+
+    /// Add list of Particles to node
+    /// 
+    /// Inputs
+    /// ------
+    /// particles: `Vector<Particle>`
+    ///     List of particles to store
+    /// 
+    /// node_id: `usize`
+    ///     Node identification number. See Tree:get_node_id_from_center()
     pub fn add_particles_to_node(
         self, 
         particles: Vec<Particle>, 
-        node: usize
+        node_id: usize
     ) {
         if particles.len() == 1 {
-            self.nodes[node].mass += particles[0].mass;
+            self.nodes[node_id].mass += particles[0].mass;
             return;
         };
 
-        let center_point = (self.mins[node] + self.maxs[node]) / 2.0;
+        let center = (self.mins[node_id] + self.maxs[node_id]) / 2.0;
 
+        // TODO-TD: improve initialization
         let mut particle_trees: [Vec<Particle>; 8] = [
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
@@ -248,29 +298,26 @@ impl Tree {
         ];
 
         for particle in particles {
-            self.nodes[node].mass += particle.mass;
-            let index = Tree::get_id_from_center(center_point, particle.position);
+            self.nodes[node_id].mass += particle.mass;
+            let index = Tree::get_node_id_from_center(center, particle.motion[0]);
             particle_trees[index].push(particle);
-        }
+        };
 
         //Recurse
-        self.nodes[node].child_base = self.nodes.len();
+        self.nodes[node_id].child_base = self.nodes.len();
         for (idx, particle_tree) in particle_trees.iter().enumerate() {
             if !particle_tree.is_empty() {
-                let (min, max) = Tree::get_bounding_box(
-                    (self.mins[node], self.maxs[node]),
-                    center_point,
-                    idx,
-                );
+                let mut range = (self.mins[node_id], self.maxs[node_id]);
+                range = Tree::get_bounding_box(range, center, idx);
 
-                self.nodes.push(Node::new(min, max));
-                self.mins.push(min);
-                self.maxs.push(max);
-                self.nodes[node].child_mask |= 1 << idx;
+                self.nodes.push(Node::new(range.0, range.1));
+                self.mins.push(range.0);
+                self.maxs.push(range.1);
+                self.nodes[node_id].child_mask |= 1 << idx;
             }
         }
 
-        let mut child_node = self.nodes[node].child_base;
+        let mut child_node = self.nodes[node_id].child_base;
         for particle_tree in particle_trees.iter() {
             if !particle_tree.is_empty() {
                 self.add_particles_to_node(particle_tree.to_vec(), child_node);
@@ -279,43 +326,77 @@ impl Tree {
         }
     }
 
+    /// Initialize empty `Tree`
+    /// 
+    /// Inputs
+    /// ------
+    /// range: `(Vector3<f64>,Vector3<f64>)`
+    ///     Range of min and max coordinates
+    /// 
+    /// theta: `f64`
+    ///     Angular precision
+    /// 
+    /// n_nodes: `usize`
+    ///     Number of empty nodes to store
+    /// 
+    /// Outputs
+    /// -------
+    /// tree: `Tree`
+    ///     Empty tree
     pub fn empty(
         range: (Vector3<f64>,Vector3<f64>), 
         theta: f64, 
         n_nodes: usize
     ) -> Self {
-        let mut tr = Tree {
+        let mut tree = Tree {
             nodes: Vec::with_capacity(n_nodes),
             mins: Vec::with_capacity(n_nodes),
             maxs: Vec::with_capacity(n_nodes),
             center_of_mass: Vec::with_capacity(n_nodes),
             theta_sq: theta.powi(2)
         };
-        tr.nodes.push(Node::new(range.0, range.1));
-        tr.mins.push(range.0);
-        tr.maxs.push(range.1);
-        return tr
+        tree.nodes.push(Node::new(range.0, range.1));
+        tree.mins.push(range.0);
+        tree.maxs.push(range.1);
+        return tree
     }
 
+    /// Get bounding box of Tree
+    /// 
+    /// Inputs
+    /// ------
+    /// range: `(Vector3<f64>, Vector3<f64>)`
+    ///     Min and max points of space
+    /// 
+    /// center: `Vector3<f64>`
+    ///     Center point of Tree
+    /// 
+    /// node_id: `usize`
+    ///     Node identification number
+    /// 
+    /// Outputs
+    /// -------
+    /// range: `(Vector3<f64>, Vector3<f64>)`
+    ///     Min and max position points
     pub fn get_bounding_box(
         range: (Vector3<f64>, Vector3<f64>), 
         center: Vector3<f64>, 
-        idx: usize
+        node_id: usize
     ) -> (Vector3<f64>, Vector3<f64>) {
         let mut min_coord: Vector3<f64> = center;
 		let mut max_coord: Vector3<f64> = range.1;
 
-		if idx == 1 {
+		if node_id == 1 {
 			min_coord.x = range.0.x;
 			max_coord.x = center.x;
 		} 
 
-		if idx == 2 {
+		if node_id == 2 {
 			min_coord.y = range.0.y;
 			max_coord.y = center.y;
 		} 
 
-		if idx == 4 {
+		if node_id == 4 {
 			min_coord.z = range.0.z;
 			max_coord.z = center.z;
 		} 
@@ -323,7 +404,21 @@ impl Tree {
 		(min_coord, max_coord)
 	    }
 
-    pub fn get_id_from_center(
+    /// Get node id of point from center point
+    /// 
+    /// Inputs
+    /// ------
+    /// center: `Vector3<f64>`
+    ///     Center point of Tree
+    /// 
+    /// point: `Vector3<f64>`
+    ///     Point of interest   
+    /// 
+    /// Outputs
+    /// -------
+    /// node_id: `usize`
+    ///     Node identification number
+    pub fn get_node_id_from_center(
         center: Vector3<f64>, 
         point: Vector3<f64>
     ) -> usize {
@@ -331,7 +426,8 @@ impl Tree {
 		let x_offset = if offset.x > 0.0 {0} else {1};
 		let y_offset = if offset.y > 0.0 {0} else {1};
 		let z_offset = if offset.z > 0.0 {0} else {1};
-		x_offset + y_offset * 2 + z_offset * 4 
+		let node_id = x_offset + y_offset * 2 + z_offset * 4;
+        node_id
     }
 }
 
@@ -341,8 +437,18 @@ pub fn barnes_hut_gravity(
 
 }
 
-
-pub fn find_range(particles: Vec<Particle>) -> (Vector3<f64>, Vector3<f64>) {
+/// Calculate range of min and max positions of set of Particles
+/// 
+/// Inputs
+/// ------
+/// particles: `Vec<Particle>`
+///     List of particles
+/// 
+/// Outputs
+/// -------
+/// range: `(Vector3<f64>, Vector3<f64>)`
+///     Min and max points of space
+pub fn calc_range(particles: Vec<Particle>) -> (Vector3<f64>, Vector3<f64>) {
     let mut min: Vector3<f64> = Vector3::zeros();
     let mut max: Vector3<f64> = Vector3::zeros();
 
