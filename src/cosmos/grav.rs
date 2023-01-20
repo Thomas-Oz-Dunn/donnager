@@ -200,7 +200,7 @@ impl Node {
         Node {
             child_base: 0,
             child_mask: 0,
-            mass: 0,
+            mass: 0.,
             quad_size: q_size
         }
     }
@@ -273,7 +273,7 @@ impl Tree {
         let mut child_node = self.nodes[node].child_base;
         for particle_tree in particle_trees.iter() {
             if !particle_tree.is_empty() {
-                self.add_particles_to_node(particle_tree, child_node);
+                self.add_particles_to_node(particle_tree.to_vec(), child_node);
                 child_node += 1;
             }
         }
@@ -323,10 +323,17 @@ impl Tree {
 		(min_coord, max_coord)
 	    }
 
-    pub fn get_id_from_center(){}s
-    
+    pub fn get_id_from_center(
+        center: Vector3<f64>, 
+        point: Vector3<f64>
+    ) -> usize {
+        let offset = point - center;
+		let x_offset = if offset.x > 0.0 {0} else {1};
+		let y_offset = if offset.y > 0.0 {0} else {1};
+		let z_offset = if offset.z > 0.0 {0} else {1};
+		x_offset + y_offset * 2 + z_offset * 4 
+    }
 }
-
 
 pub fn barnes_hut_gravity(
     particles: Vec<Particle>
