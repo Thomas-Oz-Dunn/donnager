@@ -231,12 +231,12 @@ impl Tree {
     ) {
         if particles.len() == 1 {
             self.nodes[node].mass += particles[0].mass;
-            return self;
+            return;
         };
 
         let center_point = (self.mins[node] + self.maxs[node]) / 2.0;
 
-        let mut particle_trees: [Vec<&Particle>; 8] = [
+        let mut particle_trees: [Vec<Particle>; 8] = [
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
@@ -247,7 +247,7 @@ impl Tree {
             Vec::with_capacity(particles.len() / 4),
         ];
 
-        for &particle in particles {
+        for particle in particles {
             self.nodes[node].mass += particle.mass;
             let index = Tree::get_id_from_center(center_point, particle.position);
             particle_trees[index].push(particle);
@@ -257,9 +257,8 @@ impl Tree {
         self.nodes[node].child_base = self.nodes.len();
         for (idx, particle_tree) in particle_trees.iter().enumerate() {
             if !particle_tree.is_empty() {
-                let (min, max) = Tree::get_bounding_box_from_id(
-                    self.mins[node],
-                    self.maxs[node],
+                let (min, max) = Tree::get_bounding_box(
+                    (self.mins[node], self.maxs[node]),
                     center_point,
                     idx,
                 );
@@ -267,7 +266,7 @@ impl Tree {
                 self.nodes.push(Node::new(min, max));
                 self.mins.push(min);
                 self.maxs.push(max);
-                self.nodes[node].children_mask |= 1 << i;
+                self.nodes[node].child_mask |= 1 << idx;
             }
         }
 
@@ -298,16 +297,34 @@ impl Tree {
         return tr
     }
 
-    pub fn get_bounding_box_from_id(
-        min: Vector3<f64>, 
-        max: Vector3<f64>, 
+    pub fn get_bounding_box(
+        range: (Vector3<f64>, Vector3<f64>), 
         center: Vector3<f64>, 
         idx: usize
     ) -> (Vector3<f64>, Vector3<f64>) {
+        let mut min_coord: Vector3<f64> = center;
+		let mut max_coord: Vector3<f64> = range.1;
 
-    }
+		if idx == 1 {
+			min_coord.x = range.0.x;
+			max_coord.x = center.x;
+		} 
 
+		if idx == 2 {
+			min_coord.y = range.0.y;
+			max_coord.y = center.y;
+		} 
 
+		if idx == 4 {
+			min_coord.z = range.0.z;
+			max_coord.z = center.z;
+		} 
+
+		(min_coord, max_coord)
+	    }
+
+    pub fn get_id_from_center(){}s
+    
 }
 
 
