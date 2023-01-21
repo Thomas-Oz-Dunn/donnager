@@ -4,7 +4,7 @@ Gravitational Bodies
 
 use nalgebra as na;
 use std::f64::consts::PI;
-use na::Vector3;
+use na::{Vector3, distance};
 
 use crate::constants as cst;
 
@@ -103,6 +103,12 @@ impl Body {
 
 }
 
+
+pub fn calc_acc(d_sq: f64, mass: f64, dir: Vector3<f64>) -> Vector3<f64> {
+    let acc: Vector3<f64> = dir * cst::GRAV_CONST * (mass) / d_sq;
+    acc
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Particle {
     pub mass: f64,
@@ -131,7 +137,7 @@ impl Particle {
         mut particle2: Particle,
         time_step: f64
     ) -> Particle {
-        let mut delta : Vector3<f64>; 
+        let mut delta: Vector3<f64>; 
         delta = (self.motion[1] + 0.5 * self.motion[2] * time_step) * time_step;
         self.motion[0] += delta;
         
@@ -200,7 +206,7 @@ pub fn calc_acceleration(
 }
 
 
-
+#[derive(Clone, Debug, PartialEq)]
 pub struct Node {
     pub child_base: usize,
     pub child_mask: u16,
@@ -232,6 +238,7 @@ impl Node {
     }
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct Tree {
     pub nodes: Vec<Node>,
     pub center_of_mass: Vec<Vector3<f64>>,
@@ -256,9 +263,9 @@ impl Tree {
     /// -------
     /// tree: `Tree`
     ///     Initialized `Tree` struct
-    pub fn new(particles: Vec<Particle>, theta: f64) -> Self {
+    pub fn new(particles: Vec<Particle>, theta: f64) -> Tree {
         let range = calc_range(particles);
-        let mut tree = Tree::empty(range, theta, particles.len());
+        let tree = Tree::empty(range, theta, particles.len());
         tree.add_particles_to_node(particles, 0);
         tree
     }
@@ -274,7 +281,7 @@ impl Tree {
     /// node_id: `usize`
     ///     Node identification number. See Tree:get_node_id_from_center()
     pub fn add_particles_to_node(
-        self, 
+        mut self, 
         particles: Vec<Particle>, 
         node_id: usize
     ) {
@@ -310,7 +317,7 @@ impl Tree {
                 let mut range = (self.mins[node_id], self.maxs[node_id]);
                 range = Tree::get_bounding_box(range, center, idx);
 
-                self.nodes.push(Node::new(range.0, range.1));
+                self.nodes.push(Node::new(range));
                 self.mins.push(range.0);
                 self.maxs.push(range.1);
                 self.nodes[node_id].child_mask |= 1 << idx;
@@ -355,7 +362,7 @@ impl Tree {
             center_of_mass: Vec::with_capacity(n_nodes),
             theta_sq: theta.powi(2)
         };
-        tree.nodes.push(Node::new(range.0, range.1));
+        tree.nodes.push(Node::new(range));
         tree.mins.push(range.0);
         tree.maxs.push(range.1);
         return tree
@@ -429,11 +436,48 @@ impl Tree {
 		let node_id = x_offset + y_offset * 2 + z_offset * 4;
         node_id
     }
-}
+
+    pub fn barnes_hut_node(
+        &self, 
+        pos: Vector3<f64>, 
+        node_id: usize
+    ) -> Vector3<f64> {
+        let cur_node = &self.nodes[node_id];
+        let q_size = cur_node.quad_size;
+        let distance= self.center_of_mass[node_id] - pos; 
+        let d_sq = distance.norm_squared();
+        let theta_sq = self.theta_sq;
+        let force: Vector3<f64>;
+
+        if q_size < theta_sq * d_sq || cur_node.child_mask == 0 {
+            if d_sq < TOLERANCE {
+                force = Vector3::new(0.,0.,0.);
+            } else {
+                force = calc_acc(d_sq, cur_node.mass, distance);
+            }
+
+        } else {
+            let mut node = cur_node.child_base;
+            let mut sum: Vector3<f64> = Vector3::zeros();
+            for node_idx in 0..8 {
+                // Voodoo magic here
+                if cur_node.child_mask & (1 << node_idx) != 0 {
+                    sum += self.barnes_hut_node(pos, node);
+                    node += 1;
+                }
+            }
+            force = sum;
+            }
+            force
+        }
+
+    }
+ 
 
 pub fn barnes_hut_gravity(
     particles: Vec<Particle>
 ){
+    // Create Tree
 
 }
 
@@ -452,13 +496,11 @@ pub fn calc_range(particles: Vec<Particle>) -> (Vector3<f64>, Vector3<f64>) {
     let mut min: Vector3<f64> = Vector3::zeros();
     let mut max: Vector3<f64> = Vector3::zeros();
 
-    particles.iter().for_each(
-        |particle| {
-            particle.motion[0].iter_mut().zip(
-                min.iter_mut().zip(max.iter_mut())).for_each(
-                |(pos, (min_val, max_val))| { 
-                    if pos < min_val{min_val=pos;}
-                    if pos < max_val{max_val=pos;}
+    particles.iter().for_each(|particle| {
+        min.iter_mut().zip(max.iter_mut()).zip(particle.motion[0].iter())
+            .for_each(|((min_val, max_val), pos)| { 
+                    if pos < min_val{*min_val=*pos;}
+                    if pos > max_val{*max_val=*pos;}
                 })
             }
         );
