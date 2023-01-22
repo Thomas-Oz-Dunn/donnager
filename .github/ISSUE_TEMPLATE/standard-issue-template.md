@@ -8,12 +8,15 @@ assignees: ''
 ---
 
 Background
+---
 [Link to previous issues, useful background information]
 
 Procedure
+---
 1.
 2.
 3.
 
 Acceptance Criteria
+---
 [Insert acceptance criteria here, should be measurable]
