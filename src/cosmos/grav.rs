@@ -4,7 +4,7 @@ Gravitational Bodies
 
 use nalgebra as na;
 use std::f64::consts::PI;
-use na::{Vector3, distance};
+use na::{Vector3};
 
 use crate::constants as cst;
 
@@ -22,8 +22,9 @@ pub struct Body{
 
 impl Body {
 
-    // Calculate gravitational acceleration at radial distance
+    // Calculate gravitational acceleration at radial distance from Body
     pub fn calc_grav_acc(&self, radius: f64) -> f64 {
+        // TODO-TD: Vectorize
         let grav_acc: f64 = self.grav_param / radius.powi(2);
         return grav_acc
     }
@@ -36,13 +37,23 @@ impl Body {
         return vel
     }
 
-    // Calculate period of orbit
+    /// Calculate period of orbit at semi major axis
+    /// 
+    /// Inputs
+    /// ------
+    /// semi_major_axis: `f64`
+    ///     Semi major axis of orbital ellipse
     pub fn calc_period(&self, semi_major_axis: f64) -> f64 {
         let time: f64 = 2.0 * PI * (semi_major_axis.powi(3)/self.grav_param).sqrt();
         return time
     }
     
-    // Calculate radius for stationary orbit above body surface
+    /// Calculate radius for stationary orbit above body surface
+    /// 
+    /// Outputs
+    /// -------
+    /// r_mag: `f64`
+    ///     Magnitude of radius for stationary orbit
     pub fn calc_stationary_orbit(&self) -> f64 {
         let period: f64 = 2.0 * PI / self.rotation_rate;
         let a: f64 = self.grav_param * period.powi(2); // 
@@ -116,96 +127,6 @@ pub struct Particle {
 }
 
 
-impl Particle {
-   
-    /// Update state of Particle and secondary with gravitational acceleration
-    /// 
-    /// Inputs
-    /// ------
-    /// particle2: `Particle`
-    ///     Secondary particle for 2-body attraction
-    /// 
-    /// time_step: f64
-    ///     Increment of time for update
-    /// 
-    /// Outputs
-    /// -------
-    /// particle2: `Particle`
-    ///     Updated Particle state
-    pub fn update(
-        mut self, 
-        mut particle2: Particle,
-        time_step: f64
-    ) -> Particle {
-        let mut delta: Vector3<f64>; 
-        delta = (self.motion[1] + 0.5 * self.motion[2] * time_step) * time_step;
-        self.motion[0] += delta;
-        
-        delta = (particle2.motion[1] + 0.5 * particle2.motion[2] * time_step) * time_step;
-        particle2.motion[0] += delta;
-        
-        delta = particle2.motion[2] * time_step;
-        self.motion[1] += delta;
-
-        delta = particle2.motion[2] * time_step;
-        particle2.motion[1] += delta;
-
-
-        let distance: Vector3<f64> = self.motion[0] - particle2.motion[0];
-        let radius: f64 = distance.norm();
-        let force: f64 = cst::GRAV_CONST * (self.mass + particle2.mass) / radius.powi(2);
-        let dir: Vector3<f64> = distance / radius;
-        
-        self.motion[2] += -force / self.mass * dir;
-        particle2.motion[2] += force / particle2.mass * dir;
-        particle2
-    }
-
-}
-
-
-/// Calculate acceleration, brute force method (O(n^2) runtime)
-/// 
-/// Inputs
-/// ------
-/// particles: `Vec<Particle>` [N, ]
-///     Vector of `Particle` structs to be simulated
-/// 
-/// field_strength: `f64`
-///     Scalar value describing field of interest. 
-///     Gravity:
-///     Electromagnetism:
-/// 
-/// Outputs
-/// -------
-/// accelerations: `Vec<Vector3<f64>>` [N, 3]
-///     Net accleration vector for each particle
-pub fn calc_acceleration(
-    particles: Vec<Particle>
-) -> Vec<Vector3<f64>> {
-
-    let mut distance: Vector3<f64>;
-    let mut radius: f64;
-    let mut force: f64;
-    let zero_vec: Vector3<f64> = Vector3::new(0.0, 0.0, 0.0);
-    let mut acc_mut: Vec<Vector3<f64>> = vec![zero_vec; particles.len()];
-
-    // O(n^2)
-    // Dude there is a lot of redundant code, binary sort this shit
-    for (idx1, particle1) in particles.iter().enumerate(){
-        for (idx2, particle2) in particles[idx1..particles.len()].iter().enumerate(){
-            distance = particle1.motion[0] - particle2.motion[0];
-            radius = distance.norm();
-            force =  cst::GRAV_CONST * (particle1.mass + particle2.mass) / radius.powi(2);
-            acc_mut[idx1] -= force / particle1.mass * distance / radius;
-            acc_mut[idx2] += force / particle2.mass * distance / radius;
-        }
-    }
-    let acc: Vec<Vector3<f64>> = acc_mut;
-    return acc
-}
-
-
 #[derive(Clone, Debug, PartialEq)]
 pub struct Node {
     pub child_base: usize,
@@ -263,7 +184,7 @@ impl Tree {
     /// -------
     /// tree: `Tree`
     ///     Initialized `Tree` struct
-    pub fn new(particles: Vec<Particle>, theta: f64) -> Tree {
+    pub fn new(particles: Vec<&Particle>, theta: f64) -> Tree {
         let range = calc_range(particles);
         let tree = Tree::empty(range, theta, particles.len());
         tree.add_particles_to_node(particles, 0);
@@ -275,14 +196,14 @@ impl Tree {
     /// 
     /// Inputs
     /// ------
-    /// particles: `Vector<Particle>`
+    /// particles: `Vector<&Particle>`
     ///     List of particles to store
     /// 
     /// node_id: `usize`
     ///     Node identification number. See Tree:get_node_id_from_center()
     pub fn add_particles_to_node(
         mut self, 
-        particles: Vec<Particle>, 
+        particles: Vec<&Particle>, 
         node_id: usize
     ) {
         if particles.len() == 1 {
@@ -293,7 +214,8 @@ impl Tree {
         let center = (self.mins[node_id] + self.maxs[node_id]) / 2.0;
 
         // TODO-TD: improve initialization
-        let mut particle_trees: [Vec<Particle>; 8] = [
+        
+        let mut particle_trees: [Vec<&Particle>; 8] = [
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
@@ -437,7 +359,7 @@ impl Tree {
         node_id
     }
 
-    pub fn barnes_hut_node(
+    pub fn barnes_hut_node_acc(
         &self, 
         pos: Vector3<f64>, 
         node_id: usize
@@ -447,13 +369,13 @@ impl Tree {
         let distance= self.center_of_mass[node_id] - pos; 
         let d_sq = distance.norm_squared();
         let theta_sq = self.theta_sq;
-        let force: Vector3<f64>;
+        let acc: Vector3<f64>;
 
         if q_size < theta_sq * d_sq || cur_node.child_mask == 0 {
             if d_sq < TOLERANCE {
-                force = Vector3::new(0.,0.,0.);
+                acc = Vector3::new(0.,0.,0.);
             } else {
-                force = calc_acc(d_sq, cur_node.mass, distance);
+                acc = calc_acc(d_sq, cur_node.mass, distance);
             }
 
         } else {
@@ -462,22 +384,30 @@ impl Tree {
             for node_idx in 0..8 {
                 // Voodoo magic here
                 if cur_node.child_mask & (1 << node_idx) != 0 {
-                    sum += self.barnes_hut_node(pos, node);
+                    sum += self.barnes_hut_node_acc(pos, node);
                     node += 1;
                 }
             }
-            force = sum;
+            acc = sum;
             }
-            force
+            acc
         }
 
     }
  
 
 pub fn barnes_hut_gravity(
-    particles: Vec<Particle>
+    particles: Vec<&Particle>,
+    duration: f64,
+    theta: f64
 ){
-    // Create Tree
+    // for t in duration
+        // Create Tree
+        let tree = Tree::new(particles, theta);
+        // Calculate acceleration per particle (multithread)
+        let accs = particles.iter().for_each(|particle| {tree.barnes_hut_node_acc(*particle.motion[0], 0);});
+
+        // Move particles
 
 }
 
@@ -492,7 +422,7 @@ pub fn barnes_hut_gravity(
 /// -------
 /// range: `(Vector3<f64>, Vector3<f64>)`
 ///     Min and max points of space
-pub fn calc_range(particles: Vec<Particle>) -> (Vector3<f64>, Vector3<f64>) {
+pub fn calc_range(particles: Vec<&Particle>) -> (Vector3<f64>, Vector3<f64>) {
     let mut min: Vector3<f64> = Vector3::zeros();
     let mut max: Vector3<f64> = Vector3::zeros();
 
