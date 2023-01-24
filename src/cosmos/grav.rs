@@ -397,18 +397,35 @@ impl Tree {
  
 
 pub fn barnes_hut_gravity(
-    particles: Vec<&Particle>,
-    duration: f64,
+    mut particles: Vec<Particle>,
+    step_size: f64,
+    n_steps: usize,
     theta: f64
 ){
-    // for t in duration
+    let mut tree: Tree;
+    let mut delta_t: f64;
+    let ref_part: Vec<&Particle>;
+
+    for particle in particles{
+        ref_part.append(&mut vec![&particle]);
+    }
+
+    // Float iteration is a footgun
+    for step in 0..n_steps {
         // Create Tree
-        let tree = Tree::new(particles, theta);
-        // Calculate acceleration per particle (multithread)
-        let accs = particles.iter().for_each(|particle| {tree.barnes_hut_node_acc(*particle.motion[0], 0);});
+        tree = Tree::new(ref_part.clone(), theta);
+        delta_t = step as f64 * step_size;
+        particles.iter_mut().for_each(
+            |particle| {
+                // Calculate acceleration per particle (MULTITHREAD)
+                particle.motion[2] = tree.barnes_hut_node_acc(particle.motion[0], 0);
 
-        // Move particles
+                // Move and update values
+                particle.motion[1] += particle.motion[2] * delta_t;
+                particle.motion[0] += particle.motion[1] * delta_t + 0.5 * particle.motion[2] * delta_t.powi(2);
+            });
 
+    }
 }
 
 /// Calculate range of min and max positions of set of Particles
