@@ -184,9 +184,9 @@ impl Tree {
     /// -------
     /// tree: `Tree`
     ///     Initialized `Tree` struct
-    pub fn new(particles: Vec<&Particle>, theta: f64) -> Tree {
-        let range = calc_range(particles);
-        let tree = Tree::empty(range, theta, particles.len());
+    pub fn new(particles: Vec<Particle>, theta: f64) -> Tree {
+        let range = calc_range(particles.clone());
+        let mut tree = Tree::empty(range, theta, particles.len());
         tree.add_particles_to_node(particles, 0);
         tree
     }
@@ -202,8 +202,8 @@ impl Tree {
     /// node_id: `usize`
     ///     Node identification number. See Tree:get_node_id_from_center()
     pub fn add_particles_to_node(
-        mut self, 
-        particles: Vec<&Particle>, 
+        &mut self, 
+        particles: Vec<Particle>, 
         node_id: usize
     ) {
         if particles.len() == 1 {
@@ -215,7 +215,7 @@ impl Tree {
 
         // TODO-TD: improve initialization
         
-        let mut particle_trees: [Vec<&Particle>; 8] = [
+        let mut particle_trees: [Vec<Particle>; 8] = [
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
@@ -396,24 +396,51 @@ impl Tree {
     }
  
 
+
+/// Propogate set of gravitationally attracting particles
+/// 
+/// Inputs
+/// ------
+/// particles: `Vec<Particle>` 
+///     Vector of Particles
+/// 
+/// step_size: f64
+///     Time in seconds to increment simulation
+/// 
+/// n_steps: usize
+///     Number of steps to propogate
+/// 
+/// theta: f64
+///     Angular precision for barnes hut calculation
+/// 
+/// is_show: bool
+///     Show propogation
+/// 
+/// Outputs
+/// -------
+/// particles: `Vec<Particle>` 
+///     Vector of Particles updated at t = step_size * n_steps 
 pub fn barnes_hut_gravity(
     mut particles: Vec<Particle>,
     step_size: f64,
     n_steps: usize,
-    theta: f64
-){
+    theta: f64,
+    is_show: bool
+) -> Vec<Particle> {
     let mut tree: Tree;
     let mut delta_t: f64;
-    let ref_part: Vec<&Particle>;
+    let mut del_pos: Vector3<f64> = Vector3::zeros();
+    let mut del_vel: Vector3<f64> = Vector3::zeros();
 
-    for particle in particles{
-        ref_part.append(&mut vec![&particle]);
+    if is_show {
+        // Initialize plot
+
+
     }
 
-    // Float iteration is a footgun
     for step in 0..n_steps {
         // Create Tree
-        tree = Tree::new(ref_part.clone(), theta);
+        tree = Tree::new(particles.clone(), theta);
         delta_t = step as f64 * step_size;
         particles.iter_mut().for_each(
             |particle| {
@@ -421,11 +448,21 @@ pub fn barnes_hut_gravity(
                 particle.motion[2] = tree.barnes_hut_node_acc(particle.motion[0], 0);
 
                 // Move and update values
-                particle.motion[1] += particle.motion[2] * delta_t;
-                particle.motion[0] += particle.motion[1] * delta_t + 0.5 * particle.motion[2] * delta_t.powi(2);
-            });
+                del_vel = particle.motion[2] * delta_t;
+                del_pos = particle.motion[1] * delta_t;
 
+                particle.motion[1] += del_vel;
+                particle.motion[0] += del_pos + 0.5 * del_vel * delta_t;
+            });
+        
+            if is_show {
+                // Plot frame
+
+
+            }
+            
     }
+    particles
 }
 
 /// Calculate range of min and max positions of set of Particles
@@ -439,7 +476,7 @@ pub fn barnes_hut_gravity(
 /// -------
 /// range: `(Vector3<f64>, Vector3<f64>)`
 ///     Min and max points of space
-pub fn calc_range(particles: Vec<&Particle>) -> (Vector3<f64>, Vector3<f64>) {
+pub fn calc_range(particles: Vec<Particle>) -> (Vector3<f64>, Vector3<f64>) {
     let mut min: Vector3<f64> = Vector3::zeros();
     let mut max: Vector3<f64> = Vector3::zeros();
 
