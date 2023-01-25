@@ -12,6 +12,15 @@ use crate::constants as cst;
 
 pub const TOLERANCE: f64 = 1e-8;
 
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Particle {
+    pub mass: f64,
+    pub motion: Vec<Vector3<f64>>,
+}
+
+// TODO-TD: find happy interface between Particle and Body
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Body{
     pub name: String,
@@ -42,9 +51,18 @@ impl Body {
     }
     
 
-    // Calculate required orbital velocity at radial distance
-    pub fn calc_orbital_velocity(&self, radius: f64) -> f64 {
-        // TODO-TD: Vectorize
+    /// Calculate required orbital velocity at radial distance
+    /// 
+    /// Inputs
+    /// ------
+    /// radius: `f64`
+    ///     Radius in km from Body center
+    ///     
+    /// Outputs
+    /// -------
+    /// val: `f64`
+    ///     Required tangential velocity magnitude
+    pub fn calc_orbital_velocity_mag(&self, radius: f64) -> f64 {
         let vel: f64 = (2.0 * self.grav_param / radius).sqrt();
         return vel
     }
@@ -55,9 +73,14 @@ impl Body {
     /// ------
     /// semi_major_axis: `f64`
     ///     Semi major axis of orbital ellipse
+    /// 
+    /// Outputs
+    /// -------
+    /// period: `f64`
+    ///    Period of orbit in seconds
     pub fn calc_period(&self, semi_major_axis: f64) -> f64 {
-        let time: f64 = 2.0 * PI * (semi_major_axis.powi(3)/self.grav_param).sqrt();
-        return time
+        let period: f64 = 2.0 * PI * (semi_major_axis.powi(3)/self.grav_param).sqrt();
+        return period
     }
     
     /// Calculate radius for stationary orbit above body surface
@@ -68,13 +91,23 @@ impl Body {
     ///     Magnitude of radius for stationary orbit
     pub fn calc_stationary_orbit(&self) -> f64 {
         let period: f64 = 2.0 * PI / self.rotation_rate;
-        let a: f64 = self.grav_param * period.powi(2); // 
-        let r_mag: f64 = (a / (4.0 * PI.powi(2))).powf(1.0 / 3.0); // 
+        let a: f64 = self.grav_param * period.powi(2); 
+        let r_mag: f64 = (a / (4.0 * PI.powi(2))).powf(1.0 / 3.0); 
         return r_mag
     }
 
-    // Geodetic to rectangular coordinates
-    // E.g. Latitude, Longitude, Altitude to ECEF
+    /// Geodetic to rectangular coordinates
+    /// E.g. Latitude, Longitude, Altitude to ECEF
+    /// 
+    /// Inputs
+    /// ------
+    /// lla: `Vector3<f64>`
+    ///     geodetic coords
+    /// 
+    /// Outputs
+    /// -------
+    /// xyz: `Vector3<f64>`
+    ///     Cartesian coords
     pub fn geodetic_to_xyz(&self, lla: Vector3<f64>) -> Vector3<f64> {
         let radius: f64 = self.calc_prime_vertical(lla[0]);
         let x: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].cos();
@@ -127,27 +160,15 @@ impl Body {
 }
 
 
-pub fn calc_acc(d_sq: f64, mass: f64, dir: Vector3<f64>) -> Vector3<f64> {
-    let acc: Vector3<f64> = dir * cst::GRAV_CONST * (mass) / d_sq;
-    acc
-}
-
 #[derive(Clone, Debug, PartialEq)]
-pub struct Particle {
-    pub mass: f64,
-    pub motion: Vec<Vector3<f64>>,
-}
-
-
-#[derive(Clone, Debug, PartialEq)]
-pub struct Node {
+pub struct BhNode {
     pub child_base: usize,
     pub child_mask: u16,
     pub quad_size: f64,
     pub mass: f64
 }
 
-impl Node {
+impl BhNode {
 
     /// Initialize new Node
     /// 
@@ -161,7 +182,7 @@ impl Node {
     /// node: `Node`
     ///     Initialized `Node` struct
     fn new(range: (Vector3<f64>,Vector3<f64>)) -> Self {
-        let node: Node = Node {
+        let node: BhNode = BhNode {
             child_base: 0,
             child_mask: 0,
             mass: 0.,
@@ -172,15 +193,15 @@ impl Node {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Tree {
-    pub nodes: Vec<Node>,
+pub struct BhTree {
+    pub nodes: Vec<BhNode>,
     pub center_of_mass: Vec<Vector3<f64>>,
     pub mins: Vec<Vector3<f64>>,
     pub maxs: Vec<Vector3<f64>>,
     pub theta_sq: f64
 }
 
-impl Tree {
+impl BhTree {
 
     /// Initialize new `Tree`
     /// 
@@ -196,9 +217,9 @@ impl Tree {
     /// -------
     /// tree: `Tree`
     ///     Initialized `Tree` struct
-    pub fn new(particles: Vec<Particle>, theta: f64) -> Tree {
+    pub fn new(particles: Vec<Particle>, theta: f64) -> BhTree {
         let range = calc_range(particles.clone());
-        let mut tree = Tree::empty(range, theta, particles.len());
+        let mut tree = BhTree::empty(range, theta, particles.len());
         tree.add_particles_to_node(particles, 0);
         tree
     }
@@ -240,7 +261,7 @@ impl Tree {
 
         for particle in particles {
             self.nodes[node_id].mass += particle.mass;
-            let index = Tree::get_node_id_from_center(center, particle.motion[0]);
+            let index = BhTree::get_node_id_from_center(center, particle.motion[0]);
             particle_trees[index].push(particle);
         };
 
@@ -249,9 +270,9 @@ impl Tree {
         for (idx, particle_tree) in particle_trees.iter().enumerate() {
             if !particle_tree.is_empty() {
                 let mut range = (self.mins[node_id], self.maxs[node_id]);
-                range = Tree::get_bounding_box(range, center, idx);
+                range = BhTree::get_bounding_box(range, center, idx);
 
-                self.nodes.push(Node::new(range));
+                self.nodes.push(BhNode::new(range));
                 self.mins.push(range.0);
                 self.maxs.push(range.1);
                 self.nodes[node_id].child_mask |= 1 << idx;
@@ -289,14 +310,14 @@ impl Tree {
         theta: f64, 
         n_nodes: usize
     ) -> Self {
-        let mut tree = Tree {
+        let mut tree = BhTree {
             nodes: Vec::with_capacity(n_nodes),
             mins: Vec::with_capacity(n_nodes),
             maxs: Vec::with_capacity(n_nodes),
             center_of_mass: Vec::with_capacity(n_nodes),
             theta_sq: theta.powi(2)
         };
-        tree.nodes.push(Node::new(range));
+        tree.nodes.push(BhNode::new(range));
         tree.mins.push(range.0);
         tree.maxs.push(range.1);
         return tree
@@ -387,7 +408,7 @@ impl Tree {
             if d_sq < TOLERANCE {
                 acc = Vector3::new(0.,0.,0.);
             } else {
-                acc = calc_acc(d_sq, cur_node.mass, distance);
+                acc = dir * cst::GRAV_CONST * (mass) / d_sq;
             }
 
         } else {
@@ -408,7 +429,6 @@ impl Tree {
     }
  
 
-
 /// Propogate set of gravitationally attracting particles
 /// 
 /// Inputs
@@ -416,16 +436,16 @@ impl Tree {
 /// particles: `Vec<Particle>` 
 ///     Vector of Particles
 /// 
-/// step_size: f64
+/// step_size: `f64`
 ///     Time in seconds to increment simulation
 /// 
-/// n_steps: usize
+/// n_steps: `usize`
 ///     Number of steps to propogate
 /// 
-/// theta: f64
+/// theta: `f64`
 ///     Angular precision for barnes hut calculation
 /// 
-/// is_show: bool
+/// is_show: `bool`
 ///     Show propogation
 /// 
 /// Outputs
@@ -439,7 +459,7 @@ pub fn barnes_hut_gravity(
     theta: f64,
     is_show: bool
 ) -> Vec<Particle> {
-    let mut tree: Tree;
+    let mut tree: BhTree;
     let mut del_pos: Vector3<f64> = Vector3::zeros();
     let mut del_vel: Vector3<f64> = Vector3::zeros();
 
@@ -472,7 +492,7 @@ pub fn barnes_hut_gravity(
 
     for step in 0..n_steps {
         // Create Tree
-        tree = Tree::new(particles.clone(), theta);
+        tree = BhTree::new(particles.clone(), theta);
         particles.iter_mut().for_each(
             |particle| {
                 // Calculate acceleration per particle (MULTITHREAD)

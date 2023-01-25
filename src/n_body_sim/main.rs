@@ -35,15 +35,7 @@ fn main() {
                      Vector3::zeros()]
     };
 
-    let t_end: i32 = 60;
-
-    // Control duration and precision
-    for _ in [0..t_end].iter(){
-        particle2 = particle1.update(particle2, 1.0);
-    }
-
-
-    // 3 body - initial vectorization
+    // 3 body 
     let particle3: grav::Particle = grav::Particle {
         mass: 0.0,
         motion: vec![Vector3::new(0.,0.,0.),
@@ -58,6 +50,11 @@ fn main() {
     let step_szie: f64 = 2.5;
     let is_show: bool = false;
 
-    particles = grav::barnes_hut_gravity(particles, step_size, n_steps, theta, is_show)
+    particles = grav::barnes_hut_gravity(
+        particles, 
+        step_size, 
+        n_steps, 
+        theta, 
+        is_show)
 
 }

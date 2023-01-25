@@ -48,7 +48,7 @@ impl SurfacePoint{
     ) -> f64 {
         let radius: f64 = altitude + self.calc_surface_radius().norm();
         let surface_vel: f64 = self.calc_surface_vel();
-        let delta_v: f64 = self.body.calc_orbital_velocity(radius);
+        let delta_v: f64 = self.body.calc_orbital_velocity_mag(radius);
         let net_delta_v: f64 = delta_v - surface_vel;
         return net_delta_v
     }
