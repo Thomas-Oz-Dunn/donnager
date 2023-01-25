@@ -2,6 +2,9 @@
 Vehicle modelling
 */
 
+use nalgebra as na;
+use na::Vector3;
+
 use crate::{propulsion as prop, cosmos};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -55,9 +58,9 @@ impl Multistage {
         // Starting conditions
         let n_stage: usize = self.stages.len();
         let total_mass_0: f64 = self.calc_inertial_mass();
-        let mut radius: f64 = launch_site.calc_surface_radius();
         let body: cosmos::grav::Body = launch_site.body;
-        let mut grav_acc: f64 = body.calc_grav_acc(radius);
+        let mut radius: Vector3<f64> = launch_site.calc_surface_radius();
+        let mut grav_acc: Vector3<f64> = body.calc_body_grav(radius);
 
         let mut fuel_mass_mut: Vec<f64> = Vec::<f64>::new();
         for (stage, i_stage) in self.stages.iter().zip((0..n_stage).into_iter()) {
@@ -73,19 +76,19 @@ impl Multistage {
                 delta_v * (stage.mass + external_mass) / (total_mass_0 + external_mass);
             fuel_mass_mut[i_stage] = stage.calc_mass_fuel(
                 delta_v_stage, 
-                grav_acc, 
+                grav_acc.norm(), 
                 external_mass);
                 
             // Calculate new starting conditions for next stage
             let mass_ratio: f64 = prop::ballistics::calc_mass_ratio(
                 delta_v_stage, 
                 stage.engine.isp, 
-                grav_acc);
+                grav_acc.norm());
             radius = prop::ballistics::calc_burnout_height(
                 mass_ratio, 
-                grav_acc, 
-                stage.engine.isp);
-            grav_acc = body.calc_grav_acc(radius);
+                grav_acc.norm(), 
+                stage.engine.isp) * radius / radius.norm();
+            grav_acc = body.calc_body_grav(radius);
         }
 
         let fuel_mass: Vec<f64> = fuel_mass_mut;

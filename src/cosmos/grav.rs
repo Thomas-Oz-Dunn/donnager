@@ -2,7 +2,9 @@
 Gravitational Bodies
 */
 
+use std::fs;
 use nalgebra as na;
+use plotters::prelude::*;
 use std::f64::consts::PI;
 use na::{Vector3};
 
@@ -20,12 +22,22 @@ pub struct Body{
 }
 
 
+/// Gravitational Body
 impl Body {
 
-    // Calculate gravitational acceleration at radial distance from Body
-    pub fn calc_grav_acc(&self, radius: f64) -> f64 {
-        // TODO-TD: Vectorize
-        let grav_acc: f64 = self.grav_param / radius.powi(2);
+    /// Calculate gravitational acceleration at radial distance from Body
+    /// 
+    /// Inputs
+    /// ------
+    /// radius: `Vector3<f64>`
+    ///     Radius in km from Body center
+    /// 
+    /// Outputs
+    /// -------
+    /// grav_acc: `Vector3<f64>`
+    ///     Acceleration rate due to gravity
+    pub fn calc_body_grav(&self, radius: Vector3<f64>) -> Vector3<f64> {
+        let grav_acc: Vector3<f64>  = self.grav_param * radius / radius.norm().powi(3);
         return grav_acc
     }
     
@@ -428,40 +440,73 @@ pub fn barnes_hut_gravity(
     is_show: bool
 ) -> Vec<Particle> {
     let mut tree: Tree;
-    let mut delta_t: f64;
     let mut del_pos: Vector3<f64> = Vector3::zeros();
     let mut del_vel: Vector3<f64> = Vector3::zeros();
 
     if is_show {
         // Initialize plot
+        match fs::create_dir("./images") {
+            Err(why) => println!("! {:?}", why.kind()),
+            Ok(_) => {},
+        }
+            
+        let root_drawing_area = BitMapBackend::gif(
+            "./images/animated.gif", 
+            (500, 500), 
+            1_000  /* Each frame show 1s */
+        ).unwrap().into_drawing_area();
 
+        
+        let x_spec: Range<f64> = -10.0..10.0;
+        let y_spec: Range<f64> = -10.0..10.0;
 
+        root_drawing_area.fill(&WHITE).unwrap();
+        let mut ctx = ChartBuilder::on(&root_drawing_area)
+            .set_label_area_size(LabelAreaPosition::Left, 30)
+            .set_label_area_size(LabelAreaPosition::Bottom, 30)
+            .build_cartesian_2d::<Range<f64>, Range<f64>>(x_spec, y_spec)
+            .unwrap();
+
+        ctx.configure_mesh().draw().unwrap();
     }
 
     for step in 0..n_steps {
         // Create Tree
         tree = Tree::new(particles.clone(), theta);
-        delta_t = step as f64 * step_size;
         particles.iter_mut().for_each(
             |particle| {
                 // Calculate acceleration per particle (MULTITHREAD)
                 particle.motion[2] = tree.barnes_hut_node_acc(particle.motion[0], 0);
 
                 // Move and update values
-                del_vel = particle.motion[2] * delta_t;
-                del_pos = particle.motion[1] * delta_t;
+                del_vel = particle.motion[2] * step_size;
+                del_pos = particle.motion[1] * step_size;
 
                 particle.motion[1] += del_vel;
-                particle.motion[0] += del_pos + 0.5 * del_vel * delta_t;
+                particle.motion[0] += del_pos + 0.5 * del_vel * step_size;
             });
         
             if is_show {
                 // Plot frame
-
-
+                ctx.draw_series(
+                    // PLot idea, circle at point!
+                    LineSeries::new(
+                        [(particle.motion[0][0], particle.motion[0][1]), (particle.motion[0][0] + particle.motion[1][0], particle.motion[0][1] + particle.motion[0][1])], 
+                        Palette99::pick(i_point))
+                    ).unwrap().label(format!("Particle {}", i_point));
             }
             
     }
+
+
+    if is_show{
+        ctx.configure_series_labels()
+        .background_style(&WHITE.mix(0.8))
+        .border_style(&BLACK)
+        .draw()
+        .unwrap();
+    }
+
     particles
 }
 

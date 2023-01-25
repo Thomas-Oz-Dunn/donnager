@@ -3,9 +3,7 @@ n-body simulation demonstration
 Barnes Hut
 */
 
-use std::fs;
 use std::ops::Range;
-use plotters::prelude::*;
 use nalgebra as na;
 use na::Vector3;
 
@@ -19,31 +17,6 @@ use donnager::cosmos::grav as grav;
 /// n body - barnes hut tree
 
 fn main() {
-
-    // Render plot
-    match fs::create_dir("./images") {
-        Err(why) => println!("! {:?}", why.kind()),
-        Ok(_) => {},
-    }
-
-    let root_drawing_area = BitMapBackend::gif(
-        "./images/animated.gif", 
-        (500, 500), 
-        1_000  /* Each frame show 1s */
-    ).unwrap().into_drawing_area();
-
-    let x_spec: Range<f64> = -10.0..10.0;
-    let y_spec: Range<f64> = -10.0..10.0;
-
-    root_drawing_area.fill(&WHITE).unwrap();
-    let mut ctx = ChartBuilder::on(&root_drawing_area)
-        .set_label_area_size(LabelAreaPosition::Left, 30)
-        .set_label_area_size(LabelAreaPosition::Bottom, 30)
-        .build_cartesian_2d::<Range<f64>, Range<f64>>(x_spec, y_spec)
-        .unwrap();
-
-    ctx.configure_mesh().draw().unwrap();
-
 
     // Run
     // 1 body
@@ -70,7 +43,6 @@ fn main() {
     }
 
 
-
     // 3 body - initial vectorization
     let particle3: grav::Particle = grav::Particle {
         mass: 0.0,
@@ -79,35 +51,13 @@ fn main() {
                      Vector3::new(0.,0., 0.)]
     };
 
-    let mut particles: Vec<grav::Particle> = [particle1, particle2, particle3].to_vec();
-
-    for _ in [0..t_end].iter(){
-        
-        let accel: Vec<Vector3<f64>> = grav::calc_acceleration(particles.clone());
-        (0..).zip(
-            accel.iter().zip(
-                particles.iter_mut()))
-                    .for_each(|(i_point, (acc, particle))| {
-                        ctx.draw_series(
-                            // PLot idea, circle at point!
-                            LineSeries::new(
-                                [(particle.motion[0][0], particle.motion[0][1]), (particle.motion[0][0] + particle.motion[1][0], particle.motion[0][1] + particle.motion[0][1])], 
-                                Palette99::pick(i_point))
-                            ).unwrap().label(format!("Particle {}", i_point));
-
-                particle.motion[0] += particle.motion[1];
-                particle.motion[1] += acc;
-            });
-
-    }
-    ctx.configure_series_labels()
-        .background_style(&WHITE.mix(0.8))
-        .border_style(&BLACK)
-        .draw()
-        .unwrap();
-
-
-
     // N body- watch your Kolmogrov Complexity
+    let mut particles: Vec<grav::Particle> = [particle1, particle2, particle3].to_vec();
+    let theta: f64  = 0.1;
+    let n_steps: usize = 100;
+    let step_szie: f64 = 2.5;
+    let is_show: bool = false;
+
+    particles = grav::barnes_hut_gravity(particles, step_size, n_steps, theta, is_show)
 
 }
