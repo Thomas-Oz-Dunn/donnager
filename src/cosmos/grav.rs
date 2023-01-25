@@ -3,6 +3,7 @@ Gravitational Bodies
 */
 
 use std::fs;
+use std::ops::*;
 use nalgebra as na;
 use plotters::prelude::*;
 use std::f64::consts::PI;
@@ -408,7 +409,7 @@ impl BhTree {
             if d_sq < TOLERANCE {
                 acc = Vector3::new(0.,0.,0.);
             } else {
-                acc = dir * cst::GRAV_CONST * (mass) / d_sq;
+                acc = distance * cst::GRAV_CONST * (cur_node.mass) / d_sq;
             }
 
         } else {
@@ -489,6 +490,9 @@ pub fn barnes_hut_gravity(
 
         ctx.configure_mesh().draw().unwrap();
     }
+    else {
+        let root_drawing_area = None;
+    }
 
     for step in 0..n_steps {
         // Create Tree
@@ -504,17 +508,19 @@ pub fn barnes_hut_gravity(
 
                 particle.motion[1] += del_vel;
                 particle.motion[0] += del_pos + 0.5 * del_vel * step_size;
+                
+                if is_show {
+                    // Plot frame
+                    let mut ctx = ChartBuilder::on(&root_drawing_area).draw_series(
+                        LineSeries::new(
+                            [(particle.motion[0][0], particle.motion[0][1]), 
+                                   (particle.motion[0][0], particle.motion[0][1])], 
+                            Palette99::pick(32))
+                        ).unwrap().label(format!("Particle {}", 32));
+                }
+
             });
         
-            if is_show {
-                // Plot frame
-                ctx.draw_series(
-                    // PLot idea, circle at point!
-                    LineSeries::new(
-                        [(particle.motion[0][0], particle.motion[0][1]), (particle.motion[0][0] + particle.motion[1][0], particle.motion[0][1] + particle.motion[0][1])], 
-                        Palette99::pick(i_point))
-                    ).unwrap().label(format!("Particle {}", i_point));
-            }
             
     }
 
