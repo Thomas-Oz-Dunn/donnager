@@ -16,7 +16,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Document
+      run: cargo doc
     - name: Build
-      run: cargo build --verbose
+      run: cargo build --verbose --releases
     - name: Run tests
       run: cargo test --verbose
