@@ -1,12 +1,12 @@
 
-// Useful constants
+/// A Module of useful constants
 pub mod constants;
 
-// Propulsion related tools
+/// Propulsion related module
 pub mod propulsion;
 
-// Dynamics related tools
+/// Dynamics related module
 pub mod dynamics;
 
-// Cosmos related tools
+/// Cosmos related module
 pub mod cosmos;
