@@ -58,8 +58,8 @@ impl Multistage {
         // Starting conditions
         let n_stage: usize = self.stages.len();
         let total_mass_0: f64 = self.calc_inertial_mass();
-        let body: cosmos::grav::Body = launch_site.body;
         let mut radius: Vector3<f64> = launch_site.calc_surface_radius();
+        let body: cosmos::grav::Body = launch_site.body;
         let mut grav_acc: Vector3<f64> = body.calc_body_grav(radius);
 
         let mut fuel_mass_mut: Vec<f64> = Vec::<f64>::new();

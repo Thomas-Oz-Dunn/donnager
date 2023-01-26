@@ -45,16 +45,27 @@ fn main() {
 
     // N body- watch your Kolmogrov Complexity
     let mut particles: Vec<grav::Particle> = [particle1, particle2, particle3].to_vec();
+    println!("\nStart\n");
+    for (particle, idx) in particles.iter().zip(0..){
+        println!("Particle {} pos: {} x, {} y, {} z \t", idx, 
+            particle.motion[0][0], particle.motion[0][1], particle.motion[0][2])
+    }
     let theta: f64  = 0.1;
     let n_steps: usize = 100;
-    let step_szie: f64 = 2.5;
-    let is_show: bool = false;
+    let step_size: f64 = 2.5;
+    let is_debug: bool = true;
 
     particles = grav::barnes_hut_gravity(
         particles, 
         step_size, 
         n_steps, 
         theta, 
-        is_show)
+        is_debug);
+
+    println!("\nEnd\n");
+    for (particle, idx) in particles.iter().zip(0..){
+        println!("\nParticle {} pos: {} x, {} y, {} z \n", idx, 
+            particle.motion[0][0], particle.motion[0][1], particle.motion[0][2])
+    }
 
 }

@@ -2,10 +2,10 @@
 Gravitational Bodies
 */
 
-use std::fs;
-use std::ops::*;
+// use std::fs;
+// use std::ops::*;
 use nalgebra as na;
-use plotters::prelude::*;
+// use plotters::prelude::*;
 use std::f64::consts::PI;
 use na::{Vector3};
 
@@ -222,6 +222,7 @@ impl BhTree {
         let range = calc_range(particles.clone());
         let mut tree = BhTree::empty(range, theta, particles.len());
         tree.add_particles_to_node(particles, 0);
+        println!("{:?}",tree.center_of_mass);
         tree
     }
 
@@ -315,7 +316,7 @@ impl BhTree {
             nodes: Vec::with_capacity(n_nodes),
             mins: Vec::with_capacity(n_nodes),
             maxs: Vec::with_capacity(n_nodes),
-            center_of_mass: Vec::with_capacity(n_nodes),
+            center_of_mass: vec![Vector3::zeros(); n_nodes],
             theta_sq: theta.powi(2)
         };
         tree.nodes.push(BhNode::new(range));
@@ -400,6 +401,7 @@ impl BhTree {
     ) -> Vector3<f64> {
         let cur_node = &self.nodes[node_id];
         let q_size = cur_node.quad_size;
+        println!("{:?}", self.center_of_mass);
         let distance= self.center_of_mass[node_id] - pos; 
         let d_sq = distance.norm_squared();
         let theta_sq = self.theta_sq;
@@ -458,49 +460,49 @@ pub fn barnes_hut_gravity(
     step_size: f64,
     n_steps: usize,
     theta: f64,
-    is_show: bool
+    is_debug: bool
 ) -> Vec<Particle> {
     let mut tree: BhTree;
     let mut del_pos: Vector3<f64> = Vector3::zeros();
     let mut del_vel: Vector3<f64> = Vector3::zeros();
 
-    if is_show {
-        // Initialize plot
-        match fs::create_dir("./images") {
-            Err(why) => println!("! {:?}", why.kind()),
-            Ok(_) => {},
-        }
+    // if is_show {
+    //     // Initialize plot
+    //     match fs::create_dir("./images") {
+    //         Err(why) => println!("! {:?}", why.kind()),
+    //         Ok(_) => {},
+    //     }
             
-        let root_drawing_area = BitMapBackend::gif(
-            "./images/animated.gif", 
-            (500, 500), 
-            1_000  /* Each frame show 1s */
-        ).unwrap().into_drawing_area();
+    //     let root_drawing_area = BitMapBackend::gif(
+    //         "./images/animated.gif", 
+    //         (500, 500), 
+    //         1_000  /* Each frame show 1s */
+    //     ).unwrap().into_drawing_area();
 
         
-        let x_spec: Range<f64> = -10.0..10.0;
-        let y_spec: Range<f64> = -10.0..10.0;
+    //     let x_spec: Range<f64> = -10.0..10.0;
+    //     let y_spec: Range<f64> = -10.0..10.0;
 
-        root_drawing_area.fill(&WHITE).unwrap();
-        let mut ctx = ChartBuilder::on(&root_drawing_area)
-            .set_label_area_size(LabelAreaPosition::Left, 30)
-            .set_label_area_size(LabelAreaPosition::Bottom, 30)
-            .build_cartesian_2d::<Range<f64>, Range<f64>>(x_spec, y_spec)
-            .unwrap();
+    //     root_drawing_area.fill(&WHITE).unwrap();
+    //     let mut ctx = ChartBuilder::on(&root_drawing_area)
+    //         .set_label_area_size(LabelAreaPosition::Left, 30)
+    //         .set_label_area_size(LabelAreaPosition::Bottom, 30)
+    //         .build_cartesian_2d::<Range<f64>, Range<f64>>(x_spec, y_spec)
+    //         .unwrap();
 
-        ctx.configure_mesh().draw().unwrap();
-    }
-    else {
-        let root_drawing_area = None;
-    }
+    //     ctx.configure_mesh().draw().unwrap();
+    // }
+    // else {
+    //     let root_drawing_area = None;
+    // }
 
-    for step in 0..n_steps {
+    for _ in 0..n_steps {
         // Create Tree
         tree = BhTree::new(particles.clone(), theta);
-        particles.iter_mut().for_each(
-            |particle| {
+        (0..).zip(particles.iter_mut()).for_each(
+            |(idx, particle)| {
                 // Calculate acceleration per particle (MULTITHREAD)
-                particle.motion[2] = tree.barnes_hut_node_acc(particle.motion[0], 0);
+                particle.motion[2] = tree.barnes_hut_node_acc(particle.motion[0], idx);
 
                 // Move and update values
                 del_vel = particle.motion[2] * step_size;
@@ -509,14 +511,17 @@ pub fn barnes_hut_gravity(
                 particle.motion[1] += del_vel;
                 particle.motion[0] += del_pos + 0.5 * del_vel * step_size;
                 
-                if is_show {
-                    // Plot frame
-                    let mut ctx = ChartBuilder::on(&root_drawing_area).draw_series(
-                        LineSeries::new(
-                            [(particle.motion[0][0], particle.motion[0][1]), 
-                                   (particle.motion[0][0], particle.motion[0][1])], 
-                            Palette99::pick(32))
-                        ).unwrap().label(format!("Particle {}", 32));
+                // if is_show {
+                //     // Plot frame
+                //     let mut ctx = ChartBuilder::on(&root_drawing_area).draw_series(
+                //         LineSeries::new(
+                //             [(particle.motion[0][0], particle.motion[0][1]), 
+                //                    (particle.motion[0][0], particle.motion[0][1])], 
+                //             Palette99::pick(32))
+                //         ).unwrap().label(format!("Particle {}", 32));
+                // }
+                if is_debug {
+                    println!("Particle # {} pos: {}", idx, particle.motion[0]);
                 }
 
             });
@@ -525,13 +530,13 @@ pub fn barnes_hut_gravity(
     }
 
 
-    if is_show{
-        ctx.configure_series_labels()
-        .background_style(&WHITE.mix(0.8))
-        .border_style(&BLACK)
-        .draw()
-        .unwrap();
-    }
+    // if is_show{
+    //     ctx.configure_series_labels()
+    //     .background_style(&WHITE.mix(0.8))
+    //     .border_style(&BLACK)
+    //     .draw()
+    //     .unwrap();
+    // }
 
     particles
 }
