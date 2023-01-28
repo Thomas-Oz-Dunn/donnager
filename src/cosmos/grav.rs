@@ -2,10 +2,7 @@
 Gravitational Bodies
 */
 
-// use std::fs;
-// use std::ops::*;
 use nalgebra as na;
-// use plotters::prelude::*;
 use std::f64::consts::PI;
 use na::{Vector3};
 
@@ -197,98 +194,13 @@ impl BhNode {
 pub struct BhTree {
     pub nodes: Vec<BhNode>,
     pub center_of_mass: Vec<Vector3<f64>>,
+    pub avg_weighted_pos: Vec<Vector3<f64>>,
     pub mins: Vec<Vector3<f64>>,
     pub maxs: Vec<Vector3<f64>>,
     pub theta_sq: f64
 }
 
 impl BhTree {
-
-    /// Initialize new `Tree`
-    /// 
-    /// Inputs
-    /// ------
-    /// particles: `Vector<Particle>`
-    ///     List of particles to store
-    /// 
-    /// theta: `f64`
-    ///     Angular precision
-    /// 
-    /// Outputs
-    /// -------
-    /// tree: `Tree`
-    ///     Initialized `Tree` struct
-    pub fn new(particles: Vec<Particle>, theta: f64) -> BhTree {
-        let range = calc_range(particles.clone());
-        let mut tree = BhTree::empty(range, theta, particles.len());
-        tree.add_particles_to_node(particles, 0);
-        println!("{:?}",tree.center_of_mass);
-        tree
-    }
-
-
-    /// Add list of Particles to node
-    /// 
-    /// Inputs
-    /// ------
-    /// particles: `Vector<&Particle>`
-    ///     List of particles to store
-    /// 
-    /// node_id: `usize`
-    ///     Node identification number. See Tree:get_node_id_from_center()
-    pub fn add_particles_to_node(
-        &mut self, 
-        particles: Vec<Particle>, 
-        node_id: usize
-    ) {
-        if particles.len() == 1 {
-            self.nodes[node_id].mass += particles[0].mass;
-            return;
-        };
-
-        let center = (self.mins[node_id] + self.maxs[node_id]) / 2.0;
-
-        // TODO-TD: improve initialization
-        
-        let mut particle_trees: [Vec<Particle>; 8] = [
-            Vec::with_capacity(particles.len() / 4),
-            Vec::with_capacity(particles.len() / 4),
-            Vec::with_capacity(particles.len() / 4),
-            Vec::with_capacity(particles.len() / 4),
-            Vec::with_capacity(particles.len() / 4),
-            Vec::with_capacity(particles.len() / 4),
-            Vec::with_capacity(particles.len() / 4),
-            Vec::with_capacity(particles.len() / 4),
-        ];
-
-        for particle in particles {
-            self.nodes[node_id].mass += particle.mass;
-            let index = BhTree::get_node_id_from_center(center, particle.motion[0]);
-            particle_trees[index].push(particle);
-        };
-
-        //Recurse
-        self.nodes[node_id].child_base = self.nodes.len();
-        for (idx, particle_tree) in particle_trees.iter().enumerate() {
-            if !particle_tree.is_empty() {
-                let mut range = (self.mins[node_id], self.maxs[node_id]);
-                range = BhTree::get_bounding_box(range, center, idx);
-
-                self.nodes.push(BhNode::new(range));
-                self.mins.push(range.0);
-                self.maxs.push(range.1);
-                self.nodes[node_id].child_mask |= 1 << idx;
-            }
-        }
-
-        let mut child_node = self.nodes[node_id].child_base;
-        for particle_tree in particle_trees.iter() {
-            if !particle_tree.is_empty() {
-                self.add_particles_to_node(particle_tree.to_vec(), child_node);
-                child_node += 1;
-            }
-        }
-    }
 
     /// Initialize empty `Tree`
     /// 
@@ -316,14 +228,108 @@ impl BhTree {
             nodes: Vec::with_capacity(n_nodes),
             mins: Vec::with_capacity(n_nodes),
             maxs: Vec::with_capacity(n_nodes),
-            center_of_mass: vec![Vector3::zeros(); n_nodes],
+            center_of_mass: Vec::with_capacity(n_nodes),
+			avg_weighted_pos: Vec::with_capacity(n_nodes),
             theta_sq: theta.powi(2)
         };
         tree.nodes.push(BhNode::new(range));
         tree.mins.push(range.0);
         tree.maxs.push(range.1);
+		tree.avg_weighted_pos.push(Vector3::zeros());
         return tree
     }
+
+    /// Initialize new `Tree`
+    /// 
+    /// Inputs
+    /// ------
+    /// particles: `Vector<Particle>`
+    ///     List of particles to store
+    /// 
+    /// theta: `f64`
+    ///     Angular precision
+    /// 
+    /// Outputs
+    /// -------
+    /// tree: `Tree`
+    ///     Initialized `Tree` struct
+    pub fn new(particles: Vec<Particle>, theta: f64) -> BhTree {
+        let range = calc_range(particles.clone());
+        let mut tree = BhTree::empty(range, theta, particles.len());
+        tree.add_particles_to_node(particles, 0);
+        for (idx, node) in &mut tree.nodes.iter().enumerate() {
+			tree.center_of_mass.push(tree.avg_weighted_pos[idx] / node.mass);
+		}
+        tree
+    }
+
+
+    /// Add list of Particles to node
+    /// 
+    /// Inputs
+    /// ------
+    /// particles: `Vector<&Particle>`
+    ///     List of particles to store
+    /// 
+    /// node_id: `usize`
+    ///     Node identification number. See Tree:get_node_id_from_center()
+    pub fn add_particles_to_node(
+        &mut self, 
+        particles: Vec<Particle>, 
+        node_id: usize
+    ) {
+        if particles.len() == 1 {
+            self.nodes[node_id].mass += particles[0].mass;
+			self.avg_weighted_pos[node_id] += particles[0].motion[0] * particles[0].mass;
+            return;
+        };
+
+        let center = (self.mins[node_id] + self.maxs[node_id]) / 2.0;
+
+        // TODO-TD: improve initialization
+        
+        let mut particle_trees: [Vec<Particle>; 8] = [
+            Vec::with_capacity(particles.len() / 4),
+            Vec::with_capacity(particles.len() / 4),
+            Vec::with_capacity(particles.len() / 4),
+            Vec::with_capacity(particles.len() / 4),
+            Vec::with_capacity(particles.len() / 4),
+            Vec::with_capacity(particles.len() / 4),
+            Vec::with_capacity(particles.len() / 4),
+            Vec::with_capacity(particles.len() / 4),
+        ];
+
+        for particle in particles {
+            self.nodes[node_id].mass += particle.mass;
+			self.avg_weighted_pos[node_id] += particle.motion[0] * particle.mass;
+
+            let index = BhTree::get_node_id_from_center(center, particle.motion[0]);
+            particle_trees[index].push(particle);
+        };
+
+        self.nodes[node_id].child_base = self.nodes.len();
+        for (idx, particle_tree) in particle_trees.iter().enumerate() {
+            if !particle_tree.is_empty() {
+                let mut range = (self.mins[node_id], self.maxs[node_id]);
+                range = BhTree::get_bounding_box(range, center, idx);
+
+                self.nodes.push(BhNode::new(range));
+                self.mins.push(range.0);
+                self.maxs.push(range.1);
+				self.avg_weighted_pos.push(Vector3::zeros());
+                self.nodes[node_id].child_mask |= 1 << idx;
+            }
+        }
+
+        let mut child_node = self.nodes[node_id].child_base;
+        for particle_tree in particle_trees.iter() {
+            if !particle_tree.is_empty() {
+                self.add_particles_to_node(particle_tree.to_vec(), child_node);
+                child_node += 1;
+            }
+        }
+    }
+
 
     /// Get bounding box of Tree
     /// 
@@ -401,7 +407,6 @@ impl BhTree {
     ) -> Vector3<f64> {
         let cur_node = &self.nodes[node_id];
         let q_size = cur_node.quad_size;
-        println!("{:?}", self.center_of_mass);
         let distance= self.center_of_mass[node_id] - pos; 
         let d_sq = distance.norm_squared();
         let theta_sq = self.theta_sq;
@@ -466,39 +471,14 @@ pub fn barnes_hut_gravity(
     let mut del_pos: Vector3<f64> = Vector3::zeros();
     let mut del_vel: Vector3<f64> = Vector3::zeros();
 
-    // if is_show {
-    //     // Initialize plot
-    //     match fs::create_dir("./images") {
-    //         Err(why) => println!("! {:?}", why.kind()),
-    //         Ok(_) => {},
-    //     }
-            
-    //     let root_drawing_area = BitMapBackend::gif(
-    //         "./images/animated.gif", 
-    //         (500, 500), 
-    //         1_000  /* Each frame show 1s */
-    //     ).unwrap().into_drawing_area();
-
-        
-    //     let x_spec: Range<f64> = -10.0..10.0;
-    //     let y_spec: Range<f64> = -10.0..10.0;
-
-    //     root_drawing_area.fill(&WHITE).unwrap();
-    //     let mut ctx = ChartBuilder::on(&root_drawing_area)
-    //         .set_label_area_size(LabelAreaPosition::Left, 30)
-    //         .set_label_area_size(LabelAreaPosition::Bottom, 30)
-    //         .build_cartesian_2d::<Range<f64>, Range<f64>>(x_spec, y_spec)
-    //         .unwrap();
-
-    //     ctx.configure_mesh().draw().unwrap();
-    // }
-    // else {
-    //     let root_drawing_area = None;
-    // }
-
     for _ in 0..n_steps {
         // Create Tree
         tree = BhTree::new(particles.clone(), theta);
+
+        if is_debug{
+            println!("")
+        };
+
         (0..).zip(particles.iter_mut()).for_each(
             |(idx, particle)| {
                 // Calculate acceleration per particle (MULTITHREAD)
@@ -507,36 +487,18 @@ pub fn barnes_hut_gravity(
                 // Move and update values
                 del_vel = particle.motion[2] * step_size;
                 del_pos = particle.motion[1] * step_size;
-
+                if is_debug {
+                    print!("{:.5} dv \t\t", del_vel);
+                }
                 particle.motion[1] += del_vel;
                 particle.motion[0] += del_pos + 0.5 * del_vel * step_size;
                 
-                // if is_show {
-                //     // Plot frame
-                //     let mut ctx = ChartBuilder::on(&root_drawing_area).draw_series(
-                //         LineSeries::new(
-                //             [(particle.motion[0][0], particle.motion[0][1]), 
-                //                    (particle.motion[0][0], particle.motion[0][1])], 
-                //             Palette99::pick(32))
-                //         ).unwrap().label(format!("Particle {}", 32));
-                // }
                 if is_debug {
-                    println!("Particle # {} pos: {}", idx, particle.motion[0]);
+                    print!("{} pos: {:.5} x, {:.5} y, {:.5} z\t\t", idx, 
+                        particle.motion[0][0], particle.motion[0][1], particle.motion[0][2]);
                 }
-
             });
-        
-            
     }
-
-
-    // if is_show{
-    //     ctx.configure_series_labels()
-    //     .background_style(&WHITE.mix(0.8))
-    //     .border_style(&BLACK)
-    //     .draw()
-    //     .unwrap();
-    // }
 
     particles
 }
