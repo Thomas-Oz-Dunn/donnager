@@ -12,45 +12,41 @@ fn main() {
 
     // Body
     let particle1: grav::Particle = grav::Particle {
-        mass: 30.0,
+        mass: 1e13,
         motion: vec![
-            Vector3::new(0.,2.8,0.),
+            Vector3::new(0.,28.,0.),
             Vector3::zeros(),
             Vector3::zeros()]
     };
 
     // Body
     let particle2: grav::Particle = grav::Particle {
-        mass: 50.0,
+        mass: 1e13,
         motion: vec![
-            Vector3::new(0.7,0.5,0.),
+            Vector3::new(7.,4.,0.),
             Vector3::zeros(),
             Vector3::zeros()]
     };
 
     // Body 
     let particle3: grav::Particle = grav::Particle {
-        mass: 15.0,
+        mass: 1e13,
         motion: vec![
-            Vector3::new(0.,0.,1.),
+            Vector3::new(0.,10.,0.),
             Vector3::zeros(),
             Vector3::zeros()]
     };
     
-    // N body- watch your Kolmogrov Complexity
+    // N body configuration
     let theta: f64  = 1.0;
     let n_steps: usize = 1000;
     let step_size: f64 = 0.01;
-    let is_debug: bool = true;
-
+    let is_debug: bool = false;
     let mut particles: Vec<grav::Particle> = [particle1, particle2, particle3].to_vec();
 
-    println!("\nStart\n");
-    for (particle, idx) in particles.iter().zip(0..){
-        if is_debug {
-            print!("{} pos: {:.5} x, {:.5} y, {:.5} z\t\t", idx, 
-                particle.motion[0][0], particle.motion[0][1], particle.motion[0][2]);
-        }
+    println!("\nStart");
+    for particle in particles.iter(){
+        print!("pos: {:.5?} \t\t", particle.motion[0]);
     }
 
     particles = grav::barnes_hut_gravity(
@@ -59,5 +55,11 @@ fn main() {
         n_steps, 
         theta, 
         is_debug);
+
+        
+    println!("\nEnd @ t = {} s", (n_steps as f64) * step_size);
+    for particle in particles.iter(){
+        print!("pos: {:.5?} \t\t", particle.motion[0]);
+    }
 
 }

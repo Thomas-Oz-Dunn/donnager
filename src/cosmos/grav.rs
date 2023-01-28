@@ -8,7 +8,7 @@ use na::{Vector3};
 
 use crate::constants as cst;
 
-pub const TOLERANCE: f64 = 1e-8;
+pub const TOLERANCE: f64 = 1e-16;
 
 
 #[derive(Clone, Debug, PartialEq)]
@@ -137,13 +137,13 @@ impl Body {
             ecc_2 * (a.powi(2) - b.powi(2));
         let c: f64 = ecc_2.powi(2) * 54.0 * b.powi(2) * xyz[2].powi(2) * p.powi(2) / (g.powi(3));
         let s: f64 = (1.0 + c + (c.powi(2) + 2.0 * c).sqrt()).powf(1.0 / 3.0);
-        let capP: f64 = 54.0 * b.powi(2)*xyz[2].powi(2) / 
+        let cap_p: f64 = 54.0 * b.powi(2)*xyz[2].powi(2) / 
             (3.0 * (s + 1.0 + 1.0 / s).powi(2) * g.powi(2));
-        let q: f64 = (1.0 + 2.0 * ecc_2.powi(2) * capP).sqrt();
-        let r_0: f64 = -capP * ecc_2 * p /(1.0+q) + 
+        let q: f64 = (1.0 + 2.0 * ecc_2.powi(2) * cap_p).sqrt();
+        let r_0: f64 = -cap_p * ecc_2 * p /(1.0+q) + 
             ((a.powi(2)/2.0)*(1.0 + 1.0 / q) - 
-            capP * (1.0 - ecc_2) * xyz[2].powi(2) / (q * (1.0 + q)) - 
-            capP*p.powi(2)/2.0).sqrt();
+            cap_p * (1.0 - ecc_2) * xyz[2].powi(2) / (q * (1.0 + q)) - 
+            cap_p*p.powi(2)/2.0).sqrt();
         let u: f64 = ((p - ecc_2*r_0).powi(2) + xyz[2].powi(2)).sqrt();
         let v: f64 = ((p - ecc_2*r_0).powi(2) + (1.0 - ecc_2)*xyz[2].powi(2)).sqrt();
         let z_0: f64 = b.powi(2) * xyz[2] / (a * v);
@@ -272,7 +272,7 @@ impl BhTree {
     ///     List of particles to store
     /// 
     /// node_id: `usize`
-    ///     Node identification number. See Tree:get_node_id_from_center()
+    ///     Node identification number.
     pub fn add_particles_to_node(
         &mut self, 
         particles: Vec<Particle>, 
@@ -283,11 +283,8 @@ impl BhTree {
 			self.avg_weighted_pos[node_id] += particles[0].motion[0] * particles[0].mass;
             return;
         };
-
-        let center = (self.mins[node_id] + self.maxs[node_id]) / 2.0;
-
-        // TODO-TD: improve initialization
         
+        // TODO-TD: improve initialization
         let mut particle_trees: [Vec<Particle>; 8] = [
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
@@ -299,11 +296,18 @@ impl BhTree {
             Vec::with_capacity(particles.len() / 4),
         ];
 
+        let center = (self.mins[node_id] + self.maxs[node_id]) / 2.0;
+
         for particle in particles {
             self.nodes[node_id].mass += particle.mass;
 			self.avg_weighted_pos[node_id] += particle.motion[0] * particle.mass;
+            let offset = particle.motion[0] - center;
 
-            let index = BhTree::get_node_id_from_center(center, particle.motion[0]);
+            let mut node_idx = Vec::with_capacity(3);
+            offset.iter().zip(node_idx.iter_mut()).for_each(
+                |(off, idx)| 
+                if *off > 0.0 {*idx = (0 as usize)} else {*idx = (1 as usize)});
+            let index = node_idx[0] + node_idx[1] * 2 + node_idx[2] * 4;
             particle_trees[index].push(particle);
         };
 
@@ -311,7 +315,26 @@ impl BhTree {
         for (idx, particle_tree) in particle_trees.iter().enumerate() {
             if !particle_tree.is_empty() {
                 let mut range = (self.mins[node_id], self.maxs[node_id]);
-                range = BhTree::get_bounding_box(range, center, idx);
+
+                let mut min_coord: Vector3<f64> = center;
+                let mut max_coord: Vector3<f64> = range.1;
+
+                if node_id == 1 {
+                    min_coord.x = range.0.x;
+                    max_coord.x = center.x;
+                } 
+
+                if node_id == 2 {
+                    min_coord.y = range.0.y;
+                    max_coord.y = center.y;
+                } 
+
+                if node_id == 4 {
+                    min_coord.z = range.0.z;
+                    max_coord.z = center.z;
+                } 
+
+                range = (min_coord, max_coord);
 
                 self.nodes.push(BhNode::new(range));
                 self.mins.push(range.0);
@@ -331,107 +354,34 @@ impl BhTree {
     }
 
 
-    /// Get bounding box of Tree
-    /// 
-    /// Inputs
-    /// ------
-    /// range: `(Vector3<f64>, Vector3<f64>)`
-    ///     Min and max points of space
-    /// 
-    /// center: `Vector3<f64>`
-    ///     Center point of Tree
-    /// 
-    /// node_id: `usize`
-    ///     Node identification number
-    /// 
-    /// Outputs
-    /// -------
-    /// range: `(Vector3<f64>, Vector3<f64>)`
-    ///     Min and max position points
-    pub fn get_bounding_box(
-        range: (Vector3<f64>, Vector3<f64>), 
-        center: Vector3<f64>, 
-        node_id: usize
-    ) -> (Vector3<f64>, Vector3<f64>) {
-        let mut min_coord: Vector3<f64> = center;
-		let mut max_coord: Vector3<f64> = range.1;
-
-		if node_id == 1 {
-			min_coord.x = range.0.x;
-			max_coord.x = center.x;
-		} 
-
-		if node_id == 2 {
-			min_coord.y = range.0.y;
-			max_coord.y = center.y;
-		} 
-
-		if node_id == 4 {
-			min_coord.z = range.0.z;
-			max_coord.z = center.z;
-		} 
-
-		(min_coord, max_coord)
-	    }
-
-    /// Get node id of point from center point
-    /// 
-    /// Inputs
-    /// ------
-    /// center: `Vector3<f64>`
-    ///     Center point of Tree
-    /// 
-    /// point: `Vector3<f64>`
-    ///     Point of interest   
-    /// 
-    /// Outputs
-    /// -------
-    /// node_id: `usize`
-    ///     Node identification number
-    pub fn get_node_id_from_center(
-        center: Vector3<f64>, 
-        point: Vector3<f64>
-    ) -> usize {
-        let offset = point - center;
-		let x_offset = if offset.x > 0.0 {0} else {1};
-		let y_offset = if offset.y > 0.0 {0} else {1};
-		let z_offset = if offset.z > 0.0 {0} else {1};
-		let node_id = x_offset + y_offset * 2 + z_offset * 4;
-        node_id
-    }
-
+    /// Calculate acceleration of a node
     pub fn barnes_hut_node_acc(
         &self, 
         pos: Vector3<f64>, 
         node_id: usize
     ) -> Vector3<f64> {
-        let cur_node = &self.nodes[node_id];
-        let q_size = cur_node.quad_size;
-        let distance= self.center_of_mass[node_id] - pos; 
-        let d_sq = distance.norm_squared();
-        let theta_sq = self.theta_sq;
-        let acc: Vector3<f64>;
+        let current_node = &self.nodes[node_id];
+        let distance= self.center_of_mass[node_id] - pos;
 
-        if q_size < theta_sq * d_sq || cur_node.child_mask == 0 {
-            if d_sq < TOLERANCE {
-                acc = Vector3::new(0.,0.,0.);
+        if current_node.quad_size < self.theta_sq * distance.norm_squared() || current_node.child_mask == 0 {
+            if distance.norm_squared() < TOLERANCE {
+                return Vector3::new(0.,0.,0.);
             } else {
-                acc = distance * cst::GRAV_CONST * (cur_node.mass) / d_sq;
+                return distance * cst::GRAV_CONST * (current_node.mass) / distance.norm_squared();
             }
 
         } else {
-            let mut node = cur_node.child_base;
+            let mut node = current_node.child_base;
             let mut sum: Vector3<f64> = Vector3::zeros();
             for node_idx in 0..8 {
-                // Voodoo magic here
-                if cur_node.child_mask & (1 << node_idx) != 0 {
+                if current_node.child_mask & (1 << node_idx) != 0 {
                     sum += self.barnes_hut_node_acc(pos, node);
                     node += 1;
                 }
             }
-            acc = sum;
+            return sum;
             }
-            acc
+
         }
 
     }
@@ -479,24 +429,22 @@ pub fn barnes_hut_gravity(
             println!("")
         };
 
+        // TODO-TD: multithread
         (0..).zip(particles.iter_mut()).for_each(
             |(idx, particle)| {
-                // Calculate acceleration per particle (MULTITHREAD)
+                // Calculate acceleration per particle
                 particle.motion[2] = tree.barnes_hut_node_acc(particle.motion[0], idx);
 
-                // Move and update values
                 del_vel = particle.motion[2] * step_size;
-                del_pos = particle.motion[1] * step_size;
-                if is_debug {
-                    print!("{:.5} dv \t\t", del_vel);
-                }
                 particle.motion[1] += del_vel;
-                particle.motion[0] += del_pos + 0.5 * del_vel * step_size;
+
+                del_pos = del_vel * step_size + 0.5 * del_vel * step_size * step_size;
+                particle.motion[0] += del_pos;
                 
                 if is_debug {
-                    print!("{} pos: {:.5} x, {:.5} y, {:.5} z\t\t", idx, 
-                        particle.motion[0][0], particle.motion[0][1], particle.motion[0][2]);
+                    print!("pos: {:.5?} \t\t", particle.motion[0]);
                 }
+
             });
     }
 
