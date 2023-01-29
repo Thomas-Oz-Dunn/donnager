@@ -14,7 +14,7 @@ fn main() {
     let particle1: grav::Particle = grav::Particle {
         mass: 1e13,
         motion: vec![
-            Vector3::new(0.,0.,0.),
+            Vector3::new(5.,1.,0.),
             Vector3::zeros(),
             Vector3::zeros()]
     };
@@ -39,14 +39,16 @@ fn main() {
     
     // N body configuration
     let theta: f64  = 1.0;
-    let n_steps: usize = 1000;
+    let n_steps: usize = 100;
     let step_size: f64 = 0.01;
     let is_debug: bool = false;
-    let mut particles: Vec<grav::Particle> = [particle1, particle2, particle3].to_vec();
+
+    let mut particles: Vec<&grav::Particle> = [&particle1, &particle2, &particle3].to_vec();
 
     println!("\nStart");
+
     for particle in particles.iter(){
-        print!("pos: {:.5?} \t\t", particle.motion[0]);
+        print!("pos: {:.5?} \t\t", *particle.motion[0]);
     }
 
     particles = grav::barnes_hut_gravity(
@@ -59,7 +61,7 @@ fn main() {
         
     println!("\nEnd @ t = {} s", (n_steps as f64) * step_size);
     for particle in particles.iter(){
-        print!("pos: {:.5?} \t\t", particle.motion[0]);
+        print!("pos: {:.5?} \t\t", *particle.motion[0]);
     }
 
 }

@@ -202,43 +202,6 @@ pub struct BhTree {
 
 impl BhTree {
 
-    /// Initialize empty `Tree`
-    /// 
-    /// Inputs
-    /// ------
-    /// range: `(Vector3<f64>,Vector3<f64>)`
-    ///     Range of min and max coordinates
-    /// 
-    /// theta: `f64`
-    ///     Angular precision
-    /// 
-    /// n_nodes: `usize`
-    ///     Number of empty nodes to store
-    /// 
-    /// Outputs
-    /// -------
-    /// tree: `Tree`
-    ///     Empty tree
-    pub fn empty(
-        range: (Vector3<f64>,Vector3<f64>), 
-        theta: f64, 
-        n_nodes: usize
-    ) -> Self {
-        let mut tree = BhTree {
-            nodes: Vec::with_capacity(n_nodes),
-            mins: Vec::with_capacity(n_nodes),
-            maxs: Vec::with_capacity(n_nodes),
-            center_of_mass: Vec::with_capacity(n_nodes),
-			avg_weighted_pos: Vec::with_capacity(n_nodes),
-            theta_sq: theta.powi(2)
-        };
-        tree.nodes.push(BhNode::new(range));
-        tree.mins.push(range.0);
-        tree.maxs.push(range.1);
-		tree.avg_weighted_pos.push(Vector3::zeros());
-        return tree
-    }
-
     /// Initialize new `Tree`
     /// 
     /// Inputs
@@ -253,10 +216,25 @@ impl BhTree {
     /// -------
     /// tree: `Tree`
     ///     Initialized `Tree` struct
-    pub fn new(particles: Vec<Particle>, theta: f64) -> BhTree {
+    pub fn new(particles: Vec<&Particle>, theta: f64) -> BhTree {
+
         let range = calc_range(particles.clone());
-        let mut tree = BhTree::empty(range, theta, particles.len());
-        tree.add_particles_to_node(particles, 0);
+
+        let mut tree = BhTree {
+            nodes: Vec::with_capacity(particles.len()),
+            mins: Vec::with_capacity(particles.len()),
+            maxs: Vec::with_capacity(particles.len()),
+            center_of_mass: Vec::with_capacity(particles.len()),
+			avg_weighted_pos: Vec::with_capacity(particles.len()),
+            theta_sq: theta.powi(2)
+        };
+
+        tree.nodes.push(BhNode::new(range));
+        tree.mins.push(range.0);
+        tree.maxs.push(range.1);
+		tree.avg_weighted_pos.push(Vector3::zeros());
+        tree.add_particles_to_node(&particles, 0);
+
         for (idx, node) in &mut tree.nodes.iter().enumerate() {
 			tree.center_of_mass.push(tree.avg_weighted_pos[idx] / node.mass);
 		}
@@ -272,10 +250,10 @@ impl BhTree {
     ///     List of particles to store
     /// 
     /// node_id: `usize`
-    ///     Node identification number. See Tree:get_node_id_from_center()
+    ///     Node identification number. 
     pub fn add_particles_to_node(
         &mut self, 
-        particles: Vec<Particle>, 
+        particles: &Vec<&Particle>, 
         node_id: usize
     ) {
         if particles.len() == 1 {
@@ -288,7 +266,7 @@ impl BhTree {
 
         // TODO-TD: improve initialization
         
-        let mut particle_trees: [Vec<Particle>; 8] = [
+        let mut particle_trees: [Vec<&Particle>; 8] = [
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
@@ -303,7 +281,12 @@ impl BhTree {
             self.nodes[node_id].mass += particle.mass;
 			self.avg_weighted_pos[node_id] += particle.motion[0] * particle.mass;
 
-            let index = BhTree::get_node_id_from_center(center, particle.motion[0]);
+            let offset = particle.motion[0] - center;
+            let x_offset = if offset.x > 0.0 {0} else {1};
+            let y_offset = if offset.y > 0.0 {0} else {1};
+            let z_offset = if offset.z > 0.0 {0} else {1};
+            let index = x_offset + y_offset * 2 + z_offset * 4;
+
             particle_trees[index].push(particle);
         };
 
@@ -322,9 +305,10 @@ impl BhTree {
         }
 
         let mut child_node = self.nodes[node_id].child_base;
+
         for particle_tree in particle_trees.iter() {
             if !particle_tree.is_empty() {
-                self.add_particles_to_node(particle_tree.to_vec(), child_node);
+                self.add_particles_to_node(particle_tree, child_node);
                 child_node += 1;
             }
         }
@@ -373,32 +357,6 @@ impl BhTree {
 
 		(min_coord, max_coord)
 	    }
-
-    /// Get node id of point from center point
-    /// 
-    /// Inputs
-    /// ------
-    /// center: `Vector3<f64>`
-    ///     Center point of Tree
-    /// 
-    /// point: `Vector3<f64>`
-    ///     Point of interest   
-    /// 
-    /// Outputs
-    /// -------
-    /// node_id: `usize`
-    ///     Node identification number
-    pub fn get_node_id_from_center(
-        center: Vector3<f64>, 
-        point: Vector3<f64>
-    ) -> usize {
-        let offset = point - center;
-		let x_offset = if offset.x > 0.0 {0} else {1};
-		let y_offset = if offset.y > 0.0 {0} else {1};
-		let z_offset = if offset.z > 0.0 {0} else {1};
-		let node_id = x_offset + y_offset * 2 + z_offset * 4;
-        node_id
-    }
 
     /// Calculate acceleration of a node
     pub fn barnes_hut_node_acc(
@@ -457,15 +415,16 @@ impl BhTree {
 /// particles: `Vec<Particle>` 
 ///     Vector of Particles updated at t = step_size * n_steps 
 pub fn barnes_hut_gravity(
-    mut particles: Vec<Particle>,
+    mut particles: Vec<&Particle>,
     step_size: f64,
     n_steps: usize,
     theta: f64,
     is_debug: bool
-) -> Vec<Particle> {
+) -> Vec<&Particle> {
     let mut tree: BhTree;
-    let mut del_pos: Vector3<f64> = Vector3::zeros();
-    let mut del_vel: Vector3<f64> = Vector3::zeros();
+    let mut acc: Vector3<f64> = Vector3::zeros();
+    let mut vel: Vector3<f64> = Vector3::zeros();
+    let mut pos: Vector3<f64> = Vector3::zeros();
 
     for _ in 0..n_steps {
         // Create Tree
@@ -479,21 +438,19 @@ pub fn barnes_hut_gravity(
         (0..).zip(particles.iter_mut()).for_each(
             |(idx, particle)| {
                 // Calculate acceleration per particle
-                particle.motion[2] = tree.barnes_hut_node_acc(particle.motion[0], idx);
+                acc = tree.barnes_hut_node_acc(particle.motion[0], idx);
+                vel = acc * step_size;
+                pos = vel * step_size + 0.5 * vel * step_size * step_size;
 
-                del_vel = particle.motion[2] * step_size;
-                particle.motion[1] += del_vel;
-
-                del_pos = del_vel * step_size + 0.5 * del_vel * step_size * step_size;
-                particle.motion[0] += del_pos;
+                particle.motion[2] = acc;
+                particle.motion[1] += vel;
+                particle.motion[0] += pos;
                 
                 if is_debug {
                     print!("pos: {:.5?} \t\t", particle.motion[0]);
                 }
-
             });
     }
-
     particles
 }
 
@@ -508,7 +465,7 @@ pub fn barnes_hut_gravity(
 /// -------
 /// range: `(Vector3<f64>, Vector3<f64>)`
 ///     Min and max points of space
-pub fn calc_range(particles: Vec<Particle>) -> (Vector3<f64>, Vector3<f64>) {
+pub fn calc_range(particles: Vec<&Particle>) -> (Vector3<f64>, Vector3<f64>) {
     let mut min: Vector3<f64> = Vector3::zeros();
     let mut max: Vector3<f64> = Vector3::zeros();
 
