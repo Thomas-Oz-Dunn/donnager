@@ -43,12 +43,12 @@ fn main() {
     let step_size: f64 = 0.01;
     let is_debug: bool = false;
 
-    let mut particles: Vec<&grav::Particle> = [&particle1, &particle2, &particle3].to_vec();
+    let mut particles: Vec<grav::Particle> = [particle1, particle2, particle3].to_vec();
 
     println!("\nStart");
 
     for particle in particles.iter(){
-        print!("pos: {:.5?} \t\t", *particle.motion[0]);
+        print!("pos: {:.5?} \t\t", particle.motion[0]);
     }
 
     particles = grav::barnes_hut_gravity(
@@ -61,7 +61,7 @@ fn main() {
         
     println!("\nEnd @ t = {} s", (n_steps as f64) * step_size);
     for particle in particles.iter(){
-        print!("pos: {:.5?} \t\t", *particle.motion[0]);
+        print!("pos: {:.5?} \t\t", particle.motion[0]);
     }
 
 }

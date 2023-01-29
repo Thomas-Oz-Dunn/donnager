@@ -371,6 +371,7 @@ impl BhTree {
             if distance.norm_squared() < TOLERANCE {
                 return Vector3::new(0.,0.,0.);
             } else {
+                println!("{}", current_node.mass);
                 return distance * cst::GRAV_CONST * (current_node.mass) / distance.norm_squared();
             }
 
@@ -407,7 +408,7 @@ impl BhTree {
 /// theta: `f64`
 ///     Angular precision for barnes hut calculation
 /// 
-/// is_show: `bool`
+/// is_debug: `bool`
 ///     Show propogation
 /// 
 /// Outputs
@@ -415,41 +416,38 @@ impl BhTree {
 /// particles: `Vec<Particle>` 
 ///     Vector of Particles updated at t = step_size * n_steps 
 pub fn barnes_hut_gravity(
-    mut particles: Vec<&Particle>,
+    mut particles: Vec<Particle>,
     step_size: f64,
     n_steps: usize,
     theta: f64,
     is_debug: bool
-) -> Vec<&Particle> {
+) -> Vec<Particle> {
     let mut tree: BhTree;
-    let mut acc: Vector3<f64> = Vector3::zeros();
-    let mut vel: Vector3<f64> = Vector3::zeros();
-    let mut pos: Vector3<f64> = Vector3::zeros();
-
+    let mut motion: Vec<Vector3<f64>> = vec![Vector3::zeros(); 3];
+    
     for _ in 0..n_steps {
         // Create Tree
-        tree = BhTree::new(particles.clone(), theta);
+        let mut ref_part = Vec::with_capacity(particles.len());
+        ref_part.iter_mut().zip(particles.iter()).for_each(
+            |(refpart, part)| *refpart = part);
+        tree = BhTree::new(ref_part, theta);
 
         if is_debug{
             println!("")
         };
 
         // TODO-TD: multithread
-        (0..).zip(particles.iter_mut()).for_each(
-            |(idx, particle)| {
-                // Calculate acceleration per particle
-                acc = tree.barnes_hut_node_acc(particle.motion[0], idx);
-                vel = acc * step_size;
-                pos = vel * step_size + 0.5 * vel * step_size * step_size;
+        particles.iter_mut().for_each(|particle| {
+            motion[2] = tree.barnes_hut_node_acc(particle.motion[0], 0);
+            motion[1] = particle.motion[1] + motion[2] * step_size;
+            motion[0] = particle.motion[0] + motion[1] * step_size + 0.5 * motion[1] * step_size * step_size;
 
-                particle.motion[2] = acc;
-                particle.motion[1] += vel;
-                particle.motion[0] += pos;
-                
-                if is_debug {
-                    print!("pos: {:.5?} \t\t", particle.motion[0]);
-                }
-            });
+            particle.motion = motion.clone();
+            
+            if is_debug {
+                print!("pos: {:.5?} \t\t", particle.motion[0]);
+            }
+        });
     }
     particles
 }
