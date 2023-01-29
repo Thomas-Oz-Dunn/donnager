@@ -14,7 +14,7 @@ fn main() {
     let particle1: grav::Particle = grav::Particle {
         mass: 1e13,
         motion: vec![
-            Vector3::new(0.,28.,0.),
+            Vector3::new(0.,0.,0.),
             Vector3::zeros(),
             Vector3::zeros()]
     };

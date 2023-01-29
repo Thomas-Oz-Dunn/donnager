@@ -272,7 +272,7 @@ impl BhTree {
     ///     List of particles to store
     /// 
     /// node_id: `usize`
-    ///     Node identification number.
+    ///     Node identification number. See Tree:get_node_id_from_center()
     pub fn add_particles_to_node(
         &mut self, 
         particles: Vec<Particle>, 
@@ -283,8 +283,11 @@ impl BhTree {
 			self.avg_weighted_pos[node_id] += particles[0].motion[0] * particles[0].mass;
             return;
         };
-        
+
+        let center = (self.mins[node_id] + self.maxs[node_id]) / 2.0;
+
         // TODO-TD: improve initialization
+        
         let mut particle_trees: [Vec<Particle>; 8] = [
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
@@ -296,18 +299,11 @@ impl BhTree {
             Vec::with_capacity(particles.len() / 4),
         ];
 
-        let center = (self.mins[node_id] + self.maxs[node_id]) / 2.0;
-
         for particle in particles {
             self.nodes[node_id].mass += particle.mass;
 			self.avg_weighted_pos[node_id] += particle.motion[0] * particle.mass;
-            let offset = particle.motion[0] - center;
 
-            let mut node_idx = Vec::with_capacity(3);
-            offset.iter().zip(node_idx.iter_mut()).for_each(
-                |(off, idx)| 
-                if *off > 0.0 {*idx = (0 as usize)} else {*idx = (1 as usize)});
-            let index = node_idx[0] + node_idx[1] * 2 + node_idx[2] * 4;
+            let index = BhTree::get_node_id_from_center(center, particle.motion[0]);
             particle_trees[index].push(particle);
         };
 
@@ -315,26 +311,7 @@ impl BhTree {
         for (idx, particle_tree) in particle_trees.iter().enumerate() {
             if !particle_tree.is_empty() {
                 let mut range = (self.mins[node_id], self.maxs[node_id]);
-
-                let mut min_coord: Vector3<f64> = center;
-                let mut max_coord: Vector3<f64> = range.1;
-
-                if node_id == 1 {
-                    min_coord.x = range.0.x;
-                    max_coord.x = center.x;
-                } 
-
-                if node_id == 2 {
-                    min_coord.y = range.0.y;
-                    max_coord.y = center.y;
-                } 
-
-                if node_id == 4 {
-                    min_coord.z = range.0.z;
-                    max_coord.z = center.z;
-                } 
-
-                range = (min_coord, max_coord);
+                range = BhTree::get_bounding_box(range, center, idx);
 
                 self.nodes.push(BhNode::new(range));
                 self.mins.push(range.0);
@@ -353,6 +330,75 @@ impl BhTree {
         }
     }
 
+
+    /// Get bounding box of Tree
+    /// 
+    /// Inputs
+    /// ------
+    /// range: `(Vector3<f64>, Vector3<f64>)`
+    ///     Min and max points of space
+    /// 
+    /// center: `Vector3<f64>`
+    ///     Center point of Tree
+    /// 
+    /// node_id: `usize`
+    ///     Node identification number
+    /// 
+    /// Outputs
+    /// -------
+    /// range: `(Vector3<f64>, Vector3<f64>)`
+    ///     Min and max position points
+    pub fn get_bounding_box(
+        range: (Vector3<f64>, Vector3<f64>), 
+        center: Vector3<f64>, 
+        node_id: usize
+    ) -> (Vector3<f64>, Vector3<f64>) {
+        let mut min_coord: Vector3<f64> = center;
+		let mut max_coord: Vector3<f64> = range.1;
+
+		if node_id == 1 {
+			min_coord.x = range.0.x;
+			max_coord.x = center.x;
+		} 
+
+		if node_id == 2 {
+			min_coord.y = range.0.y;
+			max_coord.y = center.y;
+		} 
+
+		if node_id == 4 {
+			min_coord.z = range.0.z;
+			max_coord.z = center.z;
+		} 
+
+		(min_coord, max_coord)
+	    }
+
+    /// Get node id of point from center point
+    /// 
+    /// Inputs
+    /// ------
+    /// center: `Vector3<f64>`
+    ///     Center point of Tree
+    /// 
+    /// point: `Vector3<f64>`
+    ///     Point of interest   
+    /// 
+    /// Outputs
+    /// -------
+    /// node_id: `usize`
+    ///     Node identification number
+    pub fn get_node_id_from_center(
+        center: Vector3<f64>, 
+        point: Vector3<f64>
+    ) -> usize {
+        let offset = point - center;
+		let x_offset = if offset.x > 0.0 {0} else {1};
+		let y_offset = if offset.y > 0.0 {0} else {1};
+		let z_offset = if offset.z > 0.0 {0} else {1};
+		let node_id = x_offset + y_offset * 2 + z_offset * 4;
+        node_id
+    }
 
     /// Calculate acceleration of a node
     pub fn barnes_hut_node_acc(
