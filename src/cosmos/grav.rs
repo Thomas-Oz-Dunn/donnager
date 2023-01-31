@@ -537,14 +537,24 @@ mod grav_tests {
             rotation_rate: cst::EARTH_ROT_RATE,
             eccentricity: cst::EARTH_ECC
         };
-        let result = earth.calc_stationary_orbit();
 
-        assert_eq!(result, 42163779.55713436);
+        let radius = earth.calc_stationary_orbit();
+        assert_eq!(radius, 42163779.55713436);
+
+        let vel = earth.calc_orbital_velocity_mag(radius);
+        assert_eq!(vel, 4348.18527478043);
+
+        let radius_vec = Vector3::new(radius, 0., 0.);
+        let acc_vec = earth.calc_body_grav(radius_vec);
+        assert_eq!(acc_vec, Vector3::new(0.2242056497591453, 0., 0.));
+
 
         let motion = vec![Vector3::zeros(); 3];
         let earth_particle: Particle = earth.to_particle(motion);
 
         assert_eq!(earth_particle.mass, 5.972e24);
+
+
     }
     
     #[test]
