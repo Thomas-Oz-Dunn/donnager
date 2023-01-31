@@ -541,6 +541,12 @@ mod grav_tests {
         let result = earth.calc_stationary_orbit();
 
         assert_eq!(result, 42163779.55713436);
+
+        let motion = vec![Vector3::zeros(); 3];
+        let earth_particle: Particle = earth.to_particle(motion);
+
+        assert_eq!(earth_particle.mass, 5.972e24);
+
     }
 }
 
