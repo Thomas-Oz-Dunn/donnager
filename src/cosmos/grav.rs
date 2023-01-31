@@ -18,6 +18,22 @@ pub struct Particle {
 }
 
 // TODO-TD: find happy interface between Particle and Body
+impl Particle {
+
+    /// Convert into Body type
+    pub fn to_body(&self, name: String, eq_radius: f64, rotation_rate: f64, eccentricity: f64) -> Body {
+        let grav_param = self.mass * cst::GRAV_CONST;
+        let body = Body {
+            name: name,
+            grav_param: grav_param,
+            eq_radius: eq_radius,
+            rotation_rate: rotation_rate,
+            eccentricity: eccentricity
+        };
+        body
+    }
+}
+
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Body{
@@ -31,6 +47,24 @@ pub struct Body{
 
 /// Gravitational Body
 impl Body {
+
+    /// Convert into simple particle type
+    /// 
+    /// Inputs
+    /// ------
+    /// motion: `Vec<Vector3<f64>>`
+    ///     motion of body in frame
+    /// 
+    /// Outputs
+    /// -------
+    /// particle: `Particle`
+    ///     `Particle` equivalent of body
+    pub fn to_particle(&self, motion: Vec<Vector3<f64>>) -> Particle {
+        let mass = self.grav_param / cst::GRAV_CONST;
+        let particle: Particle = Particle {mass: mass, motion: motion};
+        particle
+    }
+
 
     /// Calculate gravitational acceleration at radial distance from Body
     /// 
@@ -236,9 +270,11 @@ impl BhTree {
         tree.add_particles_to_node(&particles, 0);
 
         for (idx, node) in &mut tree.nodes.iter().enumerate() {
+            println!("{}", node.mass);
 			tree.center_of_mass.push(tree.avg_weighted_pos[idx] / node.mass);
 		}
-        tree
+
+        return tree
     }
 
 
@@ -256,16 +292,17 @@ impl BhTree {
         particles: &Vec<&Particle>, 
         node_id: usize
     ) {
+
+        // If singular particle (end of tree branch)
+        // node mass += particle mass 
+        // av weight pos += particle av weight pos
         if particles.len() == 1 {
             self.nodes[node_id].mass += particles[0].mass;
 			self.avg_weighted_pos[node_id] += particles[0].motion[0] * particles[0].mass;
             return;
         };
 
-        let center = (self.mins[node_id] + self.maxs[node_id]) / 2.0;
-
         // TODO-TD: improve initialization
-        
         let mut particle_trees: [Vec<&Particle>; 8] = [
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
@@ -276,12 +313,14 @@ impl BhTree {
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
         ];
-
+        
+        let center = (self.mins[node_id] + self.maxs[node_id]) / 2.0;
         for particle in particles {
             self.nodes[node_id].mass += particle.mass;
 			self.avg_weighted_pos[node_id] += particle.motion[0] * particle.mass;
-
+            
             let offset = particle.motion[0] - center;
+
             let x_offset = if offset.x > 0.0 {0} else {1};
             let y_offset = if offset.y > 0.0 {0} else {1};
             let z_offset = if offset.z > 0.0 {0} else {1};
@@ -293,17 +332,19 @@ impl BhTree {
         self.nodes[node_id].child_base = self.nodes.len();
         for (idx, particle_tree) in particle_trees.iter().enumerate() {
             if !particle_tree.is_empty() {
-                let mut range = (self.mins[node_id], self.maxs[node_id]);
-                range = BhTree::get_bounding_box(range, center, idx);
-
-                self.nodes.push(BhNode::new(range));
-                self.mins.push(range.0);
-                self.maxs.push(range.1);
+                let old_range = 
+                    (self.mins[node_id], self.maxs[node_id]);
+                let new_range = 
+                    BhTree::get_bounding_box(old_range, center, idx);
+                
+                self.nodes.push(BhNode::new(new_range));
+                self.mins.push(new_range.0);
+                self.maxs.push(new_range.1);
 				self.avg_weighted_pos.push(Vector3::zeros());
                 self.nodes[node_id].child_mask |= 1 << idx;
             }
         }
-
+        
         let mut child_node = self.nodes[node_id].child_base;
 
         for particle_tree in particle_trees.iter() {
@@ -354,11 +395,17 @@ impl BhTree {
 			min_coord.z = range.0.z;
 			max_coord.z = center.z;
 		} 
-
-		(min_coord, max_coord)
+		return (min_coord, max_coord)
 	    }
 
+
     /// Calculate acceleration of a node
+    /// 
+    /// Inputs
+    /// ------
+    /// pos
+    /// 
+    /// node_id
     pub fn barnes_hut_node_acc(
         &self, 
         pos: Vector3<f64>, 
@@ -371,7 +418,6 @@ impl BhTree {
             if distance.norm_squared() < TOLERANCE {
                 return Vector3::new(0.,0.,0.);
             } else {
-                println!("{}", current_node.mass);
                 return distance * cst::GRAV_CONST * (current_node.mass) / distance.norm_squared();
             }
 
@@ -422,15 +468,14 @@ pub fn barnes_hut_gravity(
     theta: f64,
     is_debug: bool
 ) -> Vec<Particle> {
-    let mut tree: BhTree;
     let mut motion: Vec<Vector3<f64>> = vec![Vector3::zeros(); 3];
     
     for _ in 0..n_steps {
         // Create Tree
         let mut ref_part = Vec::with_capacity(particles.len());
-        ref_part.iter_mut().zip(particles.iter()).for_each(
-            |(refpart, part)| *refpart = part);
-        tree = BhTree::new(ref_part, theta);
+        ref_part.iter_mut().zip(particles.iter())
+            .for_each(|(refpart, part)| *refpart = part);
+        let tree = BhTree::new(ref_part, theta);
 
         if is_debug{
             println!("")
@@ -440,7 +485,7 @@ pub fn barnes_hut_gravity(
         particles.iter_mut().for_each(|particle| {
             motion[2] = tree.barnes_hut_node_acc(particle.motion[0], 0);
             motion[1] = particle.motion[1] + motion[2] * step_size;
-            motion[0] = particle.motion[0] + motion[1] * step_size + 0.5 * motion[1] * step_size * step_size;
+            motion[0] = particle.motion[0] + particle.motion[1] * step_size + 0.5 * motion[2] * step_size * step_size;
 
             particle.motion = motion.clone();
             
@@ -477,3 +522,25 @@ pub fn calc_range(particles: Vec<&Particle>) -> (Vector3<f64>, Vector3<f64>) {
         );
     return (min, max)
     }
+
+
+#[cfg(test)]
+mod grav_tests {
+    use crate::constants as cst;
+    use super::*;
+
+    #[test]
+    fn test_body() {
+        let earth: Body = Body {
+            name: "Earth".to_string(),
+            grav_param: cst::EARTH_GRAV_PARAM,
+            eq_radius: cst::EARTH_RADIUS_EQUATOR,
+            rotation_rate: cst::EARTH_ROT_RATE,
+            eccentricity: cst::EARTH_ECC
+        };
+        let result = earth.calc_stationary_orbit();
+
+        assert_eq!(result, 42163779.55713436);
+    }
+}
+
