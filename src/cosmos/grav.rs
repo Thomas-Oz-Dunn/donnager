@@ -526,7 +526,6 @@ pub fn calc_range(particles: Vec<&Particle>) -> (Vector3<f64>, Vector3<f64>) {
 
 #[cfg(test)]
 mod grav_tests {
-    use crate::constants as cst;
     use super::*;
 
     #[test]
@@ -546,7 +545,16 @@ mod grav_tests {
         let earth_particle: Particle = earth.to_particle(motion);
 
         assert_eq!(earth_particle.mass, 5.972e24);
-
+    }
+    
+    #[test]
+    fn test_calc_range(){
+        let p1 = Particle { mass: 0.0, motion: vec![Vector3::zeros(); 3] };
+        let p2 = Particle { mass: 0.0, motion: vec![
+            Vector3::new(1.,1.,1.), Vector3::zeros(), Vector3::zeros()] };
+        let particles = vec![&p1, &p2];
+        let range = calc_range(particles);
+        assert_eq!(range, (Vector3::zeros(), Vector3::new(1.,1.,1.)));
     }
 }
 
