@@ -548,6 +548,11 @@ mod grav_tests {
         let acc_vec = earth.calc_body_grav(radius_vec);
         assert_eq!(acc_vec, Vector3::new(0.2242056497591453, 0., 0.));
 
+        let pos_lla = earth.xyz_to_geodetic(radius_vec);
+        assert_eq!(pos_lla, Vector3::new(0.0, 0.0, 35785642.55713436));
+
+        let pos_ecef = earth.geodetic_to_xyz(pos_lla);
+        assert_eq!(pos_ecef, radius_vec);
 
         let motion = vec![Vector3::zeros(); 3];
         let earth_particle: Particle = earth.to_particle(motion);
