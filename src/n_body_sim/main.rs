@@ -41,9 +41,9 @@ fn main() {
     let theta: f64  = 1.0;
     let n_steps: usize = 100;
     let step_size: f64 = 0.01;
-    let is_debug: bool = false;
+    let is_debug: bool = true;
 
-    let mut particles: Vec<grav::Particle> = [particle1, particle2, particle3].to_vec();
+    let mut particles  = vec![particle1, particle2, particle3].into_boxed_slice();
 
     println!("\nStart");
 

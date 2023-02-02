@@ -250,7 +250,7 @@ impl BhTree {
     /// -------
     /// tree: `Tree`
     ///     Initialized `Tree` struct
-    pub fn new(particles: Vec<&Particle>, theta: f64) -> BhTree {
+    pub fn new(particles: Vec<Particle>, theta: f64) -> BhTree {
 
         let range = calc_range(particles.clone());
 
@@ -270,7 +270,6 @@ impl BhTree {
         tree.add_particles_to_node(&particles, 0);
 
         for (idx, node) in &mut tree.nodes.iter().enumerate() {
-            println!("{}", node.mass);
 			tree.center_of_mass.push(tree.avg_weighted_pos[idx] / node.mass);
 		}
 
@@ -289,7 +288,7 @@ impl BhTree {
     ///     Node identification number. 
     pub fn add_particles_to_node(
         &mut self, 
-        particles: &Vec<&Particle>, 
+        particles: &Vec<Particle>, 
         node_id: usize
     ) {
 
@@ -303,7 +302,7 @@ impl BhTree {
         };
 
         // TODO-TD: improve initialization
-        let mut particle_trees: [Vec<&Particle>; 8] = [
+        let mut particle_trees: [Vec<Particle>; 8] = [
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
@@ -326,7 +325,7 @@ impl BhTree {
             let z_offset = if offset.z > 0.0 {0} else {1};
             let index = x_offset + y_offset * 2 + z_offset * 4;
 
-            particle_trees[index].push(particle);
+            particle_trees[index].push(particle.clone());
         };
 
         self.nodes[node_id].child_base = self.nodes.len();
@@ -462,23 +461,20 @@ impl BhTree {
 /// particles: `Vec<Particle>` 
 ///     Vector of Particles updated at t = step_size * n_steps 
 pub fn barnes_hut_gravity(
-    mut particles: Vec<Particle>,
+    mut particles: Box<[Particle]>,
     step_size: f64,
     n_steps: usize,
     theta: f64,
     is_debug: bool
 ) -> Vec<Particle> {
-    let mut motion: Vec<Vector3<f64>> = vec![Vector3::zeros(); 3];
+    let mut motion = vec![Vector3::zeros(); 3].into_boxed_slice();
     
-    for _ in 0..n_steps {
+    for i_step in 0..n_steps {
         // Create Tree
-        let mut ref_part = Vec::with_capacity(particles.len());
-        ref_part.iter_mut().zip(particles.iter())
-            .for_each(|(refpart, part)| *refpart = part);
-        let tree = BhTree::new(ref_part, theta);
+        let tree = BhTree::new(particles.to_vec(), theta);
 
         if is_debug{
-            println!("")
+            println!("t = {}", i_step as f64 * step_size)
         };
 
         // TODO-TD: multithread
@@ -487,7 +483,7 @@ pub fn barnes_hut_gravity(
             motion[1] = particle.motion[1] + motion[2] * step_size;
             motion[0] = particle.motion[0] + particle.motion[1] * step_size + 0.5 * motion[2] * step_size * step_size;
 
-            particle.motion = motion.clone();
+            particle.motion = motion.to_vec();
             
             if is_debug {
                 print!("pos: {:.5?} \t\t", particle.motion[0]);
@@ -508,7 +504,7 @@ pub fn barnes_hut_gravity(
 /// -------
 /// range: `(Vector3<f64>, Vector3<f64>)`
 ///     Min and max points of space
-pub fn calc_range(particles: Vec<&Particle>) -> (Vector3<f64>, Vector3<f64>) {
+pub fn calc_range(particles: Vec<Particle>) -> (Vector3<f64>, Vector3<f64>) {
     let mut min: Vector3<f64> = Vector3::zeros();
     let mut max: Vector3<f64> = Vector3::zeros();
 
@@ -562,12 +558,17 @@ mod grav_tests {
 
     }
     
+    
+    #[test]
+    fn test_particle(){}
+    
+    
     #[test]
     fn test_calc_range(){
         let p1 = Particle { mass: 0.0, motion: vec![Vector3::zeros(); 3] };
         let p2 = Particle { mass: 0.0, motion: vec![
             Vector3::new(1.,1.,1.), Vector3::zeros(), Vector3::zeros()] };
-        let particles = vec![&p1, &p2];
+        let particles = vec![p1, p2];
         let range = calc_range(particles);
         assert_eq!(range, (Vector3::zeros(), Vector3::new(1.,1.,1.)));
     }
