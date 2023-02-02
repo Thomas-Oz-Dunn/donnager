@@ -22,8 +22,8 @@ impl Particle {
 
     /// Convert into Body type
     pub fn to_body(&self, name: String, eq_radius: f64, rotation_rate: f64, eccentricity: f64) -> Body {
-        let grav_param = self.mass * cst::GRAV_CONST;
-        let body = Body {
+        let grav_param: f64 = self.mass * cst::GRAV_CONST;
+        let body: Body = Body {
             name: name,
             grav_param: grav_param,
             eq_radius: eq_radius,
@@ -60,7 +60,7 @@ impl Body {
     /// particle: `Particle`
     ///     `Particle` equivalent of body
     pub fn to_particle(&self, motion: Vec<Vector3<f64>>) -> Particle {
-        let mass = self.grav_param / cst::GRAV_CONST;
+        let mass: f64 = self.grav_param / cst::GRAV_CONST;
         let particle: Particle = Particle {mass: mass, motion: motion};
         particle
     }
@@ -252,9 +252,9 @@ impl BhTree {
     ///     Initialized `Tree` struct
     pub fn new(particles: Vec<Particle>, theta: f64) -> BhTree {
 
-        let range = calc_range(particles.clone());
+        let range: (Vector3<f64>, Vector3<f64>) = calc_range(particles.clone());
 
-        let mut tree = BhTree {
+        let mut tree: BhTree = BhTree {
             nodes: Vec::with_capacity(particles.len()),
             mins: Vec::with_capacity(particles.len()),
             maxs: Vec::with_capacity(particles.len()),
@@ -313,17 +313,16 @@ impl BhTree {
             Vec::with_capacity(particles.len() / 4),
         ];
         
-        let center = (self.mins[node_id] + self.maxs[node_id]) / 2.0;
+        let center: Vector3<f64> = (self.mins[node_id] + self.maxs[node_id]) / 2.0;
         for particle in particles {
             self.nodes[node_id].mass += particle.mass;
 			self.avg_weighted_pos[node_id] += particle.motion[0] * particle.mass;
             
-            let offset = particle.motion[0] - center;
-
-            let x_offset = if offset.x > 0.0 {0} else {1};
-            let y_offset = if offset.y > 0.0 {0} else {1};
-            let z_offset = if offset.z > 0.0 {0} else {1};
-            let index = x_offset + y_offset * 2 + z_offset * 4;
+            let offset: Vector3<f64> = particle.motion[0] - center;
+            let x_offset: usize = if offset.x > 0.0 {0} else {1};
+            let y_offset: usize = if offset.y > 0.0 {0} else {1};
+            let z_offset: usize = if offset.z > 0.0 {0} else {1};
+            let index: usize = x_offset + y_offset * 2 + z_offset * 4;
 
             particle_trees[index].push(particle.clone());
         };
@@ -331,9 +330,9 @@ impl BhTree {
         self.nodes[node_id].child_base = self.nodes.len();
         for (idx, particle_tree) in particle_trees.iter().enumerate() {
             if !particle_tree.is_empty() {
-                let old_range = 
+                let old_range: (Vector3<f64>, Vector3<f64>) = 
                     (self.mins[node_id], self.maxs[node_id]);
-                let new_range = 
+                let new_range: (Vector3<f64>, Vector3<f64>) = 
                     BhTree::get_bounding_box(old_range, center, idx);
                 
                 self.nodes.push(BhNode::new(new_range));
@@ -344,7 +343,7 @@ impl BhTree {
             }
         }
         
-        let mut child_node = self.nodes[node_id].child_base;
+        let mut child_node: usize = self.nodes[node_id].child_base;
 
         for particle_tree in particle_trees.iter() {
             if !particle_tree.is_empty() {
@@ -402,35 +401,43 @@ impl BhTree {
     /// 
     /// Inputs
     /// ------
-    /// pos
+    /// pos : `Vector3<f64>`
+    ///     Position vector
     /// 
-    /// node_id
+    /// node_id : `usize`
+    ///     Node identification number
+    /// 
+    /// Outputs
+    /// -------
+    /// acc : `Vector3<f64>`
+    ///     Acceleration vector
     pub fn barnes_hut_node_acc(
         &self, 
         pos: Vector3<f64>, 
         node_id: usize
     ) -> Vector3<f64> {
-        let current_node = &self.nodes[node_id];
-        let distance= self.center_of_mass[node_id] - pos;
+        let curr_node = &self.nodes[node_id];
+        let dist: Vector3<f64> = self.center_of_mass[node_id] - pos;
+        let dist_sq: f64 = dist.norm_squared();
+        let is_close: bool = curr_node.quad_size < self.theta_sq * dist_sq;
 
-        if current_node.quad_size < self.theta_sq * distance.norm_squared() || current_node.child_mask == 0 {
-            if distance.norm_squared() < TOLERANCE {
+        if is_close || curr_node.child_mask == 0 {
+            if dist_sq < TOLERANCE {
                 return Vector3::new(0.,0.,0.);
-            } else {
-                return distance * cst::GRAV_CONST * (current_node.mass) / distance.norm_squared();
-            }
+            };
+            return dist * cst::GRAV_CONST * (curr_node.mass) / dist_sq;
+        };
 
-        } else {
-            let mut node = current_node.child_base;
-            let mut sum: Vector3<f64> = Vector3::zeros();
-            for node_idx in 0..8 {
-                if current_node.child_mask & (1 << node_idx) != 0 {
-                    sum += self.barnes_hut_node_acc(pos, node);
-                    node += 1;
-                }
+        let mut node: usize = curr_node.child_base;
+        let mut sum: Vector3<f64> = Vector3::zeros();
+
+        for node_idx in 0..8 {
+            if curr_node.child_mask & (1 << node_idx) != 0 {
+                sum += self.barnes_hut_node_acc(pos, node);
+                node += 1;
             }
-            return sum;
-            }
+        }
+        return sum;
 
         }
 
@@ -478,15 +485,15 @@ pub fn barnes_hut_gravity(
         };
 
         // TODO-TD: multithread
-        particles.iter_mut().for_each(|particle| {
-            motion[2] = tree.barnes_hut_node_acc(particle.motion[0], 0);
-            motion[1] = particle.motion[1] + motion[2] * step_size;
-            motion[0] = particle.motion[0] + particle.motion[1] * step_size + 0.5 * motion[2] * step_size * step_size;
+        particles.iter_mut().for_each(|part| {
+            motion[2] = tree.barnes_hut_node_acc(part.motion[0], 0);
+            motion[1] = part.motion[1] + motion[2] * step_size;
+            motion[0] = part.motion[0] + part.motion[1] * step_size + 0.5 * motion[2] * step_size * step_size;
 
-            particle.motion = motion.to_vec();
+            part.motion = motion.to_vec();
             
             if is_debug {
-                print!("pos: {:.5?} \t\t", particle.motion[0]);
+                print!("pos: {:.5?} \t\t", part.motion[0]);
             }
         });
     }
@@ -508,9 +515,12 @@ pub fn calc_range(particles: Vec<Particle>) -> (Vector3<f64>, Vector3<f64>) {
     let mut min: Vector3<f64> = Vector3::zeros();
     let mut max: Vector3<f64> = Vector3::zeros();
 
-    particles.iter().for_each(|particle| {
-        min.iter_mut().zip(max.iter_mut()).zip(particle.motion[0].iter())
-            .for_each(|((min_val, max_val), pos)| { 
+    particles.iter()
+        .for_each(|particle| {
+            min.iter_mut()
+                .zip(max.iter_mut())
+                .zip(particle.motion[0].iter())
+                .for_each(|((min_val, max_val), pos)| { 
                     if pos < min_val{*min_val=*pos;}
                     if pos > max_val{*max_val=*pos;}
                 })
@@ -534,42 +544,40 @@ mod grav_tests {
             eccentricity: cst::EARTH_ECC
         };
 
-        let radius = earth.calc_stationary_orbit();
+        let radius: f64 = earth.calc_stationary_orbit();
         assert_eq!(radius, 42163779.55713436);
 
-        let vel = earth.calc_orbital_velocity_mag(radius);
+        let vel: f64 = earth.calc_orbital_velocity_mag(radius);
         assert_eq!(vel, 4348.18527478043);
 
-        let radius_vec = Vector3::new(radius, 0., 0.);
-        let vel_vec = Vector3::new(0., vel, 0.);
-        let acc_vec = earth.calc_body_grav(radius_vec);
-        let sat_motion_0 = vec![
-            radius_vec,
-            vel_vec,
-            acc_vec];
+        let radius_vec: Vector3<f64> = Vector3::new(radius, 0., 0.);
+        let vel_vec: Vector3<f64> = Vector3::new(0., vel, 0.);
+        let acc_vec: Vector3<f64> = earth.calc_body_grav(radius_vec);
+        let sat_motion_0: Vec<Vector3<f64>> = vec![radius_vec, vel_vec, acc_vec];
         assert_eq!(acc_vec, Vector3::new(0.2242056497591453, 0., 0.));
 
-        let pos_lla = earth.xyz_to_geodetic(radius_vec);
+        let pos_lla: Vector3<f64> = earth.xyz_to_geodetic(radius_vec);
         assert_eq!(pos_lla, Vector3::new(0.0, 0.0, 35785642.55713436));
 
-        let pos_ecef = earth.geodetic_to_xyz(pos_lla);
+        let pos_ecef: Vector3<f64> = earth.geodetic_to_xyz(pos_lla);
         assert_eq!(pos_ecef, radius_vec);
 
-        let motion = vec![Vector3::zeros(); 3];
+        let motion: Vec<Vector3<f64>> = vec![Vector3::zeros(); 3];
         let earth_particle: Particle = earth.to_particle(motion);
         assert_eq!(earth_particle.mass, 5.972e24);
 
         let satellite: Particle = Particle { mass: 5e4, motion: sat_motion_0};
-        let mut particles = vec![earth_particle, satellite].into_boxed_slice();
+        let mut particles: Box<[Particle]> = vec![earth_particle, satellite].into_boxed_slice();
 
-        let step_size = 0.1;
-        let theta = 1.0;
-        let n_steps = 10;
-        let is_debug = false;
+        let step_size: f64 = 0.1;
+        let theta: f64 = 1.0;
+        let n_steps: usize = 10;
+        let is_debug: bool = false;
 
         particles = barnes_hut_gravity(particles, step_size, n_steps, theta, is_debug);
-        assert_eq!(particles[1].motion[0], Vector3::zeros())
-        
+        let expected: Vector3<f64> = Vector3::new(37361232.85564361, 4201.215848944788, 0.0);
+        assert_eq!(particles[1].motion[0],expected);
+
     }
     
     
