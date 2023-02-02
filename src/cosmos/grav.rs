@@ -466,7 +466,7 @@ pub fn barnes_hut_gravity(
     n_steps: usize,
     theta: f64,
     is_debug: bool
-) -> Vec<Particle> {
+) -> Box<[Particle]> {
     let mut motion = vec![Vector3::zeros(); 3].into_boxed_slice();
     
     for i_step in 0..n_steps {

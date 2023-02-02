@@ -39,7 +39,7 @@ fn main() {
     
     // N body configuration
     let theta: f64  = 1.0;
-    let n_steps: usize = 100;
+    let n_steps: usize = 66;
     let step_size: f64 = 0.01;
     let is_debug: bool = true;
 
