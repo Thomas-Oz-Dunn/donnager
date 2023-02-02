@@ -541,7 +541,12 @@ mod grav_tests {
         assert_eq!(vel, 4348.18527478043);
 
         let radius_vec = Vector3::new(radius, 0., 0.);
+        let vel_vec = Vector3::new(0., vel, 0.);
         let acc_vec = earth.calc_body_grav(radius_vec);
+        let sat_motion_0 = vec![
+            radius_vec,
+            vel_vec,
+            acc_vec];
         assert_eq!(acc_vec, Vector3::new(0.2242056497591453, 0., 0.));
 
         let pos_lla = earth.xyz_to_geodetic(radius_vec);
@@ -552,15 +557,20 @@ mod grav_tests {
 
         let motion = vec![Vector3::zeros(); 3];
         let earth_particle: Particle = earth.to_particle(motion);
-
         assert_eq!(earth_particle.mass, 5.972e24);
 
+        let satellite: Particle = Particle { mass: 5e4, motion: sat_motion_0};
+        let mut particles = vec![earth_particle, satellite].into_boxed_slice();
 
+        let step_size = 0.1;
+        let theta = 1.0;
+        let n_steps = 10;
+        let is_debug = false;
+
+        particles = barnes_hut_gravity(particles, step_size, n_steps, theta, is_debug);
+        assert_eq!(particles[1].motion[0], Vector3::zeros())
+        
     }
-    
-    
-    #[test]
-    fn test_particle(){}
     
     
     #[test]
