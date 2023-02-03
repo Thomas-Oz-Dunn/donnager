@@ -17,7 +17,6 @@ pub struct Particle {
     pub motion: Vec<Vector3<f64>>,
 }
 
-// TODO-TD: find happy interface between Particle and Body
 impl Particle {
 
     /// Convert into Body type
