@@ -4,7 +4,7 @@ Gravitational Bodies
 
 use nalgebra as na;
 use std::f64::consts::PI;
-use na::{Vector3};
+use na::Vector3;
 
 use crate::constants as cst;
 
