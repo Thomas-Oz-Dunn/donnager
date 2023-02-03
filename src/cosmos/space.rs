@@ -34,9 +34,10 @@ impl SurfacePoint{
     }
     
     /// Calculate radius from center of body at surface point
-    pub fn calc_surface_radius(&self) -> f64 {
+    pub fn calc_surface_radius(&self) -> Vector3<f64> {
         let prime_vertical: f64 = self.body.calc_prime_vertical(self.pos_lla[0]);
-        let radius: f64 = prime_vertical + self.pos_lla[2];
+        let dir: Vector3<f64> = self.body.geodetic_to_xyz(self.pos_lla);
+        let radius: Vector3<f64> = (prime_vertical + self.pos_lla[2]) * dir;
         return radius
     }
 
@@ -45,9 +46,9 @@ impl SurfacePoint{
         &self,
         altitude: f64,
     ) -> f64 {
-        let radius: f64 = altitude + self.calc_surface_radius();
+        let radius: f64 = altitude + self.calc_surface_radius().norm();
         let surface_vel: f64 = self.calc_surface_vel();
-        let delta_v: f64 = self.body.calc_orbital_velocity(radius);
+        let delta_v: f64 = self.body.calc_orbital_velocity_mag(radius);
         let net_delta_v: f64 = delta_v - surface_vel;
         return net_delta_v
     }
