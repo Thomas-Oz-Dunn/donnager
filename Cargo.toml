@@ -1,6 +1,6 @@
 [package]
 name = "donnager"
-version = "0.1.0"
+version = "0.1.1"
 description = "Blazingly fast astrodynamics calculations in Rust"
 license = "MIT"
 keywords = ["astrodynamics", "astronomy", "satellites"]
