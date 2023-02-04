@@ -8,6 +8,11 @@ use na::Vector3;
 
 use crate::constants;
 
+/// Orbit structure
+/// 
+/// Variables
+/// ---------
+/// 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Orbit{
     pub name: String,
@@ -25,7 +30,11 @@ pub struct Orbit{
 
 impl Orbit {
 
-    // Populate Orbit from Keplerian parameters
+    /// Populate Orbit from Keplerian parameters
+    /// 
+    /// Inputs
+    /// ------
+    /// 
     pub fn from_keplerian(
         name: String,
         grav_param: f64,
@@ -50,7 +59,12 @@ impl Orbit {
         }
     }
 
-    // Populate Orbit from standard Two Line Element
+    /// Populate Orbit from standard Two Line Element
+    /// 
+    /// Inputs
+    /// ------
+    /// tle_str : `String` 
+    ///     NORAD Two Line Element Identification String
     pub fn from_tle(
         tle_str: String
     ) -> Self {
@@ -92,7 +106,21 @@ impl Orbit {
     
     }
 
-    // Populate Orbit from position and velocity vectors
+    /// Populate Orbit from position and velocity vectors
+    /// 
+    /// Inputs
+    /// ------
+    /// name : `String`
+    ///     Name of object
+    /// 
+    /// grav_param : `f64`
+    ///     Central body gravitational parameter
+    /// 
+    /// pos : `Vector3<f64>`
+    ///     Position vector of object
+    /// 
+    /// vel : `Vector3<f64>`
+    ///     Velocity vector of object
     pub fn from_pos_vel(
         name: String,
         grav_param: f64,
@@ -163,10 +191,22 @@ pub fn calc_hohmann_transfer(
 /// 
 /// Inputs
 /// ------
+/// mass_0 : `f64`
+///     Primary mass of 2 body system
+/// 
+/// mass_1 : `f64`
+///     Secondary mass of 2 body system
+/// 
+/// semi_major_axis : `f64`
+///     Orbital ellipse semi major axis
+/// 
+/// eccentricity : `f64`
+///     Orbital ellipse eccentricity
 /// 
 /// Outputs
 /// -------
-/// 
+/// radius : `f64`
+///     Radius of sphere of influence
 pub fn calc_hill_sphere(
     mass_0: f64,
     mass_1: f64,
