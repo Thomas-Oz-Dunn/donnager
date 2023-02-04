@@ -34,7 +34,7 @@ impl Orbit {
     /// 
     /// Inputs
     /// ------
-    /// 
+    /// name : `String`
     pub fn from_keplerian(
         name: String,
         grav_param: f64,
@@ -76,18 +76,19 @@ impl Orbit {
         // let line1: Vec<&str> = lines[1].to_string().split_whitespace().collect();
         let binding: String = lines[2].to_string();
         let line2: Vec<&str> = binding.split_whitespace().collect();
-    
+        
         // let element_num: &str = line1[line1.len()];
         // let epoch: &str = line1[3];
         // let mean_motion_prime: &str = line1[4];
         // let mean_motion_2: &str = line1[5];
-        let inc: f64 = line2[2].to_string().parse::<f64>().unwrap();
+        let inc_str = line2[2].to_string();
+        let inc: f64 = inc_str.parse::<f64>().unwrap();
         let raan: f64 = line2[3].to_string().parse::<f64>().unwrap();
         let ecc: f64 = line2[4].to_string().parse::<f64>().unwrap() * 10e-7;
         let arg_perigee: f64 = line2[5].to_string().parse::<f64>().unwrap();
         let mean_anomaly: f64 = line2[6].to_string().parse::<f64>().unwrap();
     
-        let end_str: &str = line2[line2.len()];
+        let end_str: &str = line2[line2.len()-1];
         let mean_motion: f64 = end_str[..11].to_string().parse::<f64>().unwrap();
         // let rev_num: f64 = end_str[12..].to_string().parse::<f64>().unwrap();
         let semi_major_axis: f64 = (mean_motion.powi(2) / (grav_param)).powf(1.0/3.0);
@@ -240,21 +241,27 @@ mod orbit_tests {
     fn test_hill_sphere(){
         let earth_mass = crate::constants::EARTH_MASS;
         let sun_mass = crate::constants::SUN_MASS;
+        let earth_orbit_semi_major = crate::constants::EARTH_ORBIT_SEMI_MAJOR;
+        let earth_orbit_ecc = crate::constants::EARTH_ORBIT_ECC;
 
         let sphere_rad = calc_hill_sphere(
             sun_mass, 
             earth_mass,
+            earth_orbit_semi_major,
+            earth_orbit_ecc
         );
 
-        assert_eq!(sphere_rads)
+        assert_eq!(sphere_rad, 7069993624.788241)
     }
 
     #[test]
     fn test_orbit(){
-        let tle_str = ;
-        let orb = Orbit::from_tle(tle_str);
+        let tle_str = "ISS (ZARYA) 
+        1 25544U 98067A   23035.69666365  .00008902  00000+0  16600-3 0  9994
+        2 25544  51.6420 264.7747 0008620 314.4274 150.8239 15.49588766381243";
+        let orb = Orbit::from_tle(tle_str.to_string());
 
-        assert_eq!(orb.argument_of_perigee, );
+        assert_eq!(orb.argument_of_perigee, 314.4274);
     }
 
 

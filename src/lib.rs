@@ -1,3 +1,6 @@
+/*
+Library of donnager's modules
+*/
 
 /// A Module of useful constants
 pub mod constants;
