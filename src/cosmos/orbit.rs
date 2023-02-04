@@ -128,7 +128,23 @@ impl Orbit {
 }
 
 
-// Calculate total delta v for hohmann transfer
+/// Calculate total delta v for hohmann transfer
+/// 
+/// Inputs
+/// ------
+/// radius_1 : `f64`
+///     Radius of inner orbit
+/// 
+/// radius_2 : `f64`
+///     Radius of outer orbit
+/// 
+/// vel_0 : `f64`
+///     Initial Velocity of vehicle
+/// 
+/// Outputs
+/// -------
+/// delta_v_total : `f64`
+///     Total delta v for maneuver
 pub fn calc_hohmann_transfer(
     radius_1: f64,
     radius_2: f64,
@@ -143,7 +159,14 @@ pub fn calc_hohmann_transfer(
 }
 
 
-// Calculate sphere of influence for a body
+/// Calculate sphere of influence for a body
+/// 
+/// Inputs
+/// ------
+/// 
+/// Outputs
+/// -------
+/// 
 pub fn calc_hill_sphere(
     mass_0: f64,
     mass_1: f64,
@@ -155,3 +178,22 @@ pub fn calc_hill_sphere(
     return radius
 }
 
+
+
+
+#[cfg(test)]
+mod orbit_tests {
+    use super::*;
+
+    #[test]
+    fn test_hohmann_transfer(){
+        let radius_1 = 5000.;
+        let radius_2 = 5500.;
+        let vel_0 = 10.;
+        let deltav = calc_hohmann_transfer(radius_1, radius_2, vel_0);
+        assert_eq!(deltav, 930.8082549013038);
+
+    }
+
+
+}
