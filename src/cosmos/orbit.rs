@@ -231,8 +231,30 @@ mod orbit_tests {
         let radius_2 = 5500.;
         let vel_0 = 10.;
         let deltav = calc_hohmann_transfer(radius_1, radius_2, vel_0);
+
         assert_eq!(deltav, 930.8082549013038);
 
+    }
+
+    #[test]
+    fn test_hill_sphere(){
+        let earth_mass = crate::constants::EARTH_MASS;
+        let sun_mass = crate::constants::SUN_MASS;
+
+        let sphere_rad = calc_hill_sphere(
+            sun_mass, 
+            earth_mass,
+        );
+
+        assert_eq!(sphere_rads)
+    }
+
+    #[test]
+    fn test_orbit(){
+        let tle_str = ;
+        let orb = Orbit::from_tle(tle_str);
+
+        assert_eq!(orb.argument_of_perigee, );
     }
 
 
