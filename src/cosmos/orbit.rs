@@ -96,13 +96,13 @@ impl Orbit {
         Orbit {
             name: name.to_string(),
             grav_param,
-            semi_major_axis: semi_major_axis,
-            raan: raan,
+            semi_major_axis,
+            raan,
             eccentricity: ecc,
             inclination: inc,
             argument_of_perigee: arg_perigee,
-            mean_anomaly: mean_anomaly,
-            mean_motion: mean_motion,
+            mean_anomaly,
+            mean_motion,
         }
     
     }
@@ -141,9 +141,9 @@ impl Orbit {
             (1.0 - ecc_vec.norm_squared()) / grav_param;
 
         Orbit {
-            name: name,
-            grav_param: grav_param,
-            semi_major_axis: semi_major_axis,
+            name,
+            grav_param,
+            semi_major_axis,
             eccentricity: ecc_vec.norm(),
             raan: (node_vec[0] / node_vec.norm()).acos(),
             inclination: (spec_ang_moment[2] / spec_ang_moment.norm()).acos(),
