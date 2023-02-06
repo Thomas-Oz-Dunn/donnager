@@ -11,6 +11,7 @@ use crate::constants as cst;
 pub const TOLERANCE: f64 = 1e-16;
 
 
+/// Gravitational Particle
 #[derive(Clone, Debug, PartialEq)]
 pub struct Particle {
     pub mass: f64,
@@ -20,20 +21,35 @@ pub struct Particle {
 impl Particle {
 
     /// Convert into Body type
+    /// 
+    /// Inputs
+    /// ------
+    /// name : `String`
+    ///     Name of body
+    /// 
+    /// eq_radius : `f64`
+    ///     Equatorial radius of body
+    /// 
+    /// rotation_rate : `f64`
+    ///     Rotation rate of body
+    /// 
+    /// eccentricity : `f64`
+    ///     Body oblateness
     pub fn to_body(&self, name: String, eq_radius: f64, rotation_rate: f64, eccentricity: f64) -> Body {
         let grav_param: f64 = self.mass * cst::GRAV_CONST;
         let body: Body = Body {
-            name: name,
-            grav_param: grav_param,
-            eq_radius: eq_radius,
-            rotation_rate: rotation_rate,
-            eccentricity: eccentricity
+            name,
+            grav_param,
+            eq_radius,
+            rotation_rate,
+            eccentricity
         };
         body
     }
 }
 
 
+/// Gravitational Body
 #[derive(Clone, Debug, PartialEq)]
 pub struct Body{
     pub name: String,

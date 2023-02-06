@@ -25,8 +25,14 @@ pub enum Frame{
     Heliocentric            // Sun
 }
 
+/// SurfacePoint methods
 impl SurfacePoint{
-    // Calculate tangential velocity at surface point
+    /// Calculate tangential velocity magnitude at surface point
+    /// 
+    /// Outputs
+    /// -------
+    /// tan_vel : `f64`
+    ///     Tangential velocity magnitude
     pub fn calc_surface_vel(&self) -> f64 {
         let equatorial_vel: f64 = self.body.rotation_rate * self.body.eq_radius;
         let tan_vel: f64 = (self.pos_lla[0].cos() * equatorial_vel).abs();
@@ -34,6 +40,11 @@ impl SurfacePoint{
     }
     
     /// Calculate radius from center of body at surface point
+    /// 
+    /// Outputs
+    /// -------
+    /// radius : `Vector3<f64>`
+    ///     Radial vector
     pub fn calc_surface_radius(&self) -> Vector3<f64> {
         let prime_vertical: f64 = self.body.calc_prime_vertical(self.pos_lla[0]);
         let dir: Vector3<f64> = self.body.geodetic_to_xyz(self.pos_lla);

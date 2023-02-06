@@ -4,6 +4,23 @@ Fluid dynamics
 
 use crate::constants as cst;
 
+/// Calculate mass flow of nozzle
+/// 
+/// Inputs
+/// ------
+/// throat_area : `f64`
+///     Area of nozzle throat
+/// 
+/// p_chamber : `f64`
+///     Chamber pressure
+/// 
+/// c_star : `f64`
+///     Characteristic velocity
+/// 
+/// Outputs
+/// -------
+/// mass_flow : `f64`
+///     Mass flow rate through throat
 pub fn calc_mass_flow(
     throat_area: f64,
     p_chamber: f64,
@@ -27,6 +44,23 @@ pub fn calc_atmos_pressure(
 }
 
 
+/// Calculate mach number
+/// 
+/// Inputs
+/// ------
+/// velocity : `f64`
+///     Fluid or object velocity
+/// 
+/// temperature : `f64`
+///     Fluid temperature
+/// 
+/// heat_capacity_ratio : `f64`
+///     Heat capacity ratio of fluid
+/// 
+/// Outputs
+/// -------
+/// mach_number : `f64`
+///     Fluid or object  mach number
 pub fn calc_mach_number(
     velocity: f64,
     temperature: f64,
@@ -90,6 +124,21 @@ pub fn calc_thrust_coeff(
 }
 
 
+/// Calculate specific impulse of engine
+/// 
+/// Inputs
+/// ------
+/// heat_capacity_ratio : `f64`
+///     Heat capacity ratio    
+/// 
+/// expansion_ratio : `f64`
+///     Nozzle expansion ratio
+/// 
+/// t_chamber : `f64`
+///     Chamber temperature
+/// 
+/// p_chamber : `f64`    
+///     Chamber pressure
 pub fn calc_engine_isp(
     heat_capacity_ratio: f64, 
     expansion_ratio: f64,
@@ -104,9 +153,7 @@ pub fn calc_engine_isp(
         p_chamber, 
         p_atm, 
         p_exhaust);
-    let c_star: f64 = calc_characteristic_vel(
-        heat_capacity_ratio, 
-        t_chamber);
+    let c_star: f64 = calc_characteristic_vel(heat_capacity_ratio, t_chamber);
     let isp: f64 = thrust_coeff * c_star;
     return isp
 }
