@@ -1,8 +1,15 @@
-
+/*
+Effects and interactions of the electromagnetic field
+*/
 
 use std::f64::consts::PI;
 use crate::constants as cst;
 
+/// Calculate apparent brightness of object
+/// 
+/// Inputs
+/// ------
+/// 
 pub fn calc_apparent_brightness(
     luminosity: f64,
     radial_distance: f64
@@ -11,6 +18,10 @@ pub fn calc_apparent_brightness(
     return apparent_lum
 }
 
+/// Calculate spectral radiance
+/// 
+/// Inputs
+/// ------
 pub fn calc_spectral_radiance(
     frequency: f64,
     absolute_temp: f64
@@ -21,4 +32,23 @@ pub fn calc_spectral_radiance(
     let denom: f64 = cst::SPEED_OF_LIGHT.powi(2)*(exponent.exp() - 1.0);
     let radiance: f64 = numerator / denom;
     return radiance
+}
+
+/// Calculate solar power generated
+/// 
+/// Inputs
+/// ------
+pub fn calc_solar_power_gen(
+    incidence_angle: f64,
+    area: f64,
+    efficiency: f64,
+    distance: f64
+) -> f64 {
+    return area
+}
+
+
+#[test]
+fn test_solar_power(){
+
 }
