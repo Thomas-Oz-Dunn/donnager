@@ -3,6 +3,8 @@ Effects and interactions of the electromagnetic field
 */
 
 use std::f64::consts::PI;
+use nalgebra::Vector3;
+
 use crate::constants as cst;
 
 /// Calculate apparent brightness of object
@@ -38,14 +40,21 @@ pub fn calc_spectral_radiance(
 /// 
 /// Inputs
 /// ------
-pub fn calc_solar_power_gen(
-    incidence_angle: f64,
-    area: f64,
+pub fn calc_max_solar_power_gen(
+    flux_vec: Vector3<f64>,
+    area_vec: Vector3<f64>,
     efficiency: f64,
-    distance: f64
 ) -> f64 {
-    return area
+    let cos_incidence: f64 = area_vec.transpose() * flux_vec / (area_vec.norm() * flux_vec.norm());
+    let max_power: f64 = efficiency * area_vec.norm() * flux_vec.norm() * cos_incidence;
+    return max_power
 }
+
+pub fn calc_normal_area(
+    incidence_angle: f64,
+
+)
+
 
 
 #[test]
