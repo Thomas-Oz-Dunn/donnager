@@ -11,7 +11,16 @@ use crate::constants as cst;
 /// 
 /// Inputs
 /// ------
+/// luminosity : `f64`
+///     Luminosity in W/m^2
 /// 
+/// radial_distance : `f64`
+///     Distance from source
+/// 
+/// Ouputs
+/// ------
+/// apparent_lum : `f64`
+///     Luminosity at distance
 pub fn calc_apparent_brightness(
     luminosity: f64,
     radial_distance: f64
@@ -24,6 +33,16 @@ pub fn calc_apparent_brightness(
 /// 
 /// Inputs
 /// ------
+/// frequency : `f64`
+///     Frequency of light
+/// 
+/// absolute_temp : `f64`
+///     Temperature of blackbody in Kelvin
+/// 
+/// Outputs
+/// -------
+/// radiance : `f64`
+///     Power radiated at frequency
 pub fn calc_spectral_radiance(
     frequency: f64,
     absolute_temp: f64
@@ -40,20 +59,29 @@ pub fn calc_spectral_radiance(
 /// 
 /// Inputs
 /// ------
+/// em_flux_vec : `Vector3<f64>`
+///     Electromagnetic flux vector
+/// 
+/// panel_area_vec : `Vector3<f64>`
+///     Solar panel area normal vector
+/// 
+/// efficiency : `f64`
+///     Solar power efficiency
+/// 
+/// Outputs
+/// -------
+/// max_power : `f64`
+///     Maximum power generated
 pub fn calc_max_solar_power_gen(
-    flux_vec: Vector3<f64>,
-    area_vec: Vector3<f64>,
+    em_flux_vec: Vector3<f64>,
+    panel_area_vec: Vector3<f64>,
     efficiency: f64,
 ) -> f64 {
-    let cos_incidence: f64 = area_vec.transpose() * flux_vec / (area_vec.norm() * flux_vec.norm());
-    let max_power: f64 = efficiency * area_vec.norm() * flux_vec.norm() * cos_incidence;
+    let inner_prod: f64 = panel_area_vec.dot(&em_flux_vec);
+    let cos_incidence: f64 = inner_prod / (panel_area_vec.norm() * em_flux_vec.norm());
+    let max_power: f64 = efficiency * panel_area_vec.norm() * em_flux_vec.norm() * cos_incidence;
     return max_power
 }
-
-pub fn calc_normal_area(
-    incidence_angle: f64,
-
-)
 
 
 
