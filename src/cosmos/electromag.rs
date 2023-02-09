@@ -55,6 +55,15 @@ pub fn calc_spectral_radiance(
     return radiance
 }
 
+/// Calculate peak wavelength
+pub fn calc_peak_wavelength(
+    absolute_temp: f64
+) -> f64 {
+    let wiens_dis_const = 2.897771955;
+    let wavelength = wiens_dis_const / absolute_temp;
+    return wavelength
+}
+
 /// Calculate solar power generated
 /// 
 /// Inputs
