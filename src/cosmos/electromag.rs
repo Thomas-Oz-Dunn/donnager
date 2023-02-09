@@ -83,9 +83,34 @@ pub fn calc_max_solar_power_gen(
     return max_power
 }
 
+/// Calculate force from electromagnetic radiation
+/// 
+/// Inputs
+/// ------
+/// em_flux_vec : `f64`
+///     Electromagnetic flux vector
+/// 
+/// obj_reflectivity
+///     0.0 -> 1 -> 2.0
+///     0.0 : transparent
+///     1.0 : blackbody
+///     2.0 : mirror
+pub fn calc_em_radiative_force(
+    em_flux: f64,
+    src_obj_vec: Vector3<f64>,
+    obj_reflecitivity: f64,
+    normal_area: f64
+) -> Vector3<f64> {
+    let pressure = em_flux / cst::SPEED_OF_LIGHT;
+    let mag = pressure * obj_reflecitivity * normal_area;
+    let force = mag * src_obj_vec/ src_obj_vec.norm();
+    return force
+}
 
 
 #[test]
 fn test_solar_power(){
-
+    let frequency = 536.34;
+    let absolute_temp = 234.34;
+    let radiance = calc_spectral_radiance(frequency, absolute_temp);
 }
