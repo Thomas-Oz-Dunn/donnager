@@ -55,7 +55,17 @@ pub fn calc_spectral_radiance(
     return radiance
 }
 
-/// Calculate peak wavelength
+/// Calculate wavelength of peak black body radiance
+/// 
+/// Inputs
+/// ------
+/// absolute_temp : `f64`
+///     Absolute blackbody temperature (K)
+/// 
+/// Outputs
+/// -------
+/// wavelength : `f64`
+///     Wavelength of peak radiance
 pub fn calc_peak_wavelength(
     absolute_temp: f64
 ) -> f64 {
@@ -117,9 +127,24 @@ pub fn calc_em_radiative_force(
 }
 
 
-#[test]
-fn test_solar_power(){
-    let frequency = 536.34;
-    let absolute_temp = 234.34;
-    let radiance = calc_spectral_radiance(frequency, absolute_temp);
+#[cfg(test)]
+mod electromag_tests{
+    use super::*;
+
+    #[test]
+    fn test_radiance(){
+        let absolute_temp = 234.34;
+        let frequency = cst::SPEED_OF_LIGHT / calc_peak_wavelength(absolute_temp);
+        let radiance = calc_spectral_radiance(frequency, absolute_temp);
+        assert_eq!(radiance, 0.0)
+    
+    }
+
+    #[test]
+    fn test_power(){
+        let solar_cell_eff = 0.1;
+        let max_power = calc_max_solar_power_gen();
+
+    }
 }
+
