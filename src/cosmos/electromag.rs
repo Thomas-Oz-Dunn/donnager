@@ -142,9 +142,17 @@ mod electromag_tests{
 
     #[test]
     fn test_power(){
-        let solar_cell_eff = 0.1;
-        let max_power = calc_max_solar_power_gen();
-
+        let efficiency = 0.1;
+        let solar_flux_mag = cst::SUN_MEAN_SOLAR_FLUX;
+        let em_flux_vec: Vector3<f64> = Vector3::new(0., 0., 1.) * solar_flux_mag;
+        let panel_area_vec: Vector3<f64> = 
+            Vector3::new(0., 0., 1.);
+        let max_power = calc_max_solar_power_gen(
+            em_flux_vec,
+            panel_area_vec,
+            efficiency
+        );
+        assert_eq!(max_power, 0.)
     }
 }
 
