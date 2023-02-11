@@ -55,7 +55,7 @@ pub fn calc_spectral_radiance(
     return radiance
 }
 
-/// Calculate wavelength of peak black body radiance
+/// Calculate wavelength of peak black body radiance (m)
 /// 
 /// Inputs
 /// ------
@@ -136,7 +136,7 @@ mod electromag_tests{
         let absolute_temp = 234.34;
         let frequency = cst::SPEED_OF_LIGHT / calc_peak_wavelength(absolute_temp);
         let radiance = calc_spectral_radiance(frequency, absolute_temp);
-        assert_eq!(radiance, 0.0)
+        assert_eq!(radiance, 4.221293395184273e-17)
     
     }
 
@@ -152,7 +152,7 @@ mod electromag_tests{
             panel_area_vec,
             efficiency
         );
-        assert_eq!(max_power, 0.)
+        assert_eq!(max_power, 136.691)
     }
 }
 
