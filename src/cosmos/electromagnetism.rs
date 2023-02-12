@@ -127,6 +127,39 @@ pub fn calc_em_radiative_force(
 }
 
 
+/// Calculate radial ditance using two way speed of light
+/// 
+/// Inputs
+/// ------
+/// time_delay : `f64`
+///     Time delay in seconds
+/// 
+/// Outputs
+/// -------
+/// c : `f64`
+///     Radial magnitudes
+pub fn calc_radial_distance(
+    time_delay: f64
+) -> f64 {
+    let radius: f64 = cst::SPEED_OF_LIGHT * time_delay / 2.0;
+    return radius
+}
+
+/// Calculate radial velocity using Doppler effect
+/// 
+/// Inputs
+/// ------
+/// 
+pub fn calc_radial_vel(
+    tx_wavelength: f64,
+    rx_wavelength: f64
+) -> f64 {
+    let wavelength_shift: f64 = rx_wavelength - tx_wavelength;
+    let v_r: f64 = wavelength_shift * cst::SPEED_OF_LIGHT / tx_wavelength;
+    return v_r
+}
+
+
 #[cfg(test)]
 mod electromag_tests{
     use super::*;

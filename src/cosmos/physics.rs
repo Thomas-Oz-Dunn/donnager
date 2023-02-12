@@ -3,24 +3,6 @@ Physics calculation
 */
 use crate::constants as cst;
 
-// Calculate radial ditance using two way speed of light
-pub fn calc_radial_distance(
-    time_delay: f64
-) -> f64 {
-    let r: f64 = cst::SPEED_OF_LIGHT * time_delay / 2.0;
-    return r
-}
-
-// Calculate radial velocity using Doppler effect
-pub fn calc_radial_vel(
-    tx_wavelength: f64,
-    rx_wavelength: f64
-) -> f64 {
-    let wavelength_shift: f64 = rx_wavelength - tx_wavelength;
-    let v_r: f64 = wavelength_shift * cst::SPEED_OF_LIGHT / tx_wavelength;
-    return v_r
-}
-
 // Calculate schwarzchild radius of a given mass
 pub fn calc_schwarzchild_radius(
     mass: f64

@@ -6,7 +6,7 @@ Barnes Hut
 use nalgebra as na;
 use na::Vector3;
 
-use donnager::cosmos::grav as grav;
+use donnager::cosmos::gravity as grav;
 
 fn main() {
 
