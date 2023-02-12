@@ -14,11 +14,15 @@ name = "donnager"
 
 [[bin]]
 name = "launch_sim"
-path = "src/launch_sim/main.rs"
+path = "src/demos/launch_sim.rs"
 
 [[bin]]
 name = "n_body_sim"
-path = "src/n_body_sim/main.rs"
+path = "src/demos/n_body_sim.rs"
+
+[[bin]]
+name = "power_gen_sim"
+path = "src/demos/power_gen_sim.rs"
 
 [dependencies]
 nalgebra = "0.31.4"
