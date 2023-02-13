@@ -13,7 +13,7 @@ use donnager::dynamics as dynam;
 
 fn main() {
     // Config
-    let earth: cosm::grav::Body = cosm::grav::Body {
+    let earth: cosm::gravity::Body = cosm::gravity::Body {
         name: "Earth".to_string(),
         grav_param: cst::EARTH_GRAV_PARAM,
         eq_radius: cst::EARTH_RADIUS_EQUATOR,
