@@ -149,7 +149,11 @@ pub fn calc_radial_distance(
 /// 
 /// Inputs
 /// ------
+/// tx_wavelength: `f64`
+///     Initial transmit wavelength
 /// 
+/// rx_wavelength: `f64`
+///     Received wavelength
 pub fn calc_radial_vel(
     tx_wavelength: f64,
     rx_wavelength: f64
