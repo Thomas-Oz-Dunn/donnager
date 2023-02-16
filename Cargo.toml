@@ -20,10 +20,6 @@ path = "src/demos/launch_sim.rs"
 name = "n_body_sim"
 path = "src/demos/n_body_sim.rs"
 
-[[bin]]
-name = "power_gen_sim"
-path = "src/demos/power_gen_sim.rs"
-
 [dependencies]
 nalgebra = "0.31.4"
 plotters = "0.3.4"
