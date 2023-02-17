@@ -26,3 +26,4 @@ path = "src/demos/n_body_sim.rs"
 nalgebra = "0.31.4"
 plotters = "0.3.4"
 chrono = "0.4.23"
+
