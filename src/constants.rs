@@ -2,6 +2,16 @@
 Constants
 */
 
+use std::f64::consts::PI;
+
+/// Math
+/// ----
+
+/// Degrees to radians
+pub const DEG_TO_RAD: f64 = 180.0 / PI;
+/// Radians to degrees
+pub const RAD_TO_DEG: f64 = PI / 180.0;
+
 /// Gravity
 /// -------
 
