@@ -1,6 +1,8 @@
+# Donnager manifest file
+
 [package]
 name = "donnager"
-version = "0.1.1"
+version = "0.1.2"
 description = "Blazingly fast astrodynamics calculations in Rust"
 license = "MIT"
 keywords = ["astrodynamics", "astronomy", "satellites"]
@@ -14,13 +16,14 @@ name = "donnager"
 
 [[bin]]
 name = "launch_sim"
-path = "src/launch_sim/main.rs"
+path = "src/demos/launch_sim.rs"
 
 [[bin]]
 name = "n_body_sim"
-path = "src/n_body_sim/main.rs"
+path = "src/demos/n_body_sim.rs"
 
 [dependencies]
 nalgebra = "0.31.4"
 plotters = "0.3.4"
 chrono = "0.4.23"
+

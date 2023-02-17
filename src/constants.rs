@@ -10,27 +10,23 @@ pub const GRAV_CONST: f64 = 6.6743015e-11; // m^3 * kg^-1 * s^-2
 
 /// Mass of the Sun in kilograms
 pub const SUN_MASS: f64 = 1.9891e30; // kg
-
 /// Radius of the Sun in meters
 pub const SUN_RADIUS_EQUATOR: f64 = 9.6e7; // m
-
 /// Sun centered gravitational parameter
 pub const SUN_GRAV_PARAM: f64 = SUN_MASS * GRAV_CONST;
-
 pub const SUN_LUMINOSITY: f64 = 3.828e26; // Watts
+
+/// Mean Solar Flux at 1 AU
+pub const SUN_MEAN_SOLAR_FLUX: f64 = 1366.91; // Watts * m-2
 
 /// Mass of the Earth in kilograms
 pub const EARTH_MASS: f64 = 5.972e24; // kg
-
 /// Radius of Earth at equator in meters
 pub const EARTH_RADIUS_EQUATOR: f64 = 6.378137e6; // m
-
 /// Earth centered gravitational parameter
 pub const EARTH_GRAV_PARAM: f64 = EARTH_MASS * GRAV_CONST; // m^3 * s^-2
-
 pub const EARTH_ECC: f64 = 0.08182;
 pub const EARTH_ROT_RATE: f64 = 7.2921150e-5; // radians per second;
-
 pub const EARTH_ORBIT_SEMI_MAJOR: f64 = 149.60e6;
 pub const EARTH_ORBIT_ECC: f64 = 0.0167086;
 

@@ -8,6 +8,7 @@ Until the rains fall on Olympus Mons.
 ---
 Note: Under active development, updating structure frequently.
 
+Stable release TBD
 ---
 
 
@@ -20,7 +21,7 @@ or, alternatively, in your project's `cargo.toml` file:
 
 ```
 [dependencies]
-donnager = "0.1.0"
+donnager = "0.1.2"
 ```
 
 ## Modules
@@ -40,7 +41,7 @@ use nalgebra as na;
 use na::Vector3;
 
 // Config
-let earth: cosm::grav::Body = cosm::grav::Body {
+let earth: cosm::gravity::Body = cosm::gravity::Body {
     name: "Earth".to_string(),
     grav_param: cst::EARTH_GRAV_PARAM,
     eq_radius: cst::EARTH_RADIUS_EQUATOR,
