@@ -1,4 +1,4 @@
-name: Rust
+name: CI pipeline
 
 on:
   push:
@@ -11,15 +11,12 @@ env:
 
 jobs:
   build:
+
     runs-on: ubuntu-latest
+
     steps:
     - uses: actions/checkout@v3
     - name: Build
-      run: cargo build --verbose --release
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-    - name: Tests
+      run: cargo build --verbose
+    - name: Run tests
       run: cargo test --verbose
