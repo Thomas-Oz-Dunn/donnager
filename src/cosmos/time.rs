@@ -27,6 +27,14 @@ pub fn calc_day_length(
 }
 
 /// Convert month, day to day of year
+/// 
+/// Inputs
+/// ------
+/// month : `i32`
+///     Month of year
+/// 
+/// day : `i32`
+///     Day of month
 pub fn convert_date_to_doy(
     month: i32,
     day: i32
@@ -47,12 +55,19 @@ pub fn convert_date_to_doy(
     return total_days + day
 }
 
-/// Convert gregorian datetime to julian
-pub fn gregorian_date_time_to_julian(
-    date,
-    time
-) -> {
-    return None
+/// Convert gregorian datetime to julian time
+pub fn gregorian_date_to_julian_day_num(
+    gregorian_year: i32,
+    gregorian_month: i32,
+    day: i32
+) -> i32 {
+
+    let julian_day_num: i32 = (1461 * (gregorian_year + 4800 + (
+        gregorian_month - 14)/12))/4 + (367 * (gregorian_month - 2 - 12 * ((
+        gregorian_month - 14)/12)))/12 - (3 * ((gregorian_year + 4900 + (
+        gregorian_month - 14)/12)/100))/4 + day - 32075;
+
+    return julian_day_num
 }
 
 
