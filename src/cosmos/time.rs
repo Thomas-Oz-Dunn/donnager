@@ -56,24 +56,37 @@ pub fn convert_date_to_doy(
 }
 
 /// Convert gregorian datetime to julian time
+/// 
+/// Inputs
+/// ------
+/// gregorian_year: `i32`
+///     Common Era year
+/// 
+/// gregorian_month: `i32`
+///     Month number of year
+/// 
+/// day: `i32`
+///     Day of month
 pub fn gregorian_date_to_julian_day_num(
     gregorian_year: i32,
     gregorian_month: i32,
     day: i32
 ) -> i32 {
 
-    let julian_day_num: i32 = (1461 * (gregorian_year + 4800 + (
-        gregorian_month - 14)/12))/4 + (367 * (gregorian_month - 2 - 12 * ((
-        gregorian_month - 14)/12)))/12 - (3 * ((gregorian_year + 4900 + (
-        gregorian_month - 14)/12)/100))/4 + day - 32075;
+    let del_month: i32 = (gregorian_month - 14) / 12; // Adjusts for jul & aug
+    let julian_day_num: i32 = (1461 * (gregorian_year + 4800 + del_month))/4 
+        + (367 * (gregorian_month - 2 - 12 * (del_month)))/12 
+        - (3 * ((gregorian_year + 4900 + del_month) / 100))/4 
+        + day - 32075;
 
     return julian_day_num
 }
 
 
-/// Julian datetime to gregorian
+/// Julian day number to gregorian year, month, day
 pub fn julian_to_gregorian(
-    julian_date
-) -> {
+    julian_day: i32
+) -> (i32, i32, i32){
+
     return None
 }
