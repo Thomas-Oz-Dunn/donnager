@@ -42,7 +42,7 @@ pub fn calc_day_length(
 /// 
 /// day : `i32`
 ///     Day of month
-pub fn convert_date_to_doy(
+pub fn date_to_doy(
     year: i32, 
     month: i32,
     day: i32
@@ -55,7 +55,7 @@ pub fn convert_date_to_doy(
 
     let is_leap_year: bool = (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0);
 
-    for i_month in 1..(month-1) {
+    for i_month in 1..month {
         if long_months.contains(&i_month) {
             total_days += 31;
         } else if short_months.contains(&i_month){
@@ -98,13 +98,28 @@ pub fn gregorian_date_to_julian_day_num(
 }
 
 
-/// Julian day number to gregorian year, month, day
-pub fn julian_to_gregorian(
-    julian_day: i32
-) -> (i32, i32, i32){
+// /// Julian day number to gregorian year, month, day
+// pub fn julian_to_gregorian(
+//     julian_day: i32
+// ) -> (i32, i32, i32){
 
-    return None
+//     return None
+// }
+
+
+
+
+#[cfg(test)]
+mod time_tests {
+    use super::*;
+
+    #[test]
+    fn test_date_to_doy(){
+        let year = 2023;
+        let month = 2;
+        let day = 5;
+
+        let doy = date_to_doy(year, month, day);
+        assert_eq!(doy, 36);
+    }
 }
-
-
-
