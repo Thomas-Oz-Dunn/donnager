@@ -98,13 +98,20 @@ pub fn date_to_julian_day_num(
 }
 
 
-// /// Julian day number to gregorian year, month, day
-// pub fn julian_to_gregorian(
-//     julian_day: i32
-// ) -> (i32, i32, i32){
+/// Julian day number to gregorian year, month, day
+pub fn julian_to_gregorian(
+    jd: i32
+) -> (i32, i32, i32){
+    let e: i32 = (jd + 1401 + (((4*jd + 274277)/146097)* 3) / 4 - 38) * 4 + 3;
+    let h: i32 = 5 * (e % 1461) / 4 + 2;
 
-//     return None
-// }
+    let day: i32 = (h % 153) / 5 + 1;
+    let month: i32 = ((h / 153 + 2) % 12) + 1;
+    let year: i32 = e / 1461 - 4716 + (14 - month) / 12;
+
+    return (year, month, day)
+
+}
 
 
 
