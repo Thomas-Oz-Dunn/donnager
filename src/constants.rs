@@ -8,9 +8,9 @@ use std::f64::consts::PI;
 /// ----
 
 /// Degrees to radians
-pub const DEG_TO_RAD: f64 = 180.0 / PI;
+pub const DEG_TO_RAD: f64 = PI / 180.0;
 /// Radians to degrees
-pub const RAD_TO_DEG: f64 = PI / 180.0;
+pub const RAD_TO_DEG: f64 = 180.0 / PI;
 
 /// Gravity
 /// -------
@@ -37,10 +37,13 @@ pub const EARTH_RADIUS_EQUATOR: f64 = 6.378137e6; // m
 pub const EARTH_GRAV_PARAM: f64 = EARTH_MASS * GRAV_CONST; // m^3 * s^-2
 pub const EARTH_ECC: f64 = 0.08182;
 pub const EARTH_ROT_RATE: f64 = 7.2921150e-5; // radians per second;
-pub const EARTH_ORBIT_SEMI_MAJOR: f64 = 149.60e6;
-pub const EARTH_ORBIT_ECC: f64 = 0.0167086;
 pub const EARTH_DAYS_PER_YEAR: f64 = 365.25;
 pub const EARTH_AXIAL_TILT: f64 = -23.44;
+
+/// Earth-Sun System
+pub const EARTH_ORBIT_SEMI_MAJOR: f64 = 149.60e6;
+pub const EARTH_ORBIT_ECC: f64 = 0.0167086;
+pub const EARTH_ARG_PERIHELION: f64 = 102.9372;
 
 
 /// Electromagnetism
