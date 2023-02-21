@@ -2,27 +2,34 @@
 Time related calculations
 */
 
-use std::f64::consts::PI;
-
 use crate::constants as cst;
+
+
 /// Calculate hours of sunlight at lattitude
 /// 
 /// Inputs
 /// ------
-/// lattitude : `f64`
-///     Lat coord in degrees
+/// lat_deg : `f64`
+///     Lat of coordinates in degrees
 /// 
 /// doy : `i32`
 ///     Day of year
 pub fn calc_day_length(
-    lattitude: f64,
+    lat_deg: f64,
     doy: i32
 ) -> f64 {
-    let a: f64 = (0.98565 * ((doy - 2) as f64)).sin();
-    let c: f64 = 360.0 / 365.24 * ((doy + 10) as f64) + 360.0 / PI * 0.0167 * a;
-    let sun_declination: f64 = (c.cos() * (-23.44 as f64).sin()).asin();
-    let hour_angle: f64 = (-sun_declination.tan() * (lattitude*cst::DEG_TO_RAD).tan()).acos();
-    let hours = hour_angle / 15.0;
+    // Spatial contribution
+    let lat_rad: f64 = lat_deg * cst::DEG_TO_RAD;
+
+    // Temporal contribution
+    let alpha: f64 = (0.98565 * ((doy - 2) as f64)).sin();
+    let alpha_rad: f64 = 0.0334 * alpha * cst::DEG_TO_RAD;
+    let solstice_angle: f64 = (doy + 10) as f64 / cst::EARTH_DAYS_PER_YEAR;
+    let gamma: f64 = 360.0 * solstice_angle + alpha_rad;
+    let sun_dec: f64 = (gamma.cos() * (cst::EARTH_AXIAL_TILT).sin()).asin();
+    
+    let hour_angle: f64 = ((-sun_dec).tan() * (lat_rad).tan()).acos();
+    let hours: f64 = hour_angle / 15.0;
     return hours
 }
 
@@ -36,21 +43,29 @@ pub fn calc_day_length(
 /// day : `i32`
 ///     Day of month
 pub fn convert_date_to_doy(
+    year: i32, 
     month: i32,
     day: i32
 ) -> i32 {
+    // TODO-TD: add checks to ensure valid date entered
+
     let mut total_days: i32 = 0;
     let long_months: Vec<i32> = [1, 3, 5, 7, 8, 10, 12].to_vec();
     let short_months: Vec<i32> = [4, 6, 9, 11].to_vec();
-    for i_month in 1..month {
+
+    let is_leap_year: bool = (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0);
+
+    for i_month in 1..(month-1) {
         if long_months.contains(&i_month) {
             total_days += 31;
         } else if short_months.contains(&i_month){
             total_days += 30;
+        } else if i_month == 2 && is_leap_year {
+            total_days += 29;
         } else {
-            /// TODO-TD: Leap year check?
             total_days += 28;
         }
+
     }
     return total_days + day
 }
@@ -90,3 +105,6 @@ pub fn julian_to_gregorian(
 
     return None
 }
+
+
+

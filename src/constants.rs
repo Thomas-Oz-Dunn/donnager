@@ -39,6 +39,9 @@ pub const EARTH_ECC: f64 = 0.08182;
 pub const EARTH_ROT_RATE: f64 = 7.2921150e-5; // radians per second;
 pub const EARTH_ORBIT_SEMI_MAJOR: f64 = 149.60e6;
 pub const EARTH_ORBIT_ECC: f64 = 0.0167086;
+pub const EARTH_DAYS_PER_YEAR: f64 = 365.25;
+pub const EARTH_AXIAL_TILT: f64 = -23.44;
+
 
 /// Electromagnetism
 /// ----------------
