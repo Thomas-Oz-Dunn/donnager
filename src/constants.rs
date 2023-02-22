@@ -12,6 +12,9 @@ pub const DEG_TO_RAD: f64 = PI / 180.0;
 /// Radians to degrees
 pub const RAD_TO_DEG: f64 = 180.0 / PI;
 
+pub fn to_radians(degrees: f64) -> f64 {DEG_TO_RAD * degrees}
+pub fn to_degrees(radians: f64) -> f64 {RAD_TO_DEG * radians}
+
 /// Gravity
 /// -------
 

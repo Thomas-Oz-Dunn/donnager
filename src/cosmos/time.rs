@@ -10,7 +10,10 @@ use crate::constants as cst;
 /// Inputs
 /// ------
 /// lat_deg : `f64`
-///     Lat of coordinates in degrees
+///     Latitude of coordinates in degrees
+/// 
+/// long_deg : `f64`
+///     Longitude of coordinates in degrees
 /// 
 /// julian_day : `i32`
 ///     julian_date
@@ -37,6 +40,9 @@ pub fn calc_day_length(
 /// 
 /// Inputs
 /// ------
+/// year : `i32`
+///     Gregorian Year of common era
+/// 
 /// month : `i32`
 ///     Month of year
 /// 
@@ -99,6 +105,11 @@ pub fn date_to_julian_day_num(
 
 
 /// Julian day number to gregorian year, month, day
+/// 
+/// Inputs
+/// -----
+/// jd : `i32`
+///     Julian day
 pub fn julian_to_gregorian(
     jd: i32
 ) -> (i32, i32, i32){
@@ -112,8 +123,6 @@ pub fn julian_to_gregorian(
     return (year, month, day)
 
 }
-
-
 
 
 #[cfg(test)]
