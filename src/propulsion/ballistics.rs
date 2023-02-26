@@ -38,3 +38,26 @@ pub fn calc_coast_height(
     let coast_height: f64 = v_bo.powi(2) / (2.0 * grav_acc);
     coast_height
 }
+
+
+#[cfg(test)]
+mod ballistics_tests {
+    use super::*;
+
+    #[test]
+    fn test_burnout(){
+        let isp: f64 = 300.;
+        let grav_acc: f64 = 9.81;
+        let delta_v: f64 = 10.;
+        let mass_ratio: f64 = calc_mass_ratio(
+            delta_v, 
+            isp, 
+            grav_acc);
+        let burnout_h: f64 = calc_burnout_height(
+            mass_ratio, 
+            grav_acc, 
+            isp);
+        let coast_h: f64 =
+        assert_eq!(burnout_h, 0.);
+    }
+}

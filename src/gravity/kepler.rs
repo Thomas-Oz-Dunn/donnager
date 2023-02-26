@@ -419,10 +419,10 @@ mod orbit_tests {
 
     #[test]
     fn test_hohmann_transfer(){
-        let radius_1 = 5000.;
-        let radius_2 = 5500.;
-        let vel_0 = 10.;
-        let deltav = calc_hohmann_transfer(radius_1, radius_2, vel_0);
+        let radius_1: f64 = 5000.;
+        let radius_2: f64 = 5500.;
+        let vel_0: f64 = 10.;
+        let deltav: f64 = calc_hohmann_transfer(radius_1, radius_2, vel_0);
 
         assert_eq!(deltav, 930.8082549013038);
 
@@ -430,12 +430,12 @@ mod orbit_tests {
 
     #[test]
     fn test_hill_sphere(){
-        let earth_mass = crate::constants::EARTH_MASS;
-        let sun_mass = crate::constants::SUN_MASS;
-        let earth_orbit_semi_major = crate::constants::EARTH_ORBIT_SEMI_MAJOR;
-        let earth_orbit_ecc = crate::constants::EARTH_ORBIT_ECC;
+        let earth_mass: f64 = crate::constants::EARTH_MASS;
+        let sun_mass: f64 = crate::constants::SUN_MASS;
+        let earth_orbit_semi_major: f64 = crate::constants::EARTH_ORBIT_SEMI_MAJOR;
+        let earth_orbit_ecc: f64 = crate::constants::EARTH_ORBIT_ECC;
 
-        let sphere_rad = calc_hill_sphere(
+        let sphere_rad: f64 = calc_hill_sphere(
             sun_mass, 
             earth_mass,
             earth_orbit_semi_major,
