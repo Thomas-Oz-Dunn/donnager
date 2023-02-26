@@ -1,5 +1,5 @@
 /*
-Physics calculation
+Relativistic calculations
 */
 use crate::constants as cst;
 

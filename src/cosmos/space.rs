@@ -3,12 +3,12 @@
 use nalgebra as na;
 use na::{Vector3, Matrix3};
 
-use crate::cosmos::gravity;
+use crate::gravity::kepler;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct SurfacePoint{
     pub name: String,
-    pub body: gravity::Body,
+    pub body: kepler::Body,
     pub pos_lla: Vector3<f64>,
 }
 

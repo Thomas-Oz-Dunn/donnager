@@ -15,12 +15,12 @@ edition = "2021"
 name = "donnager"
 
 [[bin]]
-name = "launch_sim"
-path = "src/demos/launch_sim.rs"
+name = "launch_cost"
+path = "src/sims/launch_cost.rs"
 
 [[bin]]
-name = "n_body_sim"
-path = "src/demos/n_body_sim.rs"
+name = "n_body"
+path = "src/sims/n_body.rs"
 
 [dependencies]
 nalgebra = "0.31.4"

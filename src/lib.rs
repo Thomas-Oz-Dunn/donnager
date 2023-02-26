@@ -13,3 +13,6 @@ pub mod dynamics;
 
 /// Cosmos related module
 pub mod cosmos;
+
+/// Gravity related module
+pub mod gravity;

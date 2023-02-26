@@ -1,17 +1,17 @@
 /*
-n-body simulation demonstration
-Barnes Hut
+n-body simulation demonstration using Barnes Hut method
 */
 
 use nalgebra as na;
 use na::Vector3;
 
-use donnager::cosmos::gravity as grav;
+use donnager::gravity as grav;
+
 
 fn main() {
 
     // Body
-    let particle1: grav::Particle = grav::Particle {
+    let particle1: grav::kepler::Particle = grav::kepler::Particle {
         mass: 1e13,
         motion: vec![
             Vector3::new(5.,1.,0.),
@@ -20,7 +20,7 @@ fn main() {
     };
 
     // Body
-    let particle2: grav::Particle = grav::Particle {
+    let particle2: grav::kepler::Particle = grav::kepler::Particle {
         mass: 1e13,
         motion: vec![
             Vector3::new(7.,4.,0.),
@@ -29,7 +29,7 @@ fn main() {
     };
 
     // Body 
-    let particle3: grav::Particle = grav::Particle {
+    let particle3: grav::kepler::Particle = grav::kepler::Particle {
         mass: 1e13,
         motion: vec![
             Vector3::new(0.,10.,0.),
@@ -51,7 +51,7 @@ fn main() {
         print!("pos: {:.5?} \t\t", particle.motion[0]);
     }
 
-    particles = grav::barnes_hut_gravity(
+    particles = grav::barneshut::barnes_hut_gravity(
         particles, 
         step_size, 
         n_steps, 
