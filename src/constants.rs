@@ -15,6 +15,18 @@ pub const RAD_TO_DEG: f64 = 180.0 / PI;
 pub fn to_radians(degrees: f64) -> f64 {DEG_TO_RAD * degrees}
 pub fn to_degrees(radians: f64) -> f64 {RAD_TO_DEG * radians}
 
+pub const TERA: f64 = 1e12;
+pub const GIGA: f64 = 1e9;
+pub const MEGA: f64 = 1e6;
+pub const KILO: f64 = 1e3;
+pub const DECA: f64 = 1e1;
+
+pub const DECI: f64 = 1e-1;
+pub const CENTI: f64 = 1e-2;
+pub const MILLI: f64 = 1e-3;
+pub const MICRO: f64 = 1e-6;
+pub const NANO: f64 = 1e-9;
+
 /// Gravity
 /// -------
 
@@ -44,7 +56,7 @@ pub const EARTH_DAYS_PER_YEAR: f64 = 365.25;
 pub const EARTH_AXIAL_TILT: f64 = -23.44;
 
 /// Earth-Sun System
-pub const EARTH_ORBIT_SEMI_MAJOR: f64 = 149.60e6;
+pub const EARTH_ORBIT_SEMI_MAJOR: f64 = 149.60e6; // km
 pub const EARTH_ORBIT_ECC: f64 = 0.0167086;
 pub const EARTH_ARG_PERIHELION: f64 = 102.9372;
 

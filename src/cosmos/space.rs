@@ -4,6 +4,7 @@ use nalgebra as na;
 use na::{Vector3, Matrix3};
 
 use crate::gravity::kepler;
+use crate::constants as cst;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct SurfacePoint{
@@ -32,9 +33,10 @@ impl SurfacePoint{
     /// Outputs
     /// -------
     /// tan_vel : `f64`
-    ///     Tangential velocity magnitude
+    ///     Tangential velocity magnitude in km / s
     pub fn calc_surface_vel(&self) -> f64 {
-        let equatorial_vel: f64 = self.body.rotation_rate * self.body.eq_radius;
+        let radius_km: f64 = self.body.eq_radius / cst::KILO;
+        let equatorial_vel: f64 = self.body.rotation_rate * radius_km;
         let tan_vel: f64 = (self.pos_lla[0].cos() * equatorial_vel).abs();
         return tan_vel
     }
@@ -44,7 +46,7 @@ impl SurfacePoint{
     /// Outputs
     /// -------
     /// radius : `Vector3<f64>`
-    ///     Radial vector
+    ///     Radial vector in meters
     pub fn calc_surface_radius(&self) -> Vector3<f64> {
         let prime_vertical: f64 = self.body.calc_prime_vertical(self.pos_lla[0]);
         let dir: Vector3<f64> = self.body.geodetic_to_xyz(self.pos_lla);
@@ -53,15 +55,20 @@ impl SurfacePoint{
     }
 
     /// Calculate delta v required to reach an altitude from surface
+    /// 
+    /// Inputs
+    /// ------
+    /// altitude : `f64`
+    ///     Altitude off of surface
     pub fn calc_delta_v(
         &self,
         altitude: f64,
     ) -> f64 {
         let radius: f64 = altitude + self.calc_surface_radius().norm();
         let surface_vel: f64 = self.calc_surface_vel();
-        let delta_v: f64 = self.body.calc_orbital_velocity_mag(radius);
-        let net_delta_v: f64 = delta_v - surface_vel;
-        return net_delta_v
+        let delta_v_req: f64 = self.body.calc_orbital_velocity_mag(radius); 
+        let delta_v: f64 = delta_v_req - surface_vel;
+        return delta_v
     }
 
 
