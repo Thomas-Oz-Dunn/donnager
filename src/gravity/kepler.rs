@@ -3,6 +3,7 @@ Gravitational Bodies
 */
 
 use nalgebra as na;
+use chrono::DateTime as DateTime;
 use std::f64::consts::PI;
 use na::Vector3;
 use crate::constants as cst;
@@ -345,6 +346,21 @@ impl Orbit {
             mean_motion: 1.0 / (2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt())
         }
 
+    }
+
+    /// Calculate object position
+    /// 
+    /// Inputs
+    /// ------
+    /// eval_datetime
+    /// 
+    /// method
+    pub fn calc_position(
+        self, 
+        eval_datetime: DateTime,
+        method: String
+    ) -> Vec<f64> {
+        return vec![0., 0., 0.];
     }
 
 }
