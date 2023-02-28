@@ -363,6 +363,19 @@ impl Orbit {
         return vec![0., 0., 0.];
     }
 
+    /// Next overhead pass
+    /// 
+    /// Inputs
+    /// ------
+    /// pos_lla
+    /// 
+    /// 
+    pub fn calc_next_overpass(self, pos_lla: Vector3<f64>) -> Datetime {
+
+        // use period and inclination to get lattitude sine
+        // use period and earth rotation to get long sine
+    }
+
 }
 
 
