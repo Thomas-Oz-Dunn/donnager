@@ -6,7 +6,9 @@ use nalgebra as na;
 use chrono::DateTime as DateTime;
 use std::f64::consts::PI;
 use na::Vector3;
+
 use crate::constants as cst;
+use crate::gravity::barneshut as bh;
 
 /// Gravitational Body
 #[derive(Clone, Debug, PartialEq)]
@@ -360,7 +362,51 @@ impl Orbit {
         eval_datetime: DateTime,
         method: String
     ) -> Vec<f64> {
-        return vec![0., 0., 0.];
+
+        let valid_methods = [
+            "runge_kutta", "kepler", "barnes_hut"];
+        assert!(valid_methods.contains(&method));
+        let mut pos;
+
+        if method == "kepler"{
+
+            // M = E - e sin E
+
+
+            pos = vec![0.,0.,0.];
+        } else if method == "barnes_hut"{
+
+            let motion_0 = ;
+            let satellite: Particle = Particle { mass: (), motion: motion_0};
+
+
+            let earth: Body = Body {
+                name: "Earth".to_string(),
+                grav_param: cst::EARTH_GRAV_PARAM,
+                eq_radius: cst::EARTH_RADIUS_EQUATOR,
+                rotation_rate: cst::EARTH_ROT_RATE,
+                eccentricity: cst::EARTH_ECC
+            };
+ 
+            let earth_motion: Vec<Vector3<f64>> = vec![Vector3::zeros(); 3];
+            let earth_particle: Particle = earth.to_particle(earth_motion);
+        
+            let mut particles: Box<[Particle]> = vec![earth_particle, satellite].into_boxed_slice();
+    
+            let step_size: f64 = 0.1;
+            let theta: f64 = 1.0;
+            let n_steps: usize = 10;
+            let is_debug: bool = false;
+        
+            particles = bh::barnes_hut_gravity(
+                particles, step_size, n_steps, theta, is_debug);
+            pos = particles[1].motion[0];
+        
+        }
+
+
+
+        return pos
     }
 
     /// Next overhead pass
@@ -370,7 +416,11 @@ impl Orbit {
     /// pos_lla
     /// 
     /// 
-    pub fn calc_next_overpass(self, pos_lla: Vector3<f64>) -> Datetime {
+    pub fn calc_next_overpass(
+        self, 
+        pos_lla: Vector3<f64>, 
+        overhead_cone_angle: f64
+    ) -> Datetime {
 
         // use period and inclination to get lattitude sine
         // use period and earth rotation to get long sine
