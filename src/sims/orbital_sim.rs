@@ -2,21 +2,21 @@
 Orbital systems modelling Application in Rust
 */
 
-use nalgebra as na;
-use na::Vector3;
+// use nalgebra as na;
+// use na::Vector3;s
 
 use donnager::gravity as grav;
 
 fn main() {
 
-    let tle_str = 
-    "UMBRA-2001
-    1 48906U 21059AD  23060.23450352  .00060402  00000-0  27500-2 0  9997
-    2 48906  97.5592 190.8803 0007011 262.3013  97.7426 15.20439300 92688";
+    let tle_str = "ISS
+    1 25544U 98067A   23060.72453421  .00027779  00000-0  50068-3 0  9993
+    2 25544  51.6419 140.8390 0005926  43.3718 100.9839 15.49547192385127";
 
-    let orbit: grav::kepler::Orbit = Orbit.from_tle(tle_str);
-    let eval_datetime: DateTime = DateTime();
-    let p_eci: Vec<f64> = orbit.calc_position(eval_datetime);
+    let orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_tle(tle_str.to_string());
+    println!("{:?}", orbit);
+    // let eval_datetime: DateTime = DateTime();
+    // let p_eci: Vec<f64> = orbit.calc_position(eval_datetime);
     
     // TODO: compare against observed baselines
 

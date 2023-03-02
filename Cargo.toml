@@ -22,6 +22,10 @@ path = "src/sims/launch_cost.rs"
 name = "n_body"
 path = "src/sims/n_body.rs"
 
+[[bin]]
+name = "orbital_sim"
+path = "src/sims/orbital_sim.rs"
+
 [dependencies]
 nalgebra = "0.31.4"
 plotters = "0.3.4"

@@ -3,12 +3,12 @@ Gravitational Bodies
 */
 
 use nalgebra as na;
-use chrono::DateTime as DateTime;
+// use chrono::DateTime as DateTime;
 use std::f64::consts::PI;
 use na::Vector3;
 
 use crate::constants as cst;
-use crate::gravity::barneshut as bh;
+// use crate::gravity::barneshut as bh;
 
 /// Gravitational Body
 #[derive(Clone, Debug, PartialEq)]
@@ -221,11 +221,12 @@ pub struct Orbit{
     pub raan: f64,
     pub argument_of_perigee: f64,
     pub mean_anomaly: f64,
-    pub mean_motion: f64
+    pub mean_motion: f64,
+    // FIXME-TD: store epoch as Datetime
+    pub epoch: f64
 }
 
 impl Orbit {
-
     /// Populate Orbit from Keplerian parameters
     /// 
     /// Inputs
@@ -240,7 +241,8 @@ impl Orbit {
         raan: f64,
         argument_of_perigee: f64,
         mean_anomaly: f64,
-        mean_motion: f64
+        mean_motion: f64,
+        epoch: f64
     ) -> Self {
         Orbit {
             name,
@@ -251,7 +253,8 @@ impl Orbit {
             raan,
             argument_of_perigee,
             mean_anomaly,
-            mean_motion
+            mean_motion,
+            epoch
         }
     }
 
@@ -270,13 +273,16 @@ impl Orbit {
         let lines: Vec<&str> = tle_str.lines().collect();
         let name: &str = lines[0];
         // let line1: Vec<&str> = lines[1].to_string().split_whitespace().collect();
+        let binding: String = lines[1].to_string();
+        let line1: Vec<&str> = binding.split_whitespace().collect();
+        // let element_num: &str = line1[line1.len()];
+        let epoch: f64 = line1[3].to_string().parse::<f64>().unwrap();
+        // let mean_motion_prime: &str = line1[4];
+        // let mean_motion_2: &str = line1[5];
+        
         let binding: String = lines[2].to_string();
         let line2: Vec<&str> = binding.split_whitespace().collect();
         
-        // let element_num: &str = line1[line1.len()];
-        // let epoch: &str = line1[3];
-        // let mean_motion_prime: &str = line1[4];
-        // let mean_motion_2: &str = line1[5];
         let inc_str = line2[2].to_string();
         let inc: f64 = inc_str.parse::<f64>().unwrap();
         let raan: f64 = line2[3].to_string().parse::<f64>().unwrap();
@@ -285,9 +291,10 @@ impl Orbit {
         let mean_anomaly: f64 = line2[6].to_string().parse::<f64>().unwrap();
     
         let end_str: &str = line2[line2.len()-1];
+
         let mean_motion: f64 = end_str[..11].to_string().parse::<f64>().unwrap();
         // let rev_num: f64 = end_str[12..].to_string().parse::<f64>().unwrap();
-        let semi_major_axis: f64 = (mean_motion.powi(2) / (grav_param)).powf(1.0/3.0);
+        let semi_major_axis: f64 = ((grav_param)/mean_motion.powi(2)).powf(1.0/3.0);
     
         Orbit {
             name: name.to_string(),
@@ -299,6 +306,7 @@ impl Orbit {
             argument_of_perigee: arg_perigee,
             mean_anomaly,
             mean_motion,
+            epoch
         }
     
     }
@@ -322,7 +330,8 @@ impl Orbit {
         name: String,
         grav_param: f64,
         pos: Vector3<f64>,
-        vel: Vector3<f64>
+        vel: Vector3<f64>,
+        epoch: f64
     ) -> Self {
         let spec_ang_moment: Vector3<f64> = pos.cross(&vel);
         let spec_lin_moment: f64 = pos.dot(&vel);
@@ -345,86 +354,14 @@ impl Orbit {
             inclination: (spec_ang_moment[2] / spec_ang_moment.norm()).acos(),
             argument_of_perigee: node_vec.angle(&ecc_vec),
             mean_anomaly: ecc_vec.angle(&pos),
-            mean_motion: 1.0 / (2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt())
+            mean_motion: 1.0 / (2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt()),
+            epoch
         }
 
     }
 
-    /// Calculate object position
-    /// 
-    /// Inputs
-    /// ------
-    /// eval_datetime
-    /// 
-    /// method
-    pub fn calc_position(
-        self, 
-        eval_datetime: DateTime,
-        method: String
-    ) -> Vec<f64> {
-
-        let valid_methods = [
-            "runge_kutta", "kepler", "barnes_hut"];
-        assert!(valid_methods.contains(&method));
-        let mut pos;
-
-        if method == "kepler"{
-
-            // M = E - e sin E
-
-
-            pos = vec![0.,0.,0.];
-        } else if method == "barnes_hut"{
-
-            let motion_0 = ;
-            let satellite: Particle = Particle { mass: (), motion: motion_0};
-
-
-            let earth: Body = Body {
-                name: "Earth".to_string(),
-                grav_param: cst::EARTH_GRAV_PARAM,
-                eq_radius: cst::EARTH_RADIUS_EQUATOR,
-                rotation_rate: cst::EARTH_ROT_RATE,
-                eccentricity: cst::EARTH_ECC
-            };
- 
-            let earth_motion: Vec<Vector3<f64>> = vec![Vector3::zeros(); 3];
-            let earth_particle: Particle = earth.to_particle(earth_motion);
-        
-            let mut particles: Box<[Particle]> = vec![earth_particle, satellite].into_boxed_slice();
-    
-            let step_size: f64 = 0.1;
-            let theta: f64 = 1.0;
-            let n_steps: usize = 10;
-            let is_debug: bool = false;
-        
-            particles = bh::barnes_hut_gravity(
-                particles, step_size, n_steps, theta, is_debug);
-            pos = particles[1].motion[0];
-        
-        }
-
-
-
-        return pos
-    }
-
-    /// Next overhead pass
-    /// 
-    /// Inputs
-    /// ------
-    /// pos_lla
-    /// 
-    /// 
-    pub fn calc_next_overpass(
-        self, 
-        pos_lla: Vector3<f64>, 
-        overhead_cone_angle: f64
-    ) -> Datetime {
-
-        // use period and inclination to get lattitude sine
-        // use period and earth rotation to get long sine
-    }
+    // /// Cals earth rotation to get long sine
+    // }
 
 }
 
