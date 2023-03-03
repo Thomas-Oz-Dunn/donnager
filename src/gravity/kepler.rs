@@ -2,6 +2,7 @@
 Gravitational Bodies
 */
 
+use chrono::DateTime;
 use nalgebra as na;
 // use chrono::DateTime as DateTime;
 use std::f64::consts::PI;
@@ -276,7 +277,14 @@ impl Orbit {
         let binding: String = lines[1].to_string();
         let line1: Vec<&str> = binding.split_whitespace().collect();
         // let element_num: &str = line1[line1.len()];
-        let epoch: f64 = line1[3].to_string().parse::<f64>().unwrap();
+        let epoch_float: f64 = line1[3].to_string().parse::<f64>().unwrap();
+        let date = ;
+        let time = ;
+        let dt = NaiveDateTime::new(date, time);
+        let offset: Tz::Offset = Tz::Offset();
+        let epoch_date_time = 
+            DateTime{datetime=datetime, offset=offset};
+        
         // let mean_motion_prime: &str = line1[4];
         // let mean_motion_2: &str = line1[5];
         
@@ -306,7 +314,7 @@ impl Orbit {
             argument_of_perigee: arg_perigee,
             mean_anomaly,
             mean_motion,
-            epoch
+            epoch_float
         }
     
     }
