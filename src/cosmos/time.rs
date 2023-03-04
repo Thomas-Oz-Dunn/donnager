@@ -36,6 +36,29 @@ pub fn calc_day_length(
     return hours
 }
 
+/// Convert day of year, year to month, day
+pub fn doy_to_date(
+    day_of_year: i32
+) -> (i32, i32) {
+    let mut day: i32;
+    let mut month: i32;
+    if day_of_year < 31 {
+        month = 1;
+        day = day_of_year - 31;
+    } else if (28+31 > day_of_year) && (day_of_year > 31) {
+        month = 2;
+        day = day_of_year - (28+31);
+    } else  if (28+31+31 > day_of_year) && (day_of_year > 28+31) {
+        month = 3;
+        day = day_of_year - (28+31+31);
+    } else  if (28+31+31+30 > day_of_year) && (day_of_year > 28+31+31) {
+        month = 4;
+        day = day_of_year - (28+31+31+30);
+    } 
+    return (month, day);
+}
+
+
 /// Convert month, day to day of year
 /// 
 /// Inputs

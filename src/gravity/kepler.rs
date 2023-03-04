@@ -3,11 +3,12 @@ Gravitational Bodies
 */
 
 use nalgebra as na;
-use chrono::{DateTime as DateTime, TimeZone, NaiveDateTime};
+use chrono::{DateTime as DateTime, TimeZone, NaiveDateTime, NaiveDate, NaiveTime};
 use std::f64::consts::PI;
 use na::Vector3;
 
 use crate::constants as cst;
+use crate::cosmos::time as time;
 // use crate::gravity::barneshut as bh;
 
 /// Gravitational Body
@@ -275,10 +276,23 @@ impl Orbit {
         let binding: String = lines[1].to_string();
         let line1: Vec<&str> = binding.split_whitespace().collect();
         // let element_num: &str = line1[line1.len()];
-        let epoch_float: f64 = line1[3].to_string().parse::<f64>().unwrap();
-        
-        let date = 0;
-        let time = 1;
+        let epoch_str: &str = line1[3];
+        let epoch_year: f64 = epoch_str[..=1].to_string().parse::<f64>().unwrap();
+        let mut year: f64;
+        if epoch_year < 57.{
+            year = 2000 + epoch_year;
+        } else {
+            year = 1900 + epoch_year;
+        }
+        let year = year;
+
+        let epoch_day = epoch_str[2..].to_string().parse::<f64>().unwrap();
+        let md = time::doy_to_date(epoch_day);
+        let month = md[0];
+        let day = md[1];
+        let date = NaiveDate::from_ymd_opt(year, month, day).unwrap();
+
+        let time = NaiveTime::from_hms_opt(hour, min, sec).unwrap();
         let dt = NaiveDateTime::new(date, time);
         let offset: Tz::Offset = Tz::Offset(0);
         let epoch_date_time = 
@@ -298,7 +312,6 @@ impl Orbit {
         let mean_anomaly: f64 = line2[6].to_string().parse::<f64>().unwrap();
     
         let end_str: &str = line2[line2.len()-1];
-
         let mean_motion: f64 = end_str[..11].to_string().parse::<f64>().unwrap();
         // let rev_num: f64 = end_str[12..].to_string().parse::<f64>().unwrap();
         let semi_major_axis: f64 = ((grav_param)/mean_motion.powi(2)).powf(1.0/3.0);
@@ -367,8 +380,6 @@ impl Orbit {
 
     }
 
-    // /// Cals earth rotation to get long sine
-    // }
 
 }
 
