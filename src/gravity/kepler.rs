@@ -2,9 +2,8 @@
 Gravitational Bodies
 */
 
-use chrono::DateTime;
 use nalgebra as na;
-// use chrono::DateTime as DateTime;
+use chrono::{DateTime as DateTime, TimeZone, NaiveDateTime};
 use std::f64::consts::PI;
 use na::Vector3;
 
@@ -223,8 +222,7 @@ pub struct Orbit{
     pub argument_of_perigee: f64,
     pub mean_anomaly: f64,
     pub mean_motion: f64,
-    // FIXME-TD: store epoch as Datetime
-    pub epoch: f64
+    pub epoch: DateTime<TimeZone>
 }
 
 impl Orbit {
@@ -278,10 +276,11 @@ impl Orbit {
         let line1: Vec<&str> = binding.split_whitespace().collect();
         // let element_num: &str = line1[line1.len()];
         let epoch_float: f64 = line1[3].to_string().parse::<f64>().unwrap();
-        let date = ;
-        let time = ;
+        
+        let date = 0;
+        let time = 1;
         let dt = NaiveDateTime::new(date, time);
-        let offset: Tz::Offset = Tz::Offset();
+        let offset: Tz::Offset = Tz::Offset(0);
         let epoch_date_time = 
             DateTime{datetime=datetime, offset=offset};
         
@@ -314,7 +313,7 @@ impl Orbit {
             argument_of_perigee: arg_perigee,
             mean_anomaly,
             mean_motion,
-            epoch_float
+            epoch_date_time
         }
     
     }
