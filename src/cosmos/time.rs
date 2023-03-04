@@ -38,11 +38,11 @@ pub fn calc_day_length(
 
 /// Convert day of year, year to month, day
 pub fn doy_to_date(
-    day_of_year: i32
-) -> (i32, i32) {
-    let mut day: i32;
-    let mut month: i32;
-    let m: Vec<i32>;
+    day_of_year: u32
+) -> (u32, u32) {
+    let mut day: u32;
+    let mut month: u32;
+    let m: Vec<u32>;
     m[1] = 31;
     m[2] = 28 + m[1];
     m[3] = 31 + m[2];
@@ -62,7 +62,7 @@ pub fn doy_to_date(
     } else {
         for (m_i, idx) in m.iter().zip(1..=12){
             if (*m_i > day_of_year) && (day_of_year > m[idx]) {
-                month = idx as i32;
+                month = idx as u32;
                 day = day_of_year - *m_i;}
         }
     }
