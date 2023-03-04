@@ -42,19 +42,30 @@ pub fn doy_to_date(
 ) -> (i32, i32) {
     let mut day: i32;
     let mut month: i32;
-    if day_of_year < 31 {
+    let m: Vec<i32>;
+    m[1] = 31;
+    m[2] = 28 + m[1];
+    m[3] = 31 + m[2];
+    m[4] = 30 + m[3];
+    m[5] = 31 + m[4];
+    m[6] = 30 + m[5];
+    m[7] = 31 + m[6];
+    m[8] = 31 + m[7];
+    m[9] = 30 + m[8];
+    m[10] = 31 + m[9];
+    m[11] = 30 + m[10];
+    m[12] = 31 + m[11];
+    
+    if day_of_year < m[1]{
         month = 1;
-        day = day_of_year - 31;
-    } else if (28+31 > day_of_year) && (day_of_year > 31) {
-        month = 2;
-        day = day_of_year - (28+31);
-    } else  if (28+31+31 > day_of_year) && (day_of_year > 28+31) {
-        month = 3;
-        day = day_of_year - (28+31+31);
-    } else  if (28+31+31+30 > day_of_year) && (day_of_year > 28+31+31) {
-        month = 4;
-        day = day_of_year - (28+31+31+30);
-    } 
+        day = day_of_year;
+    } else {
+        for (m_i, idx) in m.iter().zip(1..=12){
+            if (*m_i > day_of_year) && (day_of_year > m[idx]) {
+                month = idx as i32;
+                day = day_of_year - *m_i;}
+        }
+    }
     return (month, day);
 }
 

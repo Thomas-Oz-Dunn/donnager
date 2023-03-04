@@ -287,6 +287,7 @@ impl Orbit {
         let year = year;
 
         let epoch_day = epoch_str[2..].to_string().parse::<f64>().unwrap();
+        // FIXME-TD: retrieve ahead of decimal place as i32
         let md = time::doy_to_date(epoch_day);
         let month = md[0];
         let day = md[1];
@@ -296,7 +297,7 @@ impl Orbit {
         let dt = NaiveDateTime::new(date, time);
         let offset: Tz::Offset = Tz::Offset(0);
         let epoch_date_time = 
-            DateTime{datetime=datetime, offset=offset};
+            DateTime{datetime=datetime, offset=offset}; 
         
         // let mean_motion_prime: &str = line1[4];
         // let mean_motion_2: &str = line1[5];
