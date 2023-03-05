@@ -57,7 +57,6 @@ mod ballistics_tests {
             mass_ratio, 
             grav_acc, 
             isp);
-        let coast_h: f64 =
         assert_eq!(burnout_h, 0.);
     }
 }

@@ -60,6 +60,9 @@ pub const EARTH_ORBIT_SEMI_MAJOR: f64 = 149.60e6; // km
 pub const EARTH_ORBIT_ECC: f64 = 0.0167086;
 pub const EARTH_ARG_PERIHELION: f64 = 102.9372;
 
+pub const MOON_MASS: f64 = 7.34767309e22; // kg
+pub const MOON_RADIUS_EQUATOR: f64 = 1.737e6; // m
+pub const MOON_GRAV_PARAM: f64 = MOON_MASS * GRAV_CONST; // m^3 * s^-2
 
 /// Electromagnetism
 /// ----------------

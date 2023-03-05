@@ -86,6 +86,8 @@ impl SurfacePoint{
     }
 
     /// Map between enu and fixed frame
+    /// 
+    /// 
     pub fn enu_to_ecef(&self, enu: Vector3<f64>) -> Vector3<f64> {
         let pos_lla: Vector3<f64> = self.pos_lla;
         let enu_ecef: Matrix3<f64> = Matrix3::new(

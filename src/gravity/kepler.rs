@@ -3,9 +3,9 @@ Gravitational Bodies
 */
 
 use nalgebra as na;
-use chrono::{DateTime as DateTime, TimeZone as Tz, NaiveDateTime, NaiveDate, NaiveTime, Utc};
-use std::f64::consts::PI;
 use na::Vector3;
+use chrono::{DateTime as DateTime, NaiveDateTime, NaiveDate, NaiveTime, Utc};
+use std::f64::consts::PI;
 
 use crate::constants as cst;
 use crate::cosmos::time as time;
@@ -233,6 +233,34 @@ impl Orbit {
     /// Inputs
     /// ------
     /// name : `String`
+    ///     Name of body this orbit is for
+    /// 
+    /// grav_param : `f64`           
+    ///     Gravitational parameter of central body
+    /// 
+    /// semi_major_axis : `f64`
+    ///     Semi-major axis of orbit in meters
+    /// 
+    /// eccentricity : `f64`  
+    ///     Eccentricity of orbit, 0 <= eccentricity < 1.0
+    /// 
+    /// inclination : `f64`
+    ///     Inclination of orbit in radians, 0 <= inclination < pi/2.0
+    /// 
+    /// raan : `f64`
+    ///     Right ascension of the ascending node in radians, 0 <= raan < 2pi.
+    /// 
+    /// argument_of_perigee : `f64`
+    ///     Argument of perigee in radians, 0 <= argument_of_perigee < 2pi.
+    /// 
+    /// mean_anomaly : `f64`
+    ///     Mean anomaly in radians, 0 <= mean_anomaly < 2pi.
+    /// 
+    /// mean_motion : `f64`
+    ///     Mean motion in radians per second.
+    /// 
+    /// epoch : `DateTime<Utc>`
+    ///     Epoch of the orbit in UTC.
     pub fn from_keplerian(
         name: String,
         grav_param: f64,
@@ -270,8 +298,8 @@ impl Orbit {
     ) -> Self {
         let lines: Vec<&str> = tle_str.lines().collect();
         let name: &str = lines[0];
-        let line1: Vec<&str> = lines[1]
-            .to_string()
+        let bind1 = lines[1].to_string();
+        let line1: Vec<&str> = bind1
             .split_whitespace()
             .collect();
 
@@ -281,16 +309,16 @@ impl Orbit {
             .parse::<i32>()
             .unwrap();
 
-        let mut year: i32;
+        let year: i32;
         if epoch_year < 57{
             year = 2000 + epoch_year;
         } else {
             year = 1900 + epoch_year;
         }
-        let year: i32 = year;
 
-        let epoch_day_full: Vec<&str> = epoch_str[2..]
-            .to_string()
+        let binding = epoch_str[2..]
+            .to_string();
+        let epoch_day_full: Vec<&str> = binding
             .split_terminator('.')
             .collect();
 
@@ -299,18 +327,29 @@ impl Orbit {
             .parse::<u32>()
             .unwrap();
 
-        let md: (u32, u32) = time::doy_to_date(day_of_year);
+        let md: (u32, u32) = time::calc_month_day(day_of_year, year);
         let date: NaiveDate = NaiveDate::from_ymd_opt(
             year, md.0, md.1).unwrap();
         
-        let percent_of_day: u32 = epoch_day_full[0]
+        let percent_of_day: f64 = epoch_day_full[0]
             .to_string()
-            .parse::<u32>()
+            .parse::<f64>()
             .unwrap();
 
-        // TODO-TD: percent of day to hour min and sec
-        let time = NaiveTime::from_hms_opt(hour, min, sec).unwrap();
-        let dt = NaiveDateTime::new(date, time);
+        let hours_dec: f64 = percent_of_day * 24.0;
+        let hours_whole: u32 = hours_dec.div_euclid(24.0).floor() as u32;
+        let hours_part: f64 = hours_dec.rem_euclid(24.0);
+
+        let minutes_dec: f64 = hours_part * 60.;
+        let minutes_whole: u32 = minutes_dec.div_euclid(60.).floor() as u32;
+        let minutes_part: f64 = minutes_dec.rem_euclid(60.);
+
+        let seconds_dec: f64 = minutes_part * 60.;
+        let seconds_whole: u32 = seconds_dec.div_euclid(60.).floor() as u32;
+
+        let time: NaiveTime = NaiveTime::from_hms_opt(
+            hours_whole, minutes_whole, seconds_whole).unwrap();
+        let dt: NaiveDateTime = NaiveDateTime::new(date, time);
         let epoch_date_time: DateTime::<Utc> = DateTime::<Utc>::from_utc(dt, Utc); 
         
         // let mean_motion_prime: &str = line1[4];
@@ -332,8 +371,8 @@ impl Orbit {
         let ecc: f64 = line2[4]
             .to_string()
             .parse::<f64>()
-            .unwrap()
-             * 10e-7;
+            .unwrap() * 10e-7;
+
         let arg_perigee: f64 = line2[5]
             .to_string()
             .parse::<f64>()
@@ -344,7 +383,6 @@ impl Orbit {
             .parse::<f64>()
             .unwrap();
 
-    
         let end_str: &str = line2[line2.len()-1];
         let mean_motion: f64 = end_str[..11]
             .to_string()
@@ -385,6 +423,39 @@ impl Orbit {
     /// 
     /// vel : `Vector3<f64>`
     ///     Velocity vector of object
+    /// 
+    /// epoch_datetime: `DateTime<Utc>`
+    ///     Epoch of object position and velocity vectors
+    /// 
+    /// Outputs	
+    /// ------
+    /// orbit : `Orbit`
+    ///     Orbit object with populated fields.
+    /// 
+    /// # Example
+    /// ```rust,no_run      
+    /// use gravity::kepler::{Orbit, calc_semi_major_axis};
+    /// use gravity::kepler::{calc_mean_motion};
+    /// use gravity::kepler::{calc_eccentricity};
+    /// use gravity::kepler::{calc_inclination};
+    /// use gravity::kepler::{calc_raan};
+    /// use gravity::kepler::{calc_argument_of_perig}; 
+    /// use gravity::kepler::{calc_mean_anomaly};
+    /// 
+    /// let name: &str = "Moon"
+    /// let grav_param: f64 = cst::MOON_GRAV_PARAM
+    /// let pos: Vector3<f64> = Vector3::new(0.0, 0
+    ///     0.0, 0.0)
+    /// let vel: Vector3<f64> = Vector3::new(0.0, 0
+    ///     0.0, 0.0) }
+    /// let epoch_datetime: DateTime<Utc> = Utc.ymd(1969
+    ///     7, 20).and_hms(0, 0, 0) }
+    /// let orbit = Orbit::from_pos_vel(name, grav_param, pos, vel
+    ///     epoch_datetime)
+    /// 
+    /// assert_eq!(orbit.name, "Moon")
+    /// assert_eq!(orbit.grav_param, cst::MOON_GRAV_PARAM)
+    /// assert_eq!(orbit.semi_major_axis, cst::MOON_SEMI_MAJOR_AXIS)
     pub fn from_pos_vel(
         name: String,
         grav_param: f64,
@@ -398,7 +469,7 @@ impl Orbit {
         let ecc_vec: Vector3<f64> = 
             ((vel.norm().powi(2) - grav_param / pos.norm())*pos 
             - (spec_lin_moment*vel)) / grav_param;
-        let node_vec: Vector3<f64> = Vector3::z_axis().cross(&spec_ang_moment);
+        let ascend_node_vec: Vector3<f64> = Vector3::z_axis().cross(&spec_ang_moment);
 
         let semi_major_axis: f64 = 
             spec_ang_moment.norm().powi(2) * 
@@ -409,11 +480,11 @@ impl Orbit {
             grav_param,
             semi_major_axis,
             eccentricity: ecc_vec.norm(),
-            raan: (node_vec[0] / node_vec.norm()).acos(),
-            inclination: (spec_ang_moment[2] / spec_ang_moment.norm()).acos(),
-            argument_of_perigee: node_vec.angle(&ecc_vec),
+            raan: calc_raan(ascend_node_vec),
+            inclination: calc_inclination(spec_ang_moment),
+            argument_of_perigee: ascend_node_vec.angle(&ecc_vec),
             mean_anomaly: ecc_vec.angle(&pos),
-            mean_motion: 1.0 / (2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt()),
+            mean_motion: calc_mean_motion(semi_major_axis, grav_param),
             epoch: epoch_datetime
         }
 
@@ -422,11 +493,38 @@ impl Orbit {
 
 }
 
+
+fn calc_raan(ascend_node_vec: Vector3<f64>) -> f64 {
+    (ascend_node_vec[0] / ascend_node_vec.norm()).acos()
+}
+
+/// Calculate inclination
+/// 
+/// # Arguments
+/// 
+/// * `spec_ang_moment` - specific angular momentum vector
+/// 
+/// # Returns
+/// 
+/// * `f64` - inclination in radians
+fn calc_inclination(spec_ang_moment: Vector3<f64>) -> f64 {
+    (spec_ang_moment[2] / spec_ang_moment.norm()).acos()
+}
+
+/// Calculate the mean motion of an orbit.
+/// 
+/// # Arguments
+/// 
+/// * `semi_major_axis` - The semi-major axis of the orbit.
+/// * `grav_param` - The gravitational parameter of the body.
+fn calc_mean_motion(semi_major_axis: f64, grav_param: f64) -> f64 {
+    1.0 / (2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt())
+}
+
 /// Calculate semi major axis of orbit
 /// 
 /// Inputs
 /// ------
-/// 
 pub fn calc_semi_major_axis(grav_param: f64, mean_motion: f64) -> f64 {
     let semi_major_axis: f64 = ((grav_param)/mean_motion.powi(2)).powf(1.0/3.0);
     semi_major_axis

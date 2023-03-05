@@ -37,38 +37,48 @@ pub fn calc_day_length(
 }
 
 /// Convert day of year, year to month, day
-pub fn doy_to_date(
-    day_of_year: u32
+/// 
+/// Inputs
+/// ------
+/// day_of_year: `u32`
+///     Day of year (1-365)
+/// 
+/// year: `i32`
+///     Year (e.g. 2020)
+/// 
+/// Outputs
+/// -------
+/// month: `u32`
+///     Month (1-12)
+/// 
+/// day: `u32`
+///     Day of month (1-31)
+pub fn calc_month_day(
+    day_of_year: u32,
+    year: i32
 ) -> (u32, u32) {
-    let mut day: u32;
-    let mut month: u32;
-    let m: Vec<u32>;
-    m[1] = 31;
-    m[2] = 28 + m[1];
-    m[3] = 31 + m[2];
-    m[4] = 30 + m[3];
-    m[5] = 31 + m[4];
-    m[6] = 30 + m[5];
-    m[7] = 31 + m[6];
-    m[8] = 31 + m[7];
-    m[9] = 30 + m[8];
-    m[10] = 31 + m[9];
-    m[11] = 30 + m[10];
-    m[12] = 31 + m[11];
-    
-    if day_of_year < m[1]{
-        month = 1;
-        day = day_of_year;
-    } else {
-        for (m_i, idx) in m.iter().zip(1..=12){
-            if (*m_i > day_of_year) && (day_of_year > m[idx]) {
-                month = idx as u32;
-                day = day_of_year - *m_i;}
-        }
+    assert!(day_of_year < 366, "Day of year must be less than 366"); 
+
+    let feb_days: u32;
+    if check_if_leap_year(year){feb_days = 29;
+    } else {feb_days = 28;}
+
+    let month_lengths: Vec<u32> = vec![
+        31, feb_days, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+    let mut month: u32 = 1;
+    let mut sum_days: u32 = month_lengths[0];
+
+    while sum_days < day_of_year {
+        month += 1;
+        sum_days += month_lengths[month as usize - 1];
     }
+
+    let month: u32 = month;
+    let day: u32 = day_of_year - sum_days;
+
     return (month, day);
 }
-
 
 /// Convert month, day to day of year
 /// 
@@ -93,7 +103,7 @@ pub fn date_to_doy(
     let long_months: Vec<i32> = [1, 3, 5, 7, 8, 10, 12].to_vec();
     let short_months: Vec<i32> = [4, 6, 9, 11].to_vec();
 
-    let is_leap_year: bool = (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0);
+    let is_leap_year: bool = check_if_leap_year(year); 
 
     for i_month in 1..month {
         if long_months.contains(&i_month) {
@@ -108,6 +118,14 @@ pub fn date_to_doy(
 
     }
     return total_days + day
+}
+
+/// Check if the year is a leap year
+fn check_if_leap_year(year: i32) -> bool {
+    let rule1: bool = year % 4 == 0;
+    let rule2: bool = year % 100 != 0;
+    let rule3: bool = year % 400 == 0;
+    return rule1 && (rule2 || rule3);
 }
 
 /// Convert gregorian date to julian day
