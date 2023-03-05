@@ -9,7 +9,6 @@ use std::f64::consts::PI;
 
 use crate::constants as cst;
 use crate::cosmos::time as time;
-// use crate::gravity::barneshut as bh;
 
 /// Gravitational Body
 #[derive(Clone, Debug, PartialEq)]
@@ -126,7 +125,12 @@ impl Body {
         return xyz
     }
 
-    // Calculate prime vertical radius to surface at latitude
+    /// Calculate prime vertical radius to surface at latitude
+    /// 
+    /// Inputs
+    /// ------
+    /// lat_deg: `f64`
+    ///     Lattitude in degrees
     pub fn calc_prime_vertical(&self, lat_deg: f64) -> f64 {
         let lat_radians: f64 = PI * lat_deg / 180.0;
         let radius: f64 = 
@@ -134,8 +138,8 @@ impl Body {
         return radius
     }
 
-    // Rectangular coordinates to geodetic
-    // E.g. ECEF to LLH
+    /// Rectangular coordinates to geodetic
+    /// E.g. ECEF to LLH
     pub fn xyz_to_geodetic(&self, xyz: Vector3<f64>) -> Vector3<f64> {
         // Zhu's method
         let a: f64 = self.eq_radius;
@@ -261,6 +265,11 @@ impl Orbit {
     /// 
     /// epoch : `DateTime<Utc>`
     ///     Epoch of the orbit in UTC.
+    /// 
+    /// Outputs       
+    /// -------
+    /// orbit : `Orbit`           
+    ///     Orbit structure with populated Keplerian parameters.
     pub fn from_keplerian(
         name: String,
         grav_param: f64,
@@ -434,13 +443,7 @@ impl Orbit {
     /// 
     /// # Example
     /// ```rust,no_run      
-    /// use gravity::kepler::{Orbit, calc_semi_major_axis};
-    /// use gravity::kepler::{calc_mean_motion};
-    /// use gravity::kepler::{calc_eccentricity};
-    /// use gravity::kepler::{calc_inclination};
-    /// use gravity::kepler::{calc_raan};
-    /// use gravity::kepler::{calc_argument_of_perig}; 
-    /// use gravity::kepler::{calc_mean_anomaly};
+    /// use gravity::kepler::Orbit;
     /// 
     /// let name: &str = "Moon"
     /// let grav_param: f64 = cst::MOON_GRAV_PARAM
@@ -491,10 +494,20 @@ impl Orbit {
     }
 
 
+
+    pub fn propogate(
+        &self, 
+        eval_datetimes: Vec<DateTime<Utc>, 
+        precision: f64)
+    -> Vec<Vector3<f64>> {
+        let arg_perigree = self.argument_of_perigee;
+        return 
+    }
+
 }
 
 
-fn calc_raan(ascend_node_vec: Vector3<f64>) -> f64 {
+pub fn calc_raan(ascend_node_vec: Vector3<f64>) -> f64 {
     (ascend_node_vec[0] / ascend_node_vec.norm()).acos()
 }
 
@@ -507,7 +520,7 @@ fn calc_raan(ascend_node_vec: Vector3<f64>) -> f64 {
 /// # Returns
 /// 
 /// * `f64` - inclination in radians
-fn calc_inclination(spec_ang_moment: Vector3<f64>) -> f64 {
+pub fn calc_inclination(spec_ang_moment: Vector3<f64>) -> f64 {
     (spec_ang_moment[2] / spec_ang_moment.norm()).acos()
 }
 
@@ -517,8 +530,9 @@ fn calc_inclination(spec_ang_moment: Vector3<f64>) -> f64 {
 /// 
 /// * `semi_major_axis` - The semi-major axis of the orbit.
 /// * `grav_param` - The gravitational parameter of the body.
-fn calc_mean_motion(semi_major_axis: f64, grav_param: f64) -> f64 {
-    1.0 / (2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt())
+pub fn calc_mean_motion(semi_major_axis: f64, grav_param: f64) -> f64 {
+    let mean_motion: f64 = 1.0 / (2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt());
+    mean_motion
 }
 
 /// Calculate semi major axis of orbit

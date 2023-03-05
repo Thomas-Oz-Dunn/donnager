@@ -121,6 +121,11 @@ pub fn date_to_doy(
 }
 
 /// Check if the year is a leap year
+/// 
+/// Inputs
+/// ------
+/// year: `i32`
+///     Gregorian Year of common era.
 fn check_if_leap_year(year: i32) -> bool {
     let rule1: bool = year % 4 == 0;
     let rule2: bool = year % 100 != 0;
@@ -159,9 +164,20 @@ pub fn date_to_julian_day_num(
 /// Julian day number to gregorian year, month, day
 /// 
 /// Inputs
-/// -----
+/// ------
 /// jd : `i32`
 ///     Julian day
+/// 
+/// Outputs
+/// -------
+/// year : `i32`
+///     Gregorian year of common era.
+/// 
+/// month : `i32`
+///     Month of year.
+/// 
+/// day : `i32`
+///     Day of month.
 pub fn julian_to_gregorian(
     jd: i32
 ) -> (i32, i32, i32){

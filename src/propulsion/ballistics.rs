@@ -4,6 +4,7 @@ Ballistics calculations
 
 // TODO-TD: mutlistage trade studies
 
+/// Calculate mass ratio of payload to fuel
 pub fn calc_mass_ratio(
     delta_v: f64,
     isp: f64,
@@ -15,6 +16,7 @@ pub fn calc_mass_ratio(
     mass_ratio
 }
 
+/// Calculate the burnout height of a rocket
 pub fn calc_burnout_height(
     mass_ratio: f64,
     grav_acc: f64,
@@ -26,6 +28,7 @@ pub fn calc_burnout_height(
     burnout_height
 }
 
+/// Calculate coasting height of a rocket after engine cut off
 pub fn calc_coast_height(
     mass_ratio: f64,
     acc_ratio: f64,
