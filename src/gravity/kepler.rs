@@ -4,7 +4,7 @@ Gravitational Bodies
 
 use nalgebra as na;
 use na::Vector3;
-use chrono::{DateTime as DateTime, NaiveDateTime, NaiveDate, NaiveTime, Utc};
+use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc};
 use std::f64::consts::PI;
 
 use crate::constants as cst;
@@ -467,16 +467,11 @@ impl Orbit {
         epoch_datetime: DateTime<Utc>
     ) -> Self {
         let spec_ang_moment: Vector3<f64> = pos.cross(&vel);
-        let spec_lin_moment: f64 = pos.dot(&vel);
-
-        let ecc_vec: Vector3<f64> = 
-            ((vel.norm().powi(2) - grav_param / pos.norm())*pos 
-            - (spec_lin_moment*vel)) / grav_param;
+        let ecc_vec: Vector3<f64> = calc_ecc_vec(pos, vel, grav_param);
         let ascend_node_vec: Vector3<f64> = Vector3::z_axis().cross(&spec_ang_moment);
 
         let semi_major_axis: f64 = 
-            spec_ang_moment.norm().powi(2) * 
-            (1.0 - ecc_vec.norm_squared()) / grav_param;
+            spec_ang_moment.norm_squared() * (1.0 - ecc_vec.norm_squared()) / grav_param;
 
         Orbit {
             name,
@@ -493,7 +488,31 @@ impl Orbit {
 
     }
 
+    pub fn calc_pos_vel(&self, time: f64) -> (Vector3<f64>, Vector3<f64>) {
+        let mean_anomaly: f64 = self.mean_anomaly + self.mean_motion * time;
+        let mean_anomaly_rad: f64 = mean_anomaly * cst::DEG_TO_RAD;
 
+        let ecc_anomaly: f64 = mean_anomaly_rad - self.eccentricity * cst::DEG_TO_RAD * (1.0 - mean_anomaly_rad.cos());
+        let ecc_anomaly_rad: f64 = ecc_anomaly * cst::DEG_TO_RAD;
+        
+        let true_anomaly_rad: f64 = 2.0 * (ecc_anomaly_rad.sin() - ecc_anomaly_rad.cos()).atan();
+        let radius: f64 = self.semi_major_axis * (1.0 - self.eccentricity.powi(2)) / (1.0 + self.eccentricity * true_anomaly_rad.cos());
+        
+        // Note: Perifocal
+        let x_pos: f64 = radius * true_anomaly_rad.cos();
+        let y_pos: f64 = radius * true_anomaly_rad.sin();
+        let z_pos: f64 = 0.0;
+        let pos = Vector3::new(x_pos, y_pos, z_pos);
+
+
+        // Perifocal
+        let x_vel: f64 = -self.mean_motion * radius * true_anomaly_rad.sin();
+        let y_vel: f64 = self.mean_motion * radius * (self.eccentricity + true_anomaly_rad.cos());
+        let z_vel: f64 = 0.0;
+        let vel = Vector3::new(x_vel, y_vel, z_vel);
+        return (pos, vel);
+        
+    }
 
     pub fn propogate(&self, dt: f64) -> Orbit {
         let mut new_orbit = self.clone();
@@ -502,41 +521,50 @@ impl Orbit {
     }
        
     pub fn propogate_in_place(&mut self, dt: f64) {
-        let mut new_pos;
-        let mut new_vel;
-        let mut new_time;
+        let new_time: f64 = self.epoch.timestamp() as f64 + dt;
+        let motion = self.calc_pos_vel(new_time);
+        let new_pos = motion.0;
+        let new_vel = motion.1;
+        let new_epoch_datetime = Utc.timestamp_opt(
+            new_time as i64, 0).unwrap();
 
-        new_time = self.epoch.timestamp() as f64 + dt;
-        new_pos = kepler::calc_pos(
-            self.grav_param, 
-            self.mean_anomaly, 
-            new_time);
-        new_vel = kepler::calc_vel(
-            self.grav_param, 
-            self.mean_anomaly, 
-            new_time);
         let new_orbit: Orbit = Orbit::from_pos_vel(
             self.name, 
             self.grav_param, 
             new_pos, 
             new_vel, 
-            new_time);
+            new_epoch_datetime);
+        *self = new_orbit;
 
+    }
 }
+
+/// Calculate the eccentricity vector from the velocity and position vectors
+/// 
+/// Inputs
+/// ------
+/// pos: `Vector3<f64>`           
+///     Position vector           
+/// vel: `Vector3<f64>`
+///     Velocity vector           
+/// grav_param: `f64`
+///     Gravitational parameter of the central body
+/// 
+/// Outputs
+/// -------
+/// ecc_vec: `Vector3<f64>`           
+///     Eccentricity vector
+fn calc_ecc_vec(
+    pos: Vector3<f64>,
+    vel: Vector3<f64>, 
+    grav_param: f64
+) -> Vector3<f64> {
+    let spec_linear_moment: f64 = pos.dot(&vel);
+    let v_sq: f64 = vel.norm().powi(2);
+    let ecc_vec: Vector3<f64> = ((
+        v_sq - grav_param / pos.norm())*pos - (spec_linear_moment*vel)) / grav_param;
+    ecc_vec
 }
-
-
-pub fn calc_pos(grav_param: f64, mean_anomaly: f64, time: f64) -> Vector3<f64> {
-    let mean_anomaly_rad: f64 = mean_anomaly * cst::DEG_TO_RAD;
-    let mean_anomaly_cos: f64 = mean_anomaly_rad.cos();
-    let mean_anomaly_sin: f64 = mean_anomaly_rad.sin();
-
-    let mean_anomaly_sq: f64 = mean_anomaly_rad.powi(2);
-    let mean_anomaly_cub: f64 = mean_anomaly_sq * mean_anomaly_rad;
-    let mean_anomaly_quat: f64 = mean_anomaly_cub * mean_anomaly;
-
-    
-}   
 
 /// Calculate the RAAN given the ascending node vector.
 /// 
@@ -550,7 +578,8 @@ pub fn calc_pos(grav_param: f64, mean_anomaly: f64, time: f64) -> Vector3<f64> {
 /// raan: `f64`
 ///     Right ascension of the ascending node.
 pub fn calc_raan(ascend_node_vec: Vector3<f64>) -> f64 {
-    (ascend_node_vec[0] / ascend_node_vec.norm()).acos()
+    let raan: f64 = (ascend_node_vec[0] / ascend_node_vec.norm()).acos();
+    raan
 }
 
 /// Calculate inclination
@@ -563,7 +592,8 @@ pub fn calc_raan(ascend_node_vec: Vector3<f64>) -> f64 {
 /// 
 /// * `f64` - inclination in radians
 pub fn calc_inclination(spec_ang_moment: Vector3<f64>) -> f64 {
-    (spec_ang_moment[2] / spec_ang_moment.norm()).acos()
+    let inclination: f64 = (spec_ang_moment[2] / spec_ang_moment.norm()).acos();
+    inclination
 }
 
 /// Calculate the mean motion of an orbit.
@@ -585,7 +615,6 @@ pub fn calc_semi_major_axis(grav_param: f64, mean_motion: f64) -> f64 {
     let semi_major_axis: f64 = ((grav_param)/mean_motion.powi(2)).powf(1.0/3.0);
     semi_major_axis
 }
-
 
 /// Calculate total delta v for hohmann transfer
 /// 
@@ -616,7 +645,6 @@ pub fn calc_hohmann_transfer(
     let delta_v_total: f64 = delta_v_1 + delta_v_2;
     return delta_v_total
 }
-
 
 /// Calculate sphere of influence for a body
 /// 
@@ -682,15 +710,20 @@ mod orbit_tests {
         assert_eq!(sphere_rad, 7069993624.788241)
     }
 
+
     #[test]
-    fn test_orbit(){
+    fn test_kepler_orbit(){
         let tle_str = "ISS (ZARYA) 
         1 25544U 98067A   23035.69666365  .00008902  00000+0  16600-3 0  9994
         2 25544  51.6420 264.7747 0008620 314.4274 150.8239 15.49588766381243";
-        let orb = Orbit::from_tle(tle_str.to_string());
+        let kep = Orbit::from_tle(tle_str.to_string());
 
-        assert_eq!(orb.argument_of_perigee, 314.4274);
+        assert_eq!(kep.semi_major_axis, 23035.69666365);
+        assert_eq!(kep.eccentricity, 0.00008902);
+        assert_eq!(kep.inclination, 51.6420);
+        assert_eq!(kep.raan, 314.4274);
+        assert_eq!(kep.argument_of_perigee, 150.8239);
+        assert_eq!(kep.mean_anomaly, 264.7747);
+        assert_eq!(kep.mean_motion, 0.0);
     }
-
-
 }
