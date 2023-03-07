@@ -495,18 +495,60 @@ impl Orbit {
 
 
 
-    pub fn propogate(
-        &self, 
-        eval_datetimes: Vec<DateTime<Utc>, 
-        precision: f64)
-    -> Vec<Vector3<f64>> {
-        let arg_perigree = self.argument_of_perigee;
-        return 
+    pub fn propogate(&self, dt: f64) -> Orbit {
+        let mut new_orbit = self.clone();
+        new_orbit.propogate_in_place(dt);
+        new_orbit
     }
+       
+    pub fn propogate_in_place(&mut self, dt: f64) {
+        let mut new_pos;
+        let mut new_vel;
+        let mut new_time;
 
+        new_time = self.epoch.timestamp() as f64 + dt;
+        new_pos = kepler::calc_pos(
+            self.grav_param, 
+            self.mean_anomaly, 
+            new_time);
+        new_vel = kepler::calc_vel(
+            self.grav_param, 
+            self.mean_anomaly, 
+            new_time);
+        let new_orbit: Orbit = Orbit::from_pos_vel(
+            self.name, 
+            self.grav_param, 
+            new_pos, 
+            new_vel, 
+            new_time);
+
+}
 }
 
 
+pub fn calc_pos(grav_param: f64, mean_anomaly: f64, time: f64) -> Vector3<f64> {
+    let mean_anomaly_rad: f64 = mean_anomaly * cst::DEG_TO_RAD;
+    let mean_anomaly_cos: f64 = mean_anomaly_rad.cos();
+    let mean_anomaly_sin: f64 = mean_anomaly_rad.sin();
+
+    let mean_anomaly_sq: f64 = mean_anomaly_rad.powi(2);
+    let mean_anomaly_cub: f64 = mean_anomaly_sq * mean_anomaly_rad;
+    let mean_anomaly_quat: f64 = mean_anomaly_cub * mean_anomaly;
+
+    
+}   
+
+/// Calculate the RAAN given the ascending node vector.
+/// 
+/// Inputs
+/// ------
+/// ascend_node_vec: `Vector3<f64>`
+///     Vector defining the ascending node.
+/// 
+/// Outputs
+/// -------
+/// raan: `f64`
+///     Right ascension of the ascending node.
 pub fn calc_raan(ascend_node_vec: Vector3<f64>) -> f64 {
     (ascend_node_vec[0] / ascend_node_vec.norm()).acos()
 }
