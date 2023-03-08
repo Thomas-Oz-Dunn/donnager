@@ -13,7 +13,7 @@ use crate::cosmos::time as time;
 /// Gravitational Body
 #[derive(Clone, Debug, PartialEq)]
 pub struct Body{
-    pub name: String,
+    pub name: str,
     pub grav_param: f64,
     pub eq_radius: f64,
     pub rotation_rate: f64,
@@ -197,7 +197,7 @@ impl Particle {
     /// 
     /// eccentricity : `f64`
     ///     Body oblateness
-    pub fn to_body(&self, name: String, eq_radius: f64, rotation_rate: f64, eccentricity: f64) -> Body {
+    pub fn to_body(&self, name: str, eq_radius: f64, rotation_rate: f64, eccentricity: f64) -> Body {
         let grav_param: f64 = self.mass * cst::GRAV_CONST;
         let body: Body = Body {
             name,
@@ -218,7 +218,7 @@ impl Particle {
 /// name : `String`
 #[derive(Clone, Debug, PartialEq)]
 pub struct Orbit{
-    pub name: String,
+    pub name: str,
     pub grav_param: f64,
     pub semi_major_axis: f64, 
     pub eccentricity: f64,
@@ -236,7 +236,7 @@ impl Orbit {
     /// 
     /// Inputs
     /// ------
-    /// name : `String`
+    /// name : `str`
     ///     Name of body this orbit is for
     /// 
     /// grav_param : `f64`           
@@ -271,7 +271,7 @@ impl Orbit {
     /// orbit : `Orbit`           
     ///     Orbit structure with populated Keplerian parameters.
     pub fn from_keplerian(
-        name: String,
+        name: str,
         grav_param: f64,
         semi_major_axis: f64, 
         eccentricity: f64,
@@ -403,7 +403,7 @@ impl Orbit {
             cst::EARTH_GRAV_PARAM, mean_motion);
     
         Orbit {
-            name: name.to_string(),
+            name,
             grav_param: cst::EARTH_GRAV_PARAM,
             semi_major_axis,
             raan,
@@ -421,7 +421,7 @@ impl Orbit {
     /// 
     /// Inputs
     /// ------
-    /// name : `String`
+    /// name : `str`
     ///     Name of object
     /// 
     /// grav_param : `f64`
@@ -460,7 +460,7 @@ impl Orbit {
     /// assert_eq!(orbit.grav_param, cst::MOON_GRAV_PARAM)
     /// assert_eq!(orbit.semi_major_axis, cst::MOON_SEMI_MAJOR_AXIS)
     pub fn from_pos_vel(
-        name: String,
+        name: str,
         grav_param: f64,
         pos: Vector3<f64>,
         vel: Vector3<f64>,
@@ -504,7 +504,6 @@ impl Orbit {
         let z_pos: f64 = 0.0;
         let pos = Vector3::new(x_pos, y_pos, z_pos);
 
-
         // Perifocal
         let x_vel: f64 = -self.mean_motion * radius * true_anomaly_rad.sin();
         let y_vel: f64 = self.mean_motion * radius * (self.eccentricity + true_anomaly_rad.cos());
@@ -520,6 +519,16 @@ impl Orbit {
         new_orbit
     }
        
+    /// Propogate orbit in place, without returning a new orbit instance.
+    /// 
+    /// Inputs
+    /// ------
+    /// dt: `f64`
+    ///     Time step, in seconds.
+    /// 
+    /// Outputs
+    /// -------
+    /// None.
     pub fn propogate_in_place(&mut self, dt: f64) {
         let new_time: f64 = self.epoch.timestamp() as f64 + dt;
         let motion = self.calc_pos_vel(new_time);
