@@ -2,9 +2,17 @@
 Ballistics calculations
 */
 
+use crate::constants as cst;
+
 // TODO-TD: mutlistage trade studies
 
 /// Calculate mass ratio of payload to fuel
+/// 
+/// Inputs
+/// ------
+/// delta_v: `f64`
+///     Delta-V of the payload in m/s.
+/// 
 pub fn calc_mass_ratio(
     delta_v: f64,
     isp: f64,
@@ -51,7 +59,7 @@ mod ballistics_tests {
     fn test_burnout(){
         let isp: f64 = 300.;
         let grav_acc: f64 = 9.81;
-        let delta_v: f64 = 10.;
+        let delta_v: f64 = 100.;
         let mass_ratio: f64 = calc_mass_ratio(
             delta_v, 
             isp, 
@@ -60,6 +68,6 @@ mod ballistics_tests {
             mass_ratio, 
             grav_acc, 
             isp);
-        assert_eq!(burnout_h, 0.);
+        assert_eq!(burnout_h, 6.1827991953331765);
     }
 }
