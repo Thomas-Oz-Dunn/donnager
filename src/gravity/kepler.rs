@@ -3,7 +3,7 @@ Gravitational Bodies
 */
 
 use nalgebra as na;
-use na::Vector3;
+use na::{Vector3, Matrix3};
 use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc};
 use std::f64::consts::PI;
 
@@ -13,7 +13,7 @@ use crate::cosmos::time as time;
 /// Gravitational Body
 #[derive(Clone, Debug, PartialEq)]
 pub struct Body{
-    pub name: str,
+    pub name: String,
     pub grav_param: f64,
     pub eq_radius: f64,
     pub rotation_rate: f64,
@@ -197,7 +197,7 @@ impl Particle {
     /// 
     /// eccentricity : `f64`
     ///     Body oblateness
-    pub fn to_body(&self, name: str, eq_radius: f64, rotation_rate: f64, eccentricity: f64) -> Body {
+    pub fn to_body(&self, name: String, eq_radius: f64, rotation_rate: f64, eccentricity: f64) -> Body {
         let grav_param: f64 = self.mass * cst::GRAV_CONST;
         let body: Body = Body {
             name,
@@ -218,7 +218,7 @@ impl Particle {
 /// name : `String`
 #[derive(Clone, Debug, PartialEq)]
 pub struct Orbit{
-    pub name: str,
+    pub name: String,
     pub grav_param: f64,
     pub semi_major_axis: f64, 
     pub eccentricity: f64,
@@ -271,7 +271,7 @@ impl Orbit {
     /// orbit : `Orbit`           
     ///     Orbit structure with populated Keplerian parameters.
     pub fn from_keplerian(
-        name: str,
+        name: String,
         grav_param: f64,
         semi_major_axis: f64, 
         eccentricity: f64,
@@ -403,7 +403,7 @@ impl Orbit {
             cst::EARTH_GRAV_PARAM, mean_motion);
     
         Orbit {
-            name,
+            name: name.to_string(),
             grav_param: cst::EARTH_GRAV_PARAM,
             semi_major_axis,
             raan,
@@ -460,7 +460,7 @@ impl Orbit {
     /// assert_eq!(orbit.grav_param, cst::MOON_GRAV_PARAM)
     /// assert_eq!(orbit.semi_major_axis, cst::MOON_SEMI_MAJOR_AXIS)
     pub fn from_pos_vel(
-        name: str,
+        name: String,
         grav_param: f64,
         pos: Vector3<f64>,
         vel: Vector3<f64>,
@@ -488,7 +488,13 @@ impl Orbit {
 
     }
 
-    pub fn calc_pos_vel(&self, time: f64) -> (Vector3<f64>, Vector3<f64>) {
+    /// Calculate position and velocity vectors in perfocal frame
+    /// 
+    /// Inputs	
+    /// ------
+    /// time: f64
+    /// 
+    pub fn calc_pos_vel(&self, time: f64, frame: &str) -> (Vector3<f64>, Vector3<f64>) {
         let mean_anomaly: f64 = self.mean_anomaly + self.mean_motion * time;
         let mean_anomaly_rad: f64 = mean_anomaly * cst::DEG_TO_RAD;
 
@@ -509,10 +515,61 @@ impl Orbit {
         let y_vel: f64 = self.mean_motion * radius * (self.eccentricity + true_anomaly_rad.cos());
         let z_vel: f64 = 0.0;
         let vel = Vector3::new(x_vel, y_vel, z_vel);
-        return (pos, vel);
         
+        if frame.to_string() == "Perifocal" {
+            return (pos, vel);
+
+        } else if frame.to_string() == "ECI" {
+            let rotam = self.calc_pfcl_eci_rotam();
+            let eci_pos = rotam * pos;
+            let eci_vel = rotam * vel;
+            return (pos, vel);
+
+        } else {
+            panic!("Invalid frame")
+        }
     }
 
+
+    /// Calculate perifocal to eci rotation matrix
+    pub fn calc_pfcl_eci_rotam(&self) -> Matrix3<f64> {
+        let cos_raan: f64 = self.raan.cos();
+        let sin_raan: f64 = self.raan.sin();
+        let cos_inc: f64 = self.inclination.cos();
+        let sin_inc: f64 = self.inclination.sin();
+        let cos_arg_peri: f64 = self.argument_of_perigee.cos();
+        let sin_arg_peri: f64 = self.argument_of_perigee.sin();
+
+        let rot_mat: Matrix3<f64> = 
+            Matrix3::new(cos_raan, -sin_raan, 0.0,
+                             sin_raan, cos_raan, 0.0,
+                             0.0, 0.0, 1.0);
+
+        let rot_mat_2: Matrix3<f64> =
+            Matrix3::new(cos_inc, 0.0, sin_inc,
+                 0.0, 1.0, 0.0, 
+                 -sin_inc, 0.0, cos_inc);
+
+        let rot_mat_3: Matrix3<f64> = 
+            Matrix3::new(cos_arg_peri, sin_arg_peri, 0.0, 
+                -sin_arg_peri, cos_arg_peri, 0.0, 
+                0.0, 0.0, 1.0);
+        return rot_mat_3 * rot_mat_2 * rot_mat;
+    }   
+
+    }
+
+    /// Propogate orbit an increment of time
+    /// 
+    /// Inputs
+    /// ------
+    /// dt: `f64`
+    ///     Time increment in seconds           
+    /// 
+    /// Outputs
+    /// -------
+    /// orbit: `Orbit`
+    ///     Propogated orbit struct
     pub fn propogate(&self, dt: f64) -> Orbit {
         let mut new_orbit = self.clone();
         new_orbit.propogate_in_place(dt);
@@ -531,17 +588,15 @@ impl Orbit {
     /// None.
     pub fn propogate_in_place(&mut self, dt: f64) {
         let new_time: f64 = self.epoch.timestamp() as f64 + dt;
-        let motion = self.calc_pos_vel(new_time);
-        let new_pos = motion.0;
-        let new_vel = motion.1;
-        let new_epoch_datetime = Utc.timestamp_opt(
+        let motion: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(new_time);
+        let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
             new_time as i64, 0).unwrap();
 
         let new_orbit: Orbit = Orbit::from_pos_vel(
-            self.name, 
+            self.name.clone(), 
             self.grav_param, 
-            new_pos, 
-            new_vel, 
+            motion.0, 
+            motion.1, 
             new_epoch_datetime);
         *self = new_orbit;
 
