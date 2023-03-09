@@ -494,7 +494,11 @@ impl Orbit {
     /// ------
     /// time: f64
     /// 
-    pub fn calc_pos_vel(&self, time: f64, frame: &str) -> (Vector3<f64>, Vector3<f64>) {
+    pub fn calc_pos_vel(
+        &self, 
+        time: f64, 
+        frame: &str
+    ) -> (Vector3<f64>, Vector3<f64>) {
         let mean_anomaly: f64 = self.mean_anomaly + self.mean_motion * time;
         let mean_anomaly_rad: f64 = mean_anomaly * cst::DEG_TO_RAD;
 
@@ -508,21 +512,22 @@ impl Orbit {
         let x_pos: f64 = radius * true_anomaly_rad.cos();
         let y_pos: f64 = radius * true_anomaly_rad.sin();
         let z_pos: f64 = 0.0;
-        let pos = Vector3::new(x_pos, y_pos, z_pos);
+        let pos: Vector<f64>
+         = Vector3::new(x_pos, y_pos, z_pos);
 
         // Perifocal
         let x_vel: f64 = -self.mean_motion * radius * true_anomaly_rad.sin();
         let y_vel: f64 = self.mean_motion * radius * (self.eccentricity + true_anomaly_rad.cos());
         let z_vel: f64 = 0.0;
-        let vel = Vector3::new(x_vel, y_vel, z_vel);
-        
+        let vel: Vector<f64> = Vector3::new(x_vel, y_vel, z_vel);
+
         if frame.to_string() == "Perifocal" {
             return (pos, vel);
 
         } else if frame.to_string() == "ECI" {
-            let rotam = self.calc_pfcl_eci_rotam();
-            let eci_pos = rotam * pos;
-            let eci_vel = rotam * vel;
+            let rotam: Matrix3<f64> = self.calc_pfcl_eci_rotam();
+            let eci_pos: Vector3<f64> = rotam * pos;
+            let eci_vel: Vector3<f64> = rotam * vel;
             return (pos, vel);
 
         } else {
