@@ -3,8 +3,8 @@ Gravitational Bodies
 */
 
 use nalgebra as na;
-use na::{Vector3, Matrix3, zero};
-use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc};
+use na::{Vector3, Matrix3};
+use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc, Datelike};
 use std::f64::consts::PI;
 
 use crate::{cosmos::time as time, constants as cst};
@@ -371,6 +371,13 @@ impl Orbit {
 
     /// Calculate eci to ecef rotation matrix
     pub fn calc_eci_ecef_rotam(&self, DateTime: DateTime<Utc>) -> Matrix3<f64> {
+        let year = DateTime.year();
+        let month = DateTime.month() as i32;
+        let day = DateTime.day() as i32;
+
+        let julian_day = time::date_to_julian_day_num(year, month, day);
+
+
         let rotam: Matrix3<f64> = Matrix3::<f64>::zeros();
         return rotam
     }
