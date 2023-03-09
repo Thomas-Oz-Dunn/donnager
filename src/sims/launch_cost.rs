@@ -6,7 +6,6 @@ use nalgebra as na;
 use na::Vector3;
 
 use donnager::constants as cst;
-use donnager::gravity as grav;
 use donnager::cosmos as cosm;
 use donnager::propulsion as prop;
 use donnager::dynamics as dynam;
@@ -14,7 +13,7 @@ use donnager::dynamics as dynam;
 
 fn main() {
     // Config
-    let earth: grav::kepler::Body = grav::kepler::Body {
+    let earth: cosm::space::Body = cosm::space::Body {
         name: "Earth".to_string(),
         grav_param: cst::EARTH_GRAV_PARAM,
         eq_radius: cst::EARTH_RADIUS_EQUATOR,

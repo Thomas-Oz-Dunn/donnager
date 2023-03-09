@@ -2,8 +2,6 @@
 Ballistics calculations
 */
 
-use crate::constants as cst;
-
 // TODO-TD: mutlistage trade studies
 
 /// Calculate mass ratio of payload to fuel

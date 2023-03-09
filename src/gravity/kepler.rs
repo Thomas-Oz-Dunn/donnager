@@ -3,213 +3,11 @@ Gravitational Bodies
 */
 
 use nalgebra as na;
-use na::{Vector3, Matrix3};
+use na::{Vector3, Matrix3, zero};
 use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc};
 use std::f64::consts::PI;
 
-use crate::constants as cst;
-use crate::cosmos::time as time;
-
-/// Gravitational Body
-#[derive(Clone, Debug, PartialEq)]
-pub struct Body{
-    pub name: String,
-    pub grav_param: f64,
-    pub eq_radius: f64,
-    pub rotation_rate: f64,
-    pub eccentricity: f64
-}
-
-
-/// Gravitational Body
-impl Body {
-
-    /// Convert into simple particle type
-    /// 
-    /// Inputs
-    /// ------
-    /// motion: `Vec<Vector3<f64>>`
-    ///     motion of body in frame
-    /// 
-    /// Outputs
-    /// -------
-    /// particle: `Particle`
-    ///     `Particle` equivalent of body
-    pub fn to_particle(&self, motion: Vec<Vector3<f64>>) -> Particle {
-        let mass: f64 = self.grav_param / cst::GRAV_CONST;
-        let particle: Particle = Particle {mass: mass, motion: motion};
-        particle
-    }
-
-
-    /// Calculate gravitational acceleration at radial distance from Body
-    /// 
-    /// Inputs
-    /// ------
-    /// radius: `Vector3<f64>`
-    ///     Radius in km from Body center
-    /// 
-    /// Outputs
-    /// -------
-    /// grav_acc: `Vector3<f64>`
-    ///     Acceleration rate due to gravity
-    pub fn calc_body_grav(&self, radius: Vector3<f64>) -> Vector3<f64> {
-        let grav_acc: Vector3<f64>  = self.grav_param * radius / radius.norm().powi(3);
-        return grav_acc
-    }
-    
-
-    /// Calculate required orbital velocity at radial distance
-    /// 
-    /// Inputs
-    /// ------
-    /// radius: `f64`
-    ///     Radius in km from Body center
-    ///     
-    /// Outputs
-    /// -------
-    /// val: `f64`
-    ///     Required tangential velocity magnitude
-    pub fn calc_orbital_velocity_mag(&self, radius: f64) -> f64 {
-        let vel: f64 = (2.0 * self.grav_param / radius).sqrt();
-        return vel
-    }
-
-    /// Calculate period of orbit at semi major axis
-    /// 
-    /// Inputs
-    /// ------
-    /// semi_major_axis: `f64`
-    ///     Semi major axis of orbital ellipse
-    /// 
-    /// Outputs
-    /// -------
-    /// period: `f64`
-    ///    Period of orbit in seconds
-    pub fn calc_period(&self, semi_major_axis: f64) -> f64 {
-        let period: f64 = 2.0 * PI * (semi_major_axis.powi(3)/self.grav_param).sqrt();
-        return period
-    }
-    
-    /// Calculate radius for stationary orbit above body surface
-    /// 
-    /// Outputs
-    /// -------
-    /// r_mag: `f64`
-    ///     Magnitude of radius for stationary orbit
-    pub fn calc_stationary_orbit(&self) -> f64 {
-        let period: f64 = 2.0 * PI / self.rotation_rate;
-        let a: f64 = self.grav_param * period.powi(2); 
-        let r_mag: f64 = (a / (4.0 * PI.powi(2))).powf(1.0 / 3.0); 
-        return r_mag
-    }
-
-    /// Geodetic to rectangular coordinates
-    /// E.g. Latitude, Longitude, Altitude to ECEF
-    /// 
-    /// Inputs
-    /// ------
-    /// lla: `Vector3<f64>`
-    ///     geodetic coords
-    /// 
-    /// Outputs
-    /// -------
-    /// xyz: `Vector3<f64>`
-    ///     Cartesian coords
-    pub fn geodetic_to_xyz(&self, lla: Vector3<f64>) -> Vector3<f64> {
-        let radius: f64 = self.calc_prime_vertical(lla[0]);
-        let x: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].cos();
-        let y: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].sin();
-        let z: f64 = ((1.0 - self.eccentricity.powi(2)) * radius + lla[2]) * lla[0].sin();
-        let xyz: Vector3<f64> = Vector3::new(x, y, z); 
-        return xyz
-    }
-
-    /// Calculate prime vertical radius to surface at latitude
-    /// 
-    /// Inputs
-    /// ------
-    /// lat_deg: `f64`
-    ///     Lattitude in degrees
-    pub fn calc_prime_vertical(&self, lat_deg: f64) -> f64 {
-        let lat_radians: f64 = PI * lat_deg / 180.0;
-        let radius: f64 = 
-            self.eq_radius / (1.0 - (self.eccentricity * lat_radians.sin()).powi(2)).sqrt();
-        return radius
-    }
-
-    /// Rectangular coordinates to geodetic
-    /// E.g. ECEF to LLH
-    pub fn xyz_to_geodetic(&self, xyz: Vector3<f64>) -> Vector3<f64> {
-        // Zhu's method
-        let a: f64 = self.eq_radius;
-        let ecc_2: f64 = self.eccentricity.powi(2);
-
-        let b: f64 = (a.powi(2)*(1.0 - ecc_2)).sqrt();
-        let ecc_2_prime: f64 = a.powi(2) / b.powi(2) - 1.0;
-        let p: f64 = (xyz[0].powi(2) + xyz[1].powi(2)).sqrt();
-        let g: f64 = p.powi(2) + (1.0 - ecc_2) * xyz[2].powi(2) - 
-            ecc_2 * (a.powi(2) - b.powi(2));
-        let c: f64 = ecc_2.powi(2) * 54.0 * b.powi(2) * xyz[2].powi(2) * p.powi(2) / (g.powi(3));
-        let s: f64 = (1.0 + c + (c.powi(2) + 2.0 * c).sqrt()).powf(1.0 / 3.0);
-        let cap_p: f64 = 54.0 * b.powi(2)*xyz[2].powi(2) / 
-            (3.0 * (s + 1.0 + 1.0 / s).powi(2) * g.powi(2));
-        let q: f64 = (1.0 + 2.0 * ecc_2.powi(2) * cap_p).sqrt();
-        let r_0: f64 = -cap_p * ecc_2 * p /(1.0+q) + 
-            ((a.powi(2)/2.0)*(1.0 + 1.0 / q) - 
-            cap_p * (1.0 - ecc_2) * xyz[2].powi(2) / (q * (1.0 + q)) - 
-            cap_p*p.powi(2)/2.0).sqrt();
-        let u: f64 = ((p - ecc_2*r_0).powi(2) + xyz[2].powi(2)).sqrt();
-        let v: f64 = ((p - ecc_2*r_0).powi(2) + (1.0 - ecc_2)*xyz[2].powi(2)).sqrt();
-        let z_0: f64 = b.powi(2) * xyz[2] / (a * v);
-
-        let alt: f64 = u * (1.0 - b.powi(2) / (a * v));
-        let lat: f64 = ((xyz[2] + ecc_2_prime*z_0)/p).atan();
-        let lon: f64 = (xyz[1] / xyz[0]).atan();
-        let lla: Vector3<f64> = Vector3::new(lat, lon, alt);
-        return lla
-    }
-
-}
-
-
-/// Gravitational Particle
-#[derive(Clone, Debug, PartialEq)]
-pub struct Particle {
-    pub mass: f64,
-    pub motion: Vec<Vector3<f64>>,
-}
-
-impl Particle {
-
-    /// Convert into Body type
-    /// 
-    /// Inputs
-    /// ------
-    /// name : `String`
-    ///     Name of body
-    /// 
-    /// eq_radius : `f64`
-    ///     Equatorial radius of body
-    /// 
-    /// rotation_rate : `f64`
-    ///     Rotation rate of body
-    /// 
-    /// eccentricity : `f64`
-    ///     Body oblateness
-    pub fn to_body(&self, name: String, eq_radius: f64, rotation_rate: f64, eccentricity: f64) -> Body {
-        let grav_param: f64 = self.mass * cst::GRAV_CONST;
-        let body: Body = Body {
-            name,
-            grav_param,
-            eq_radius,
-            rotation_rate,
-            eccentricity
-        };
-        body
-    }
-}
-
+use crate::{cosmos::time as time, constants as cst};
 
 /// Orbit structure
 /// 
@@ -493,45 +291,53 @@ impl Orbit {
     /// Inputs	
     /// ------
     /// time: f64
-    /// 
+    ///     
+    /// frame: `str`
+    ///     Reference frame
     pub fn calc_pos_vel(
         &self, 
         time: f64, 
         frame: &str
     ) -> (Vector3<f64>, Vector3<f64>) {
-        let mean_anomaly: f64 = self.mean_anomaly + self.mean_motion * time;
-        let mean_anomaly_rad: f64 = mean_anomaly * cst::DEG_TO_RAD;
+        let ecc: f64 = self.eccentricity;
 
-        let ecc_anomaly: f64 = mean_anomaly_rad - self.eccentricity * cst::DEG_TO_RAD * (1.0 - mean_anomaly_rad.cos());
-        let ecc_anomaly_rad: f64 = ecc_anomaly * cst::DEG_TO_RAD;
+        let mean_anom: f64 = (
+            self.mean_anomaly + self.mean_motion * time) * cst::DEG_TO_RAD;
+        let cos_mean_anom: f64 = mean_anom.cos();
+
+        let ecc_anom: f64 = (
+            mean_anom - ecc * cst::DEG_TO_RAD * (1.0 - cos_mean_anom)) * cst::DEG_TO_RAD;
         
-        let true_anomaly_rad: f64 = 2.0 * (ecc_anomaly_rad.sin() - ecc_anomaly_rad.cos()).atan();
-        let radius: f64 = self.semi_major_axis * (1.0 - self.eccentricity.powi(2)) / (1.0 + self.eccentricity * true_anomaly_rad.cos());
+        let true_anomaly_rad: f64 = 2.0 * (
+            ecc_anom.sin() - ecc_anom.cos()).atan();
+        let cos_true_anom: f64 = true_anomaly_rad.cos();
+        let sin_true_anom: f64 = true_anomaly_rad.sin();
+
+        let radius: f64 = self.semi_major_axis * (1.0 - ecc.powi(2)) / (1.0 + ecc * cos_true_anom);
         
-        // Note: Perifocal
-        let x_pos: f64 = radius * true_anomaly_rad.cos();
-        let y_pos: f64 = radius * true_anomaly_rad.sin();
+        // Perifocal
+        let x_pos: f64 = radius * cos_true_anom;
+        let y_pos: f64 = radius * sin_true_anom;
         let z_pos: f64 = 0.0;
-        let pos: Vector<f64>
-         = Vector3::new(x_pos, y_pos, z_pos);
+        let pos: Vector3<f64> = Vector3::new(x_pos, y_pos, z_pos);
 
         // Perifocal
-        let x_vel: f64 = -self.mean_motion * radius * true_anomaly_rad.sin();
-        let y_vel: f64 = self.mean_motion * radius * (self.eccentricity + true_anomaly_rad.cos());
+        let x_vel: f64 = -self.mean_motion * radius * sin_true_anom;
+        let y_vel: f64 = self.mean_motion * radius * (ecc + cos_true_anom);
         let z_vel: f64 = 0.0;
-        let vel: Vector<f64> = Vector3::new(x_vel, y_vel, z_vel);
+        let vel: Vector3<f64> = Vector3::new(x_vel, y_vel, z_vel);
 
-        if frame.to_string() == "Perifocal" {
-            return (pos, vel);
-
-        } else if frame.to_string() == "ECI" {
-            let rotam: Matrix3<f64> = self.calc_pfcl_eci_rotam();
-            let eci_pos: Vector3<f64> = rotam * pos;
-            let eci_vel: Vector3<f64> = rotam * vel;
-            return (pos, vel);
-
-        } else {
-            panic!("Invalid frame")
+        match frame {
+            "ECI" => {
+                let rotam: Matrix3<f64> = self.calc_pfcl_eci_rotam();
+                let eci_pos: Vector3<f64> = rotam * pos;
+                let eci_vel: Vector3<f64> = rotam * vel;
+                return (eci_pos, eci_vel);
+            },
+            "PFCL" => {
+                return (pos, vel);
+            },
+            _ => {panic!("Invalid frame")}
         }
     }
 
@@ -559,9 +365,14 @@ impl Orbit {
             Matrix3::new(cos_arg_peri, sin_arg_peri, 0.0, 
                 -sin_arg_peri, cos_arg_peri, 0.0, 
                 0.0, 0.0, 1.0);
-        return rot_mat_3 * rot_mat_2 * rot_mat;
-    }   
 
+        return rot_mat_3 * rot_mat_2 * rot_mat; 
+    }
+
+    /// Calculate eci to ecef rotation matrix
+    pub fn calc_eci_ecef_rotam(&self, DateTime: DateTime<Utc>) -> Matrix3<f64> {
+        let rotam: Matrix3<f64> = Matrix3::<f64>::zeros();
+        return rotam
     }
 
     /// Propogate orbit an increment of time
@@ -593,7 +404,8 @@ impl Orbit {
     /// None.
     pub fn propogate_in_place(&mut self, dt: f64) {
         let new_time: f64 = self.epoch.timestamp() as f64 + dt;
-        let motion: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(new_time);
+        let frame = "ECI";
+        let motion: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(new_time, frame);
         let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
             new_time as i64, 0).unwrap();
 
@@ -605,8 +417,8 @@ impl Orbit {
             new_epoch_datetime);
         *self = new_orbit;
 
+        }
     }
-}
 
 /// Calculate the eccentricity vector from the velocity and position vectors
 /// 

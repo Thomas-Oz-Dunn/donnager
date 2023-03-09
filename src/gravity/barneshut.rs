@@ -6,8 +6,7 @@ pub const TOLERANCE: f64 = 1e-16;
 
 use nalgebra as na;
 use na::Vector3;
-use crate::constants as cst;
-use crate::gravity::kepler as kepler;
+use crate::{cosmos as cosm, constants as cst};
 
 
 #[derive(Clone, Debug, PartialEq)]
@@ -68,7 +67,7 @@ impl BhTree {
     /// -------
     /// tree: `Tree`
     ///     Initialized `Tree` struct
-    pub fn new(particles: Vec<kepler::Particle>, theta: f64) -> BhTree {
+    pub fn new(particles: Vec<cosm::space::Particle>, theta: f64) -> BhTree {
 
         let range: (Vector3<f64>, Vector3<f64>) = calc_range(particles.clone());
 
@@ -106,7 +105,7 @@ impl BhTree {
     ///     Node identification number. 
     pub fn add_particles_to_node(
         &mut self, 
-        particles: &Vec<kepler::Particle>, 
+        particles: &Vec<cosm::space::Particle>, 
         node_id: usize
     ) {
 
@@ -120,7 +119,7 @@ impl BhTree {
         };
 
         // TODO-TD: improve initialization
-        let mut particle_trees: [Vec<kepler::Particle>; 8] = [
+        let mut particle_trees: [Vec<cosm::space::Particle>; 8] = [
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
@@ -285,12 +284,12 @@ impl BhTree {
 /// particles: `Vec<Particle>` 
 ///     Vector of Particles updated at t = step_size * n_steps 
 pub fn barnes_hut_gravity(
-    mut particles: Box<[kepler::Particle]>,
+    mut particles: Box<[cosm::space::Particle]>,
     step_size: f64,
     n_steps: usize,
     theta: f64,
     is_debug: bool
-) -> Box<[kepler::Particle]> {
+) -> Box<[cosm::space::Particle]> {
     let mut motion = vec![Vector3::zeros(); 3].into_boxed_slice();
     
     for i_step in 0..n_steps {
@@ -328,7 +327,9 @@ pub fn barnes_hut_gravity(
 /// -------
 /// range: `(Vector3<f64>, Vector3<f64>)`
 ///     Min and max points of space
-pub fn calc_range(particles: Vec<kepler::Particle>) -> (Vector3<f64>, Vector3<f64>) {
+pub fn calc_range(
+    particles: Vec<cosm::space::Particle>
+) -> (Vector3<f64>, Vector3<f64>) {
     let mut min: Vector3<f64> = Vector3::zeros();
     let mut max: Vector3<f64> = Vector3::zeros();
 
@@ -353,7 +354,7 @@ mod barneshut_tests{
     
     #[test]
     fn test_prop(){
-        let earth: kepler::Body = kepler::Body {
+        let earth: cosm::space::Body = cosm::space::Body {
             name: "Earth".to_string(),
             grav_param: cst::EARTH_GRAV_PARAM,
             eq_radius: cst::EARTH_RADIUS_EQUATOR,
@@ -378,13 +379,13 @@ mod barneshut_tests{
 
         let pos_ecef: Vector3<f64> = earth.geodetic_to_xyz(pos_lla);
         assert_eq!(pos_ecef, radius_vec);
-        let satellite: kepler::Particle = kepler::Particle { mass: 5e4, motion: sat_motion_0};
+        let satellite: cosm::space::Particle = cosm::space::Particle { mass: 5e4, motion: sat_motion_0};
 
         let motion: Vec<Vector3<f64>> = vec![Vector3::zeros(); 3];
-        let earth_particle: kepler::Particle = earth.to_particle(motion);
+        let earth_particle: cosm::space::Particle = earth.to_particle(motion);
         assert_eq!(earth_particle.mass, 5.972e24);
 
-        let mut particles: Box<[kepler::Particle]> = vec![earth_particle, satellite].into_boxed_slice();
+        let mut particles: Box<[cosm::space::Particle]> = vec![earth_particle, satellite].into_boxed_slice();
     
         let step_size: f64 = 0.1;
         let theta: f64 = 1.0;

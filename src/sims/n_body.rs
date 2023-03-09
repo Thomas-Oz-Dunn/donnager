@@ -6,12 +6,12 @@ use nalgebra as na;
 use na::Vector3;
 
 use donnager::gravity as grav;
-
+use donnager::cosmos as cosm;
 
 fn main() {
 
     // Body
-    let particle1: grav::kepler::Particle = grav::kepler::Particle {
+    let particle1: cosm::space::Particle = cosm::space::Particle {
         mass: 1e13,
         motion: vec![
             Vector3::new(5.,1.,0.),
@@ -20,7 +20,7 @@ fn main() {
     };
 
     // Body
-    let particle2: grav::kepler::Particle = grav::kepler::Particle {
+    let particle2: cosm::space::Particle = cosm::space::Particle {
         mass: 1e13,
         motion: vec![
             Vector3::new(7.,4.,0.),
@@ -29,7 +29,7 @@ fn main() {
     };
 
     // Body 
-    let particle3: grav::kepler::Particle = grav::kepler::Particle {
+    let particle3: cosm::space::Particle = cosm::space::Particle {
         mass: 1e13,
         motion: vec![
             Vector3::new(0.,10.,0.),
