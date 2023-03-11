@@ -15,6 +15,18 @@ pub const RAD_TO_DEG: f64 = 180.0 / PI;
 pub fn to_radians(degrees: f64) -> f64 {DEG_TO_RAD * degrees}
 pub fn to_degrees(radians: f64) -> f64 {RAD_TO_DEG * radians}
 
+pub const TERA: f64 = 1e12;
+pub const GIGA: f64 = 1e9;
+pub const MEGA: f64 = 1e6;
+pub const KILO: f64 = 1e3;
+pub const DECA: f64 = 1e1;
+
+pub const DECI: f64 = 1e-1;
+pub const CENTI: f64 = 1e-2;
+pub const MILLI: f64 = 1e-3;
+pub const MICRO: f64 = 1e-6;
+pub const NANO: f64 = 1e-9;
+
 /// Gravity
 /// -------
 
@@ -39,15 +51,20 @@ pub const EARTH_RADIUS_EQUATOR: f64 = 6.378137e6; // m
 /// Earth centered gravitational parameter
 pub const EARTH_GRAV_PARAM: f64 = EARTH_MASS * GRAV_CONST; // m^3 * s^-2
 pub const EARTH_ECC: f64 = 0.08182;
+pub const J2000_DAY: f64 = 2451545.0;
+pub const EARTH_SIDEREAL_DAY: f64 = 23.9344696; // hours
 pub const EARTH_ROT_RATE: f64 = 7.2921150e-5; // radians per second;
 pub const EARTH_DAYS_PER_YEAR: f64 = 365.25;
 pub const EARTH_AXIAL_TILT: f64 = -23.44;
 
 /// Earth-Sun System
-pub const EARTH_ORBIT_SEMI_MAJOR: f64 = 149.60e6;
+pub const EARTH_ORBIT_SEMI_MAJOR: f64 = 149.60e6; // km
 pub const EARTH_ORBIT_ECC: f64 = 0.0167086;
 pub const EARTH_ARG_PERIHELION: f64 = 102.9372;
 
+pub const MOON_MASS: f64 = 7.34767309e22; // kg
+pub const MOON_RADIUS_EQUATOR: f64 = 1.737e6; // m
+pub const MOON_GRAV_PARAM: f64 = MOON_MASS * GRAV_CONST; // m^3 * s^-2
 
 /// Electromagnetism
 /// ----------------

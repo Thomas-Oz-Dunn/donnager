@@ -1,5 +1,5 @@
 /*
-Orbital systems modelling in Rust
+Fuel calculations for launch
 */
 
 use nalgebra as na;
@@ -13,7 +13,7 @@ use donnager::dynamics as dynam;
 
 fn main() {
     // Config
-    let earth: cosm::gravity::Body = cosm::gravity::Body {
+    let earth: cosm::spacetime::Body = cosm::spacetime::Body {
         name: "Earth".to_string(),
         grav_param: cst::EARTH_GRAV_PARAM,
         eq_radius: cst::EARTH_RADIUS_EQUATOR,
@@ -21,7 +21,7 @@ fn main() {
         eccentricity: cst::EARTH_ECC
     };
     
-    let launch_site: cosm::space::SurfacePoint = cosm::space::SurfacePoint {
+    let launch_site: cosm::spacetime::SurfacePoint = cosm::spacetime::SurfacePoint {
         name: "Cape Canaveral Launch Site".to_string(),
         body: earth.clone(),
         pos_lla: Vector3::new(28.396837, -80.605659, 0.0)
