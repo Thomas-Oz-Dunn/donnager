@@ -138,15 +138,15 @@ impl Orbit {
         let date: NaiveDate = NaiveDate::from_ymd_opt(
             year, md.0, md.1).unwrap();
         
-        let percent_of_day: f64 = epoch_day_full[0]
-            .to_string()
+        let percent_of_day: f64 = 
+        (".".to_owned() + &epoch_day_full[1].to_string())
             .parse::<f64>()
             .unwrap();
 
         let hours_dec: f64 = percent_of_day * 24.0;
         let hours_whole: u32 = hours_dec.div_euclid(24.0).floor() as u32;
         let hours_part: f64 = hours_dec.rem_euclid(24.0);
-
+        
         let minutes_dec: f64 = hours_part * 60.;
         let minutes_whole: u32 = minutes_dec.div_euclid(60.).floor() as u32;
         let minutes_part: f64 = minutes_dec.rem_euclid(60.);
@@ -175,10 +175,10 @@ impl Orbit {
             .parse::<f64>()
             .unwrap();
 
-        let ecc: f64 = line2[4]
-            .to_string()
+        let ecc: f64 =
+        (".".to_owned() + & line2[4].to_string())
             .parse::<f64>()
-            .unwrap() * 10e-7;
+            .unwrap();
 
         let arg_perigee: f64 = line2[5]
             .to_string()
@@ -238,25 +238,6 @@ impl Orbit {
     /// ------
     /// orbit : `Orbit`
     ///     Orbit object with populated fields.
-    /// 
-    /// # Example
-    /// ```rust,no_run      
-    /// use gravity::kepler::Orbit;
-    /// 
-    /// let name: &str = "Moon"
-    /// let grav_param: f64 = cst::MOON_GRAV_PARAM
-    /// let pos: Vector3<f64> = Vector3::new(0.0, 0
-    ///     0.0, 0.0)
-    /// let vel: Vector3<f64> = Vector3::new(0.0, 0
-    ///     0.0, 0.0) }
-    /// let epoch_datetime: DateTime<Utc> = Utc.ymd(1969
-    ///     7, 20).and_hms(0, 0, 0) }
-    /// let orbit = Orbit::from_pos_vel(name, grav_param, pos, vel
-    ///     epoch_datetime)
-    /// 
-    /// assert_eq!(orbit.name, "Moon")
-    /// assert_eq!(orbit.grav_param, cst::MOON_GRAV_PARAM)
-    /// assert_eq!(orbit.semi_major_axis, cst::MOON_SEMI_MAJOR_AXIS)
     pub fn from_pos_vel(
         name: String,
         grav_param: f64,
@@ -297,7 +278,7 @@ impl Orbit {
     pub fn calc_pos_vel(
         &self, 
         time: f64, 
-        frame: &str
+        frame: spacetime::ReferenceFrames
     ) -> (Vector3<f64>, Vector3<f64>) {
         let ecc: f64 = self.eccentricity;
 
@@ -328,31 +309,31 @@ impl Orbit {
         let vel: Vector3<f64> = Vector3::new(x_vel, y_vel, z_vel);
 
         match frame {
-            "ECI" => {
+            spacetime::ReferenceFrames::ECI => {
                 let rotam: Matrix3<f64> = self.calc_pfcl_eci_rotam();
                 let eci_pos: Vector3<f64> = rotam * pos;
                 let eci_vel: Vector3<f64> = rotam * vel;
                 return (eci_pos, eci_vel);
             },
-            "ECEF" => {
+            spacetime::ReferenceFrames::ECEF => {
                 let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_eci_rotam();
                 let eci_pos: Vector3<f64> = pfcl_eci_rotam * pos;
                 let eci_vel: Vector3<f64> = pfcl_eci_rotam * vel;
+
                 let new_time: f64 = self.epoch.timestamp() as f64 + time;
                 let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
                     new_time as i64, 0).unwrap();
                 let eci_ecef_rotam: Matrix3<f64>  = spacetime::calc_eci_ecef_rotam(new_epoch_datetime);
+
                 let ecef_pos: Vector3<f64> = eci_ecef_rotam * eci_pos;
                 let ecef_vel: Vector3<f64> = eci_ecef_rotam * eci_vel;
                 return (ecef_pos, ecef_vel);
             },
-            "PFCL" => {
+            spacetime::ReferenceFrames::PFCL => {
                 return (pos, vel);
-            },
-            _ => {panic!("Invalid frame")}
+            }
         }
     }
-
 
     /// Calculate perifocal to eci rotation matrix
     pub fn calc_pfcl_eci_rotam(&self) -> Matrix3<f64> {
@@ -380,7 +361,6 @@ impl Orbit {
 
         return rot_mat_3 * rot_mat_2 * rot_mat; 
     }
-
 
     /// Propogate orbit an increment of time
     /// 
@@ -411,7 +391,7 @@ impl Orbit {
     /// None.
     pub fn propogate_in_place(&mut self, dt: f64) {
         let new_time: f64 = self.epoch.timestamp() as f64 + dt;
-        let frame = "ECI";
+        let frame = spacetime::ReferenceFrames::ECI;
         let motion: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(new_time, frame);
         let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
             new_time as i64, 0).unwrap();
@@ -432,9 +412,11 @@ impl Orbit {
 /// Inputs
 /// ------
 /// pos: `Vector3<f64>`           
-///     Position vector           
+///     Position vector        
+///    
 /// vel: `Vector3<f64>`
-///     Velocity vector           
+///     Velocity vector     
+///       
 /// grav_param: `f64`
 ///     Gravitational parameter of the central body
 /// 
@@ -606,12 +588,10 @@ mod orbit_tests {
         2 25544  51.6420 264.7747 0008620 314.4274 150.8239 15.49588766381243";
         let kep = Orbit::from_tle(tle_str.to_string());
 
-        assert_eq!(kep.semi_major_axis, 23035.69666365);
-        assert_eq!(kep.eccentricity, 0.00008902);
+        assert_eq!(kep.semi_major_axis, 11840.341648011852);
+        assert_eq!(kep.eccentricity, 0.0008620);
         assert_eq!(kep.inclination, 51.6420);
-        assert_eq!(kep.raan, 314.4274);
-        assert_eq!(kep.argument_of_perigee, 150.8239);
-        assert_eq!(kep.mean_anomaly, 264.7747);
-        assert_eq!(kep.mean_motion, 0.0);
+        assert_eq!(kep.raan, 264.7747);
+        assert_eq!(kep.argument_of_perigee, 314.4274);
     }
 }

@@ -19,6 +19,7 @@ pub struct Body{
     pub eccentricity: f64
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum ReferenceFrames {
     ECI,
     ECEF,
@@ -176,8 +177,6 @@ impl Body {
 
 }
 
-
-
 /// Gravitational Particle
 #[derive(Clone, Debug, PartialEq)]
 pub struct Particle {
@@ -223,18 +222,6 @@ pub struct SurfacePoint{
     pub pos_lla: Vector3<f64>,
 }
 
-
-#[derive(Clone, Debug, PartialEq)]
-pub enum Frame{
-    ENU,            // ENU
-    ECEF,        // ECEF
-    ECI,     // ECI
-    LlaE,               // LLA (Earth)
-    MCMF,       // MCMF
-    MCI,    // MCI
-    LlaM,              // LLA (Mars)
-    Heliocentric            // Sun
-}
 
 /// SurfacePoint methods
 impl SurfacePoint{
@@ -411,7 +398,7 @@ pub fn calc_month_day(
     let mut month: u32 = 1;
     let mut sum_days: u32 = month_lengths[0];
 
-    while sum_days < day_of_year {
+    while sum_days < day_of_year -  month_lengths[month as usize - 1]{
         month += 1;
         sum_days += month_lengths[month as usize - 1];
     }
