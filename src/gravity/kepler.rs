@@ -4,10 +4,10 @@ Gravitational Bodies
 
 use nalgebra as na;
 use na::{Vector3, Matrix3};
-use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc, Datelike};
+use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc};
 use std::f64::consts::PI;
 
-use crate::{cosmos::time as time, constants as cst};
+use crate::{cosmos::spacetime as spacetime, constants as cst};
 
 /// Orbit structure
 /// 
@@ -134,7 +134,7 @@ impl Orbit {
             .parse::<u32>()
             .unwrap();
 
-        let md: (u32, u32) = time::calc_month_day(day_of_year, year);
+        let md: (u32, u32) = spacetime::calc_month_day(day_of_year, year);
         let date: NaiveDate = NaiveDate::from_ymd_opt(
             year, md.0, md.1).unwrap();
         
@@ -334,6 +334,18 @@ impl Orbit {
                 let eci_vel: Vector3<f64> = rotam * vel;
                 return (eci_pos, eci_vel);
             },
+            "ECEF" => {
+                let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_eci_rotam();
+                let eci_pos: Vector3<f64> = pfcl_eci_rotam * pos;
+                let eci_vel: Vector3<f64> = pfcl_eci_rotam * vel;
+                let new_time: f64 = self.epoch.timestamp() as f64 + time;
+                let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
+                    new_time as i64, 0).unwrap();
+                let eci_ecef_rotam: Matrix3<f64>  = spacetime::calc_eci_ecef_rotam(new_epoch_datetime);
+                let ecef_pos: Vector3<f64> = eci_ecef_rotam * eci_pos;
+                let ecef_vel: Vector3<f64> = eci_ecef_rotam * eci_vel;
+                return (ecef_pos, ecef_vel);
+            },
             "PFCL" => {
                 return (pos, vel);
             },
@@ -369,18 +381,6 @@ impl Orbit {
         return rot_mat_3 * rot_mat_2 * rot_mat; 
     }
 
-    /// Calculate eci to ecef rotation matrix
-    pub fn calc_eci_ecef_rotam(&self, DateTime: DateTime<Utc>) -> Matrix3<f64> {
-        let year = DateTime.year();
-        let month = DateTime.month() as i32;
-        let day = DateTime.day() as i32;
-
-        let julian_day = time::date_to_julian_day_num(year, month, day);
-
-
-        let rotam: Matrix3<f64> = Matrix3::<f64>::zeros();
-        return rotam
-    }
 
     /// Propogate orbit an increment of time
     /// 

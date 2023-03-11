@@ -11,7 +11,7 @@ use donnager::cosmos as cosm;
 fn main() {
 
     // Body
-    let particle1: cosm::space::Particle = cosm::space::Particle {
+    let particle1: cosm::spacetime::Particle = cosm::spacetime::Particle {
         mass: 1e13,
         motion: vec![
             Vector3::new(5.,1.,0.),
@@ -20,7 +20,7 @@ fn main() {
     };
 
     // Body
-    let particle2: cosm::space::Particle = cosm::space::Particle {
+    let particle2: cosm::spacetime::Particle = cosm::spacetime::Particle {
         mass: 1e13,
         motion: vec![
             Vector3::new(7.,4.,0.),
@@ -29,7 +29,7 @@ fn main() {
     };
 
     // Body 
-    let particle3: cosm::space::Particle = cosm::space::Particle {
+    let particle3: cosm::spacetime::Particle = cosm::spacetime::Particle {
         mass: 1e13,
         motion: vec![
             Vector3::new(0.,10.,0.),
