@@ -2,8 +2,7 @@
 Propogator 
 */
 
-use nalgebra as na;
-use na::Vector3;
+use nalgebra::Vector3;
 use chrono::{DateTime as DateTime, Utc};
 
 use crate::donnager::gravity::kepler as kepler;

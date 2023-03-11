@@ -2,12 +2,11 @@
 Gravitational Bodies
 */
 
-use nalgebra as na;
-use na::{Vector3, Matrix3};
+use nalgebra::{Vector3, Matrix3};
 use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc};
 use std::f64::consts::PI;
 
-use crate::donnager::{cosmos::spacetime as spacetime, constants as cst};
+use crate::donnager::{spacetime as xyzt, constants as cst};
 
 /// Orbit structure
 /// 
@@ -134,7 +133,7 @@ impl Orbit {
             .parse::<u32>()
             .unwrap();
 
-        let md: (u32, u32) = spacetime::calc_month_day(day_of_year, year);
+        let md: (u32, u32) = xyzt::calc_month_day(day_of_year, year);
         let date: NaiveDate = NaiveDate::from_ymd_opt(
             year, md.0, md.1).unwrap();
         
@@ -278,7 +277,7 @@ impl Orbit {
     pub fn calc_pos_vel(
         &self, 
         time: f64, 
-        frame: spacetime::ReferenceFrames
+        frame: xyzt::ReferenceFrames
     ) -> (Vector3<f64>, Vector3<f64>) {
         let ecc: f64 = self.eccentricity;
 
@@ -309,13 +308,13 @@ impl Orbit {
         let vel: Vector3<f64> = Vector3::new(x_vel, y_vel, z_vel);
 
         match frame {
-            spacetime::ReferenceFrames::ECI => {
+            xyzt::ReferenceFrames::ECI => {
                 let rotam: Matrix3<f64> = self.calc_pfcl_eci_rotam();
                 let eci_pos: Vector3<f64> = rotam * pos;
                 let eci_vel: Vector3<f64> = rotam * vel;
                 return (eci_pos, eci_vel);
             },
-            spacetime::ReferenceFrames::ECEF => {
+            xyzt::ReferenceFrames::ECEF => {
                 let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_eci_rotam();
                 let eci_pos: Vector3<f64> = pfcl_eci_rotam * pos;
                 let eci_vel: Vector3<f64> = pfcl_eci_rotam * vel;
@@ -323,13 +322,13 @@ impl Orbit {
                 let new_time: f64 = self.epoch.timestamp() as f64 + time;
                 let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
                     new_time as i64, 0).unwrap();
-                let eci_ecef_rotam: Matrix3<f64>  = spacetime::calc_eci_ecef_rotam(new_epoch_datetime);
+                let eci_ecef_rotam: Matrix3<f64>  = xyzt::calc_eci_ecef_rotam(new_epoch_datetime);
 
                 let ecef_pos: Vector3<f64> = eci_ecef_rotam * eci_pos;
                 let ecef_vel: Vector3<f64> = eci_ecef_rotam * eci_vel;
                 return (ecef_pos, ecef_vel);
             },
-            spacetime::ReferenceFrames::PFCL => {
+            xyzt::ReferenceFrames::PFCL => {
                 return (pos, vel);
             }
         }
@@ -391,7 +390,7 @@ impl Orbit {
     /// None.
     pub fn propogate_in_place(&mut self, dt: f64) {
         let new_time: f64 = self.epoch.timestamp() as f64 + dt;
-        let frame = spacetime::ReferenceFrames::ECI;
+        let frame = xyzt::ReferenceFrames::ECI;
         let motion: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(new_time, frame);
         let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
             new_time as i64, 0).unwrap();
@@ -405,7 +404,50 @@ impl Orbit {
         *self = new_orbit;
 
         }
+
+    /// Convert orbit to KML string
+    /// 
+    /// Inputs
+    /// ------
+    /// None
+    /// 
+    /// Outputs
+    /// -------
+    /// kml_string: `String`
+    ///     KML string of orbit
+    pub fn to_kml(&self) -> String {
+        let mut kml_string_mut: String = String::new();
+        kml_string_mut.push_str("<Placemark>\n");
+        kml_string_mut.push_str("<name>");
+        kml_string_mut.push_str(&self.name);
+        kml_string_mut.push_str("</name>\n");
+        kml_string_mut.push_str("<LineString>\n");
+        kml_string_mut.push_str("<extrude>1</extrude>\n");
+        kml_string_mut.push_str("<tessellate>1</tessellate>\n");
+        kml_string_mut.push_str("<altitudeMode>absolute</altitudeMode>\n");
+        kml_string_mut.push_str("<coordinates>\n");
+        let mut time: f64 = self.epoch.timestamp() as f64;
+        let frame = xyzt::ReferenceFrames::ECEF;
+
+        let mut motion_ecef: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(time, frame);
+        let pos_lla = xyzt::ecef_to_lla(motion_ecef.0);
+        kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
+        time += 60.0;
+        while time < self.epoch.timestamp() as f64 + 86400.0 {
+            motion_ecef = self.calc_pos_vel(time, frame);
+            let pos_lla = xyzt::ecef_to_lla(motion_ecef.0);
+            kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
+            time += 60.0;
+        }
+        kml_string_mut.push_str("</coordinates>\n");
+        kml_string_mut.push_str("</LineString>\n");
+        kml_string_mut.push_str("</Placemark>\n");
+        let kml_string = kml_string_mut;
+        return kml_string
     }
+
+
+}
 
 /// Calculate the eccentricity vector from the velocity and position vectors
 /// 

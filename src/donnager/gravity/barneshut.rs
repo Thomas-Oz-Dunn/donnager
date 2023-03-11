@@ -4,9 +4,8 @@ Barnes hut multibody propogator
 
 pub const TOLERANCE: f64 = 1e-16;
 
-use nalgebra as na;
-use na::Vector3;
-use crate::donnager::{cosmos as cosm, constants as cst};
+use nalgebra::Vector3;
+use crate::donnager::{spacetime as xyzt, constants as cst};
 
 
 #[derive(Clone, Debug, PartialEq)]
@@ -67,7 +66,7 @@ impl BhTree {
     /// -------
     /// tree: `Tree`
     ///     Initialized `Tree` struct
-    pub fn new(particles: Vec<cosm::spacetime::Particle>, theta: f64) -> BhTree {
+    pub fn new(particles: Vec<xyzt::Particle>, theta: f64) -> BhTree {
 
         let range: (Vector3<f64>, Vector3<f64>) = calc_range(particles.clone());
 
@@ -105,7 +104,7 @@ impl BhTree {
     ///     Node identification number. 
     pub fn add_particles_to_node(
         &mut self, 
-        particles: &Vec<cosm::spacetime::Particle>, 
+        particles: &Vec<xyzt::Particle>, 
         node_id: usize
     ) {
 
@@ -119,7 +118,7 @@ impl BhTree {
         };
 
         // TODO-TD: improve initialization
-        let mut particle_trees: [Vec<cosm::spacetime::Particle>; 8] = [
+        let mut particle_trees: [Vec<xyzt::Particle>; 8] = [
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
             Vec::with_capacity(particles.len() / 4),
@@ -284,12 +283,12 @@ impl BhTree {
 /// particles: `Vec<Particle>` 
 ///     Vector of Particles updated at t = step_size * n_steps 
 pub fn barnes_hut_gravity(
-    mut particles: Box<[cosm::spacetime::Particle]>,
+    mut particles: Box<[xyzt::Particle]>,
     step_size: f64,
     n_steps: usize,
     theta: f64,
     is_debug: bool
-) -> Box<[cosm::spacetime::Particle]> {
+) -> Box<[xyzt::Particle]> {
     let mut motion = vec![Vector3::zeros(); 3].into_boxed_slice();
     
     for i_step in 0..n_steps {
@@ -328,7 +327,7 @@ pub fn barnes_hut_gravity(
 /// range: `(Vector3<f64>, Vector3<f64>)`
 ///     Min and max points of space
 pub fn calc_range(
-    particles: Vec<cosm::spacetime::Particle>
+    particles: Vec<xyzt::Particle>
 ) -> (Vector3<f64>, Vector3<f64>) {
     let mut min: Vector3<f64> = Vector3::zeros();
     let mut max: Vector3<f64> = Vector3::zeros();
@@ -354,7 +353,7 @@ mod barneshut_tests{
     
     #[test]
     fn test_prop(){
-        let earth: cosm::spacetime::Body = cosm::spacetime::Body {
+        let earth: xyzt::Body = xyzt::Body {
             name: "Earth".to_string(),
             grav_param: cst::EARTH_GRAV_PARAM,
             eq_radius: cst::EARTH_RADIUS_EQUATOR,
@@ -374,18 +373,18 @@ mod barneshut_tests{
         let sat_motion_0: Vec<Vector3<f64>> = vec![radius_vec, vel_vec, acc_vec];
         assert_eq!(acc_vec, Vector3::new(0.2242056497591453, 0., 0.));
 
-        let pos_lla: Vector3<f64> = earth.xyz_to_geodetic(radius_vec);
+        let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(radius_vec);
         assert_eq!(pos_lla, Vector3::new(0.0, 0.0, 35785642.55713436));
-
-        let pos_ecef: Vector3<f64> = earth.geodetic_to_xyz(pos_lla);
+        
+        let pos_ecef: Vector3<f64> = xyzt::lla_to_ecef(pos_lla);
         assert_eq!(pos_ecef, radius_vec);
-        let satellite: cosm::spacetime::Particle = cosm::spacetime::Particle { mass: 5e4, motion: sat_motion_0};
+        let satellite: xyzt::Particle = xyzt::Particle { mass: 5e4, motion: sat_motion_0};
 
         let motion: Vec<Vector3<f64>> = vec![Vector3::zeros(); 3];
-        let earth_particle: cosm::spacetime::Particle = earth.to_particle(motion);
+        let earth_particle: xyzt::Particle = earth.to_particle(motion);
         assert_eq!(earth_particle.mass, 5.972e24);
 
-        let mut particles: Box<[cosm::spacetime::Particle]> = vec![earth_particle, satellite].into_boxed_slice();
+        let mut particles: Box<[xyzt::Particle]> = vec![earth_particle, satellite].into_boxed_slice();
     
         let step_size: f64 = 0.1;
         let theta: f64 = 1.0;

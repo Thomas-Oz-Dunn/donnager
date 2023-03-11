@@ -2,10 +2,9 @@
 Vehicle modelling
 */
 
-use nalgebra as na;
-use na::Vector3;
+use nalgebra::Vector3;
 
-use crate::donnager::{propulsion as prop, cosmos as cosm};
+use crate::donnager::{propulsion as prop, spacetime as xyzt};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vehicle{
@@ -53,13 +52,13 @@ impl Multistage {
     pub fn calc_mass_fuel(
         &self, 
         delta_v: f64, 
-        launch_site: cosm::spacetime::SurfacePoint
+        launch_site: xyzt::SurfacePoint
     ) -> Vec<f64> {
         // Starting conditions
         let n_stage: usize = self.stages.len();
         let total_mass_0: f64 = self.calc_inertial_mass();
         let mut radius: Vector3<f64> = launch_site.calc_surface_radius();
-        let body: cosm::spacetime::Body = launch_site.body;
+        let body: xyzt::Body = launch_site.body;
         let mut grav_acc: Vector3<f64> = body.calc_body_grav(radius);
 
         let mut fuel_mass_mut: Vec<f64> = Vec::<f64>::new();

@@ -2,16 +2,14 @@
 n-body simulation demonstration using Barnes Hut method
 */
 
-use nalgebra as na;
-use na::Vector3;
+use nalgebra::Vector3;
 
-use donnager::donnager::gravity as grav;
-use donnager::donnager::cosmos as cosm;
+use donnager::donnager::{gravity as grav, spacetime as xyzt};
 
 fn main() {
 
     // Body
-    let particle1: cosm::spacetime::Particle = cosm::spacetime::Particle {
+    let particle1: xyzt::Particle = xyzt::Particle {
         mass: 1e13,
         motion: vec![
             Vector3::new(5.,1.,0.),
@@ -20,7 +18,7 @@ fn main() {
     };
 
     // Body
-    let particle2: cosm::spacetime::Particle = cosm::spacetime::Particle {
+    let particle2: xyzt::Particle = xyzt::Particle {
         mass: 1e13,
         motion: vec![
             Vector3::new(7.,4.,0.),
@@ -29,7 +27,7 @@ fn main() {
     };
 
     // Body 
-    let particle3: cosm::spacetime::Particle = cosm::spacetime::Particle {
+    let particle3: xyzt::Particle = xyzt::Particle {
         mass: 1e13,
         motion: vec![
             Vector3::new(0.,10.,0.),

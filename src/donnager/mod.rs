@@ -11,8 +11,11 @@ pub mod propulsion;
 /// Dynamics related module
 pub mod dynamics;
 
-/// Cosmos related module
-pub mod cosmos;
+/// Electromagnetism related module
+pub mod em;
+
+/// Spacetime related modules
+pub mod spacetime;
 
 /// Gravity related module
 pub mod gravity;
