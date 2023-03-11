@@ -5,7 +5,7 @@ Orbital systems modelling Application in Rust
 use nalgebra as na;
 use na::Vector3;
 
-use donnager::{gravity as grav, cosmos as cosm, constants as cst};
+use donnager::donnager::{gravity as grav, cosmos as cosm, constants as cst};
 
 fn main() {
 

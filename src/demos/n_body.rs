@@ -5,8 +5,8 @@ n-body simulation demonstration using Barnes Hut method
 use nalgebra as na;
 use na::Vector3;
 
-use donnager::gravity as grav;
-use donnager::cosmos as cosm;
+use donnager::donnager::gravity as grav;
+use donnager::donnager::cosmos as cosm;
 
 fn main() {
 

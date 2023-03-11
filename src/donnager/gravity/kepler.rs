@@ -7,7 +7,7 @@ use na::{Vector3, Matrix3};
 use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc};
 use std::f64::consts::PI;
 
-use crate::{cosmos::spacetime as spacetime, constants as cst};
+use crate::donnager::{cosmos::spacetime as spacetime, constants as cst};
 
 /// Orbit structure
 /// 
@@ -565,10 +565,10 @@ mod orbit_tests {
 
     #[test]
     fn test_hill_sphere(){
-        let earth_mass: f64 = crate::constants::EARTH_MASS;
-        let sun_mass: f64 = crate::constants::SUN_MASS;
-        let earth_orbit_semi_major: f64 = crate::constants::EARTH_ORBIT_SEMI_MAJOR;
-        let earth_orbit_ecc: f64 = crate::constants::EARTH_ORBIT_ECC;
+        let earth_mass: f64 = crate::donnager::constants::EARTH_MASS;
+        let sun_mass: f64 = crate::donnager::constants::SUN_MASS;
+        let earth_orbit_semi_major: f64 = crate::donnager::constants::EARTH_ORBIT_SEMI_MAJOR;
+        let earth_orbit_ecc: f64 = crate::donnager::constants::EARTH_ORBIT_ECC;
 
         let sphere_rad: f64 = calc_hill_sphere(
             sun_mass, 

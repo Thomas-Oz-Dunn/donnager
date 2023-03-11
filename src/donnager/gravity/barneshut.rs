@@ -6,7 +6,7 @@ pub const TOLERANCE: f64 = 1e-16;
 
 use nalgebra as na;
 use na::Vector3;
-use crate::{cosmos as cosm, constants as cst};
+use crate::donnager::{cosmos as cosm, constants as cst};
 
 
 #[derive(Clone, Debug, PartialEq)]
