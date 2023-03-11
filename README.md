@@ -1,5 +1,8 @@
 # donnager.rs
 
+[![Latest Version](https://img.shields.io/crates/v/donnager.svg)](https://crates.io/crates/donnager)
+[![License:MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 A library of functions for blazingly fast astrodynamic calculations. 
 
 Until the rains fall on Olympus Mons.
@@ -25,6 +28,7 @@ donnager = "0.1.2"
 ```
 
 ## Modules
+- `constants`
 - `cosmos`
 - `dynamics`
 - `propulsion`
