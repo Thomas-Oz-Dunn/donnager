@@ -23,6 +23,7 @@ pub enum ReferenceFrames {
     ECI,
     ECEF,
     PFCL,
+    LLA
 }
 
 /// Gravitational Body

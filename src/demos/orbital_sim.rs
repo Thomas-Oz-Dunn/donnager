@@ -2,10 +2,9 @@
 Orbital systems modelling Application in Rust
 */
 use std::{fs::File, io::{BufWriter, Write}};
-use chrono::Duration;
 use nalgebra::Vector3;
 
-use donnager::donnager::{gravity as grav, spacetime as xyzt, constants as cst};
+use donnager::donnager::{gravity as grav, spacetime as xyzt};
 
 fn main() {
 
@@ -18,7 +17,9 @@ fn main() {
     
     let orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_tle(tle_str.to_string());
     let frame = xyzt::ReferenceFrames::ECEF;
- 
+
+    orbit.show(frame);
+
     let dt: f64 = 10.1;
     let new_orb = orbit.propogate(dt);
     let p_v_ecef: (Vector3<f64>, Vector3<f64>) = new_orb.calc_pos_vel(0., frame);
@@ -32,6 +33,7 @@ fn main() {
 
 
     // Plot over earth map
+    
 
     // Write KML
     if is_write_kml{
