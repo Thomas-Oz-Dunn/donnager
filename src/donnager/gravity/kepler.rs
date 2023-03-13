@@ -4,7 +4,7 @@ Gravitational Bodies
 
 use nalgebra::{Vector3, Matrix3};
 use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc};
-use plotters::prelude::*;
+use plotters::{prelude::*, coord::ranged3d::Cartesian3d};
 use std::f64::consts::PI;
 use std::ops::Range;
 
@@ -429,71 +429,69 @@ impl Orbit {
 
         let pathname = format!("{} orbit.png", self.name);
         let plottitle = format!("{} orbit", self.name);
-        
+
+        let mut time: f64 = self.epoch.timestamp() as f64;
+        let mut motion_frame: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(time, frame);
+        let mut pos_vec: Vec<f64> = Vec::new();
+        pos_vec.push(motion_frame.0[0]);
+        pos_vec.push(motion_frame.0[1]);
+        pos_vec.push(motion_frame.0[2]);
+
+        let mut time_vec: Vec<f64> = Vec::new();
+        time_vec.push(time);
+        let mut i: usize = 0;
+        while i < 100 {
+            time += 60.0;
+            motion_frame = self.calc_pos_vel(time, frame);
+            pos_vec.push(motion_frame.0[0]);
+            pos_vec.push(motion_frame.0[1]);
+            pos_vec.push(motion_frame.0[2]);
+            time_vec.push(time);
+            i += 1;
+        }
+
+        let mut x: Vec<f64> = Vec::new();
+        let mut y: Vec<f64> = Vec::new();
+        let mut z: Vec<f64> = Vec::new();
+        let mut t: Vec<f64> = Vec::new();
+        for i in 0..pos_vec.len() {
+            if i % 3 == 0 {
+                x.push(pos_vec[i]);
+            }
+            else if i % 3 == 1 {
+                y.push(pos_vec[i]);
+            }
+            else {
+                z.push(pos_vec[i]);
+            }
+        }
+        for i in 0..time_vec.len() {
+            t.push(time_vec[i]);
+        }
+
+        // Plot
+        let drawing_area = 
+            BitMapBackend::new(&pathname, (500, 300))
+            .into_drawing_area();
+
+        let mut chart_builder = ChartBuilder::on(&drawing_area);
+
+        drawing_area.fill(&WHITE).unwrap();
+
+        chart_builder
+            .margin(5)
+            .set_left_and_bottom_label_area_size(35)
+            .caption(
+                plottitle, (
+                    "Calibri", 
+                    20, 
+                    FontStyle::Bold, 
+                    &BLACK)
+                    .into_text_style(&drawing_area));
+
         match frame{
             xyzt::ReferenceFrames::ECI => {
-
-                // Calculate
-                let mut time: f64 = self.epoch.timestamp() as f64;
-                let mut motion_eci: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(time, frame);
-                let mut pos_vec: Vec<f64> = Vec::new();
-                pos_vec.push(motion_eci.0[0]);
-                pos_vec.push(motion_eci.0[1]);
-                pos_vec.push(motion_eci.0[2]);
-
-                let mut time_vec: Vec<f64> = Vec::new();
-                time_vec.push(time);
-                let mut i: usize = 0;
-                while i < 100 {
-                    time += 60.0;
-                    motion_eci = self.calc_pos_vel(time, frame);
-                    pos_vec.push(motion_eci.0[0]);
-                    pos_vec.push(motion_eci.0[1]);
-                    pos_vec.push(motion_eci.0[2]);
-                    time_vec.push(time);
-                    i += 1;
-                }
-
-                let mut x: Vec<f64> = Vec::new();
-                let mut y: Vec<f64> = Vec::new();
-                let mut z: Vec<f64> = Vec::new();
-                let mut t: Vec<f64> = Vec::new();
-                for i in 0..pos_vec.len() {
-                    if i % 3 == 0 {
-                        x.push(pos_vec[i]);
-                    }
-                    else if i % 3 == 1 {
-                        y.push(pos_vec[i]);
-                    }
-                    else {
-                        z.push(pos_vec[i]);
-                    }
-                }
-                for i in 0..time_vec.len() {
-                    t.push(time_vec[i]);
-                }
-
-                // Plot
-                let drawing_area = 
-                    BitMapBackend::new(
-                        &pathname, (300, 200))
-                        .into_drawing_area();
-
-                let mut chart_builder = ChartBuilder::on(&drawing_area);
-
-                drawing_area.fill(&WHITE).unwrap();
-
-                chart_builder
-                    .margin(5)
-                    .set_left_and_bottom_label_area_size(35)
-                    .caption(
-                        plottitle, (
-                            "Calibri", 
-                            20, 
-                            FontStyle::Bold, 
-                            &BLACK)
-                            .into_text_style(&drawing_area));
-
+                
                 let x_spec: Range<i32> = 0..100; 
                 let y_spec: Range<i32> = 0..100;
                 let z_spec: Range<i32> = 0..100;
@@ -502,71 +500,20 @@ impl Orbit {
 
                 chart.configure_axes().draw().unwrap();
 
+                chart.configure_series_labels()
+                    .background_style(&WHITE.mix(0.8))
+                    .border_style(&BLACK)
+                    .draw().unwrap();
+
+
+                // chart.draw_series(LineSeries::new(
+                //     (x.iter().zip(y.iter()).zip(z.iter())).map(|((x, y), z)| (x, y, z)), &BLACK)).unwrap();
 
             },
             xyzt::ReferenceFrames::ECEF => {
                 // 3D globe w/ spin
 
-                // Calculate
-                let mut time: f64 = self.epoch.timestamp() as f64;
-                let mut motion_eci: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(time, frame);
-                let mut pos_vec: Vec<f64> = Vec::new();
-                pos_vec.push(motion_eci.0[0]);
-                pos_vec.push(motion_eci.0[1]);
-                pos_vec.push(motion_eci.0[2]);
-
-                let mut time_vec: Vec<f64> = Vec::new();
-                time_vec.push(time);
-                let mut i: usize = 0;
-                while i < 100 {
-                    time += 60.0;
-                    motion_eci = self.calc_pos_vel(time, frame);
-                    pos_vec.push(motion_eci.0[0]);
-                    pos_vec.push(motion_eci.0[1]);
-                    pos_vec.push(motion_eci.0[2]);
-                    time_vec.push(time);
-                    i += 1;
-                }
-
-                let mut x: Vec<f64> = Vec::new();
-                let mut y: Vec<f64> = Vec::new();
-                let mut z: Vec<f64> = Vec::new();
-                let mut t: Vec<f64> = Vec::new();
-                for i in 0..pos_vec.len() {
-                    if i % 3 == 0 {
-                        x.push(pos_vec[i]);
-                    }
-                    else if i % 3 == 1 {
-                        y.push(pos_vec[i]);
-                    }
-                    else {
-                        z.push(pos_vec[i]);
-                    }
-                }
-                for i in 0..time_vec.len() {
-                    t.push(time_vec[i]);
-                }
-
-                // Plot
-                let drawing_area = 
-                    BitMapBackend::new(&pathname, (500, 300))
-                    .into_drawing_area();
-
-                let mut chart_builder = ChartBuilder::on(&drawing_area);
-
-                drawing_area.fill(&WHITE).unwrap();
-
-                chart_builder
-                    .margin(5)
-                    .set_left_and_bottom_label_area_size(35)
-                    .caption(
-                        plottitle, (
-                            "Calibri", 
-                            20, 
-                            FontStyle::Bold, 
-                            &BLACK)
-                            .into_text_style(&drawing_area));
-
+                // Calculat
                 let x_spec: Range<i32> = 0..100; 
                 let y_spec: Range<i32> = 0..100;
                 let z_spec: Range<i32> = 0..100;
@@ -574,14 +521,46 @@ impl Orbit {
                 let mut chart = chart_builder.build_cartesian_3d(x_spec, y_spec, z_spec).unwrap();
 
                 chart.configure_axes().draw().unwrap();
+
+                chart.configure_series_labels()
+                    .background_style(&WHITE.mix(0.8))
+                    .border_style(&BLACK)
+                    .draw().unwrap();
+
+
             
             },
             xyzt::ReferenceFrames::LLA => {
-                // Ground track
+                // 2d Ground track
+                
+                let x_spec: Range<i32> = 0..100; 
+                let y_spec: Range<i32> = 0..100;
+                let mut chart = chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
+
+                chart.configure_mesh().draw().unwrap();
+
+                chart.configure_series_labels()
+                    .background_style(&WHITE.mix(0.8))
+                    .border_style(&BLACK)
+                    .draw().unwrap()
+
+                
+                
 
             },
             xyzt::ReferenceFrames::PFCL => {
                 // 2d planar plot
+
+                let x_spec: Range<i32> = 0..100; 
+                let y_spec: Range<i32> = 0..100;
+                let mut chart = chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
+
+                chart.configure_mesh().draw().unwrap();
+
+                chart.configure_series_labels()
+                    .background_style(&WHITE.mix(0.8))
+                    .border_style(&BLACK)
+                    .draw().unwrap()
 
             }   
         }
