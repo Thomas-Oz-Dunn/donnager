@@ -18,7 +18,7 @@ fn main() {
     let orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_tle(tle_str.to_string());
     let frame = xyzt::ReferenceFrames::ECEF;
 
-    orbit.show(frame);
+    orbit.show(xyzt::ReferenceFrames::LLA);
 
     let dt: f64 = 10.1;
     let new_orb = orbit.propogate(dt);
@@ -33,7 +33,7 @@ fn main() {
 
 
     // Plot over earth map
-    
+
 
     // Write KML
     if is_write_kml{

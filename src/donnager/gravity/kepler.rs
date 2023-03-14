@@ -4,7 +4,7 @@ Gravitational Bodies
 
 use nalgebra::{Vector3, Matrix3};
 use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc};
-use plotters::{prelude::*, coord::ranged3d::Cartesian3d};
+use plotters::prelude::*;
 use std::f64::consts::PI;
 use std::ops::Range;
 
@@ -450,25 +450,28 @@ impl Orbit {
             i += 1;
         }
 
-        let mut x: Vec<f64> = Vec::new();
-        let mut y: Vec<f64> = Vec::new();
-        let mut z: Vec<f64> = Vec::new();
-        let mut t: Vec<f64> = Vec::new();
+        let mut x_mut: Vec<f64> = Vec::new();
+        let mut y_mut: Vec<f64> = Vec::new();
+        let mut z_mut: Vec<f64> = Vec::new();
+        let mut t_mut: Vec<f64> = Vec::new();
         for i in 0..pos_vec.len() {
             if i % 3 == 0 {
-                x.push(pos_vec[i]);
+                x_mut.push(pos_vec[i]);
             }
             else if i % 3 == 1 {
-                y.push(pos_vec[i]);
+                y_mut.push(pos_vec[i]);
             }
             else {
-                z.push(pos_vec[i]);
+                z_mut.push(pos_vec[i]);
             }
         }
         for i in 0..time_vec.len() {
-            t.push(time_vec[i]);
+            t_mut.push(time_vec[i]);
         }
-
+        let x = x_mut;
+        let y = y_mut;
+        let z = z_mut;
+        let t = t_mut;
         // Plot
         let drawing_area = 
             BitMapBackend::new(&pathname, (500, 300))
@@ -512,8 +515,6 @@ impl Orbit {
             },
             xyzt::ReferenceFrames::ECEF => {
                 // 3D globe w/ spin
-
-                // Calculat
                 let x_spec: Range<i32> = 0..100; 
                 let y_spec: Range<i32> = 0..100;
                 let z_spec: Range<i32> = 0..100;
@@ -532,9 +533,8 @@ impl Orbit {
             },
             xyzt::ReferenceFrames::LLA => {
                 // 2d Ground track
-                
-                let x_spec: Range<i32> = 0..100; 
-                let y_spec: Range<i32> = 0..100;
+                let x_spec: Range<f64> = 0.0..100.; 
+                let y_spec: Range<f64> = 0.0..100.;
                 let mut chart = chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
 
                 chart.configure_mesh().draw().unwrap();
@@ -542,11 +542,12 @@ impl Orbit {
                 chart.configure_series_labels()
                     .background_style(&WHITE.mix(0.8))
                     .border_style(&BLACK)
-                    .draw().unwrap()
+                    .draw().unwrap();
 
-                
-                
-
+                // chart.draw_series(
+                //     LineSeries::new(
+                //     x.iter().zip(y.iter()).map(|(x, y)| (x, y)),
+                //     &BLUE)).unwrap();
             },
             xyzt::ReferenceFrames::PFCL => {
                 // 2d planar plot
