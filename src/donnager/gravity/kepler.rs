@@ -491,13 +491,13 @@ impl Orbit {
                     FontStyle::Bold, 
                     &BLACK)
                     .into_text_style(&drawing_area));
-
+        let earth_radius = cst::EARTH_RADIUS_EQUATOR
         match frame{
             xyzt::ReferenceFrames::ECI => {
                 
-                let x_spec: Range<i32> = 0..100; 
-                let y_spec: Range<i32> = 0..100;
-                let z_spec: Range<i32> = 0..100;
+                let x_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius; 
+                let y_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
+                let z_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
 
                 let mut chart = chart_builder.build_cartesian_3d(x_spec, y_spec, z_spec).unwrap();
 
@@ -515,9 +515,9 @@ impl Orbit {
             },
             xyzt::ReferenceFrames::ECEF => {
                 // 3D globe w/ spin
-                let x_spec: Range<i32> = 0..100; 
-                let y_spec: Range<i32> = 0..100;
-                let z_spec: Range<i32> = 0..100;
+                let x_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius; 
+                let y_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
+                let z_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
 
                 let mut chart = chart_builder.build_cartesian_3d(x_spec, y_spec, z_spec).unwrap();
 
@@ -533,10 +533,10 @@ impl Orbit {
             },
             xyzt::ReferenceFrames::LLA => {
                 // 2d Ground track
-                let x_spec: Range<f64> = 0.0..100.; 
-                let y_spec: Range<f64> = 0.0..100.;
+                let x_spec: Range<f64> = -90.0..90.; 
+                let y_spec: Range<f64> = -180.0..180.;
                 let mut chart = chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
-
+s
                 chart.configure_mesh().draw().unwrap();
 
                 chart.configure_series_labels()
