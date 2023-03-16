@@ -427,51 +427,30 @@ impl Orbit {
     /// Show orbit plot
     pub fn show(&self, frame: xyzt::ReferenceFrames) {
 
-        let pathname = format!("{} orbit.png", self.name);
-        let plottitle = format!("{} orbit", self.name);
-
-        let mut time: f64 = self.epoch.timestamp() as f64;
-        let mut motion_frame: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(time, frame);
-        let mut pos_vec: Vec<f64> = Vec::new();
-        pos_vec.push(motion_frame.0[0]);
-        pos_vec.push(motion_frame.0[1]);
-        pos_vec.push(motion_frame.0[2]);
-
-        let mut time_vec: Vec<f64> = Vec::new();
-        time_vec.push(time);
-        let mut i: usize = 0;
-        while i < 100 {
-            time += 60.0;
-            motion_frame = self.calc_pos_vel(time, frame);
-            pos_vec.push(motion_frame.0[0]);
-            pos_vec.push(motion_frame.0[1]);
-            pos_vec.push(motion_frame.0[2]);
-            time_vec.push(time);
-            i += 1;
-        }
+        let pathname = format!("{}_orbit_{:?}.png", self.name, &frame);
+        let plottitle = format!("{} orbit {:?} frame", self.name, &frame);
 
         let mut x_mut: Vec<f64> = Vec::new();
         let mut y_mut: Vec<f64> = Vec::new();
         let mut z_mut: Vec<f64> = Vec::new();
         let mut t_mut: Vec<f64> = Vec::new();
-        for i in 0..pos_vec.len() {
-            if i % 3 == 0 {
-                x_mut.push(pos_vec[i]);
-            }
-            else if i % 3 == 1 {
-                y_mut.push(pos_vec[i]);
-            }
-            else {
-                z_mut.push(pos_vec[i]);
-            }
-        }
-        for i in 0..time_vec.len() {
-            t_mut.push(time_vec[i]);
+        
+        let mut i: usize = 0;
+        let mut time: f64 = self.epoch.timestamp() as f64;
+        while i < 100 {
+            let motion_frame = self.calc_pos_vel(time, frame);
+            x_mut.push(motion_frame.0[0]);
+            y_mut.push(motion_frame.0[1]);
+            z_mut.push(motion_frame.0[2]);
+            t_mut.push(time);
+            time += 60.0;
+            i += 1;
         }
         let x = x_mut;
         let y = y_mut;
         let z = z_mut;
         let t = t_mut;
+
         // Plot
         let drawing_area = 
             BitMapBackend::new(&pathname, (500, 300))
@@ -479,7 +458,9 @@ impl Orbit {
 
         let mut chart_builder = ChartBuilder::on(&drawing_area);
 
-        drawing_area.fill(&WHITE).unwrap();
+        drawing_area
+            .fill(&WHITE)
+            .unwrap();
 
         chart_builder
             .margin(5)
@@ -493,6 +474,7 @@ impl Orbit {
                     .into_text_style(&drawing_area));
 
         let earth_radius = cst::EARTH_RADIUS_EQUATOR;
+
         match frame{
             xyzt::ReferenceFrames::ECI => {
                 
@@ -500,16 +482,40 @@ impl Orbit {
                 let y_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
                 let z_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
 
-                let mut chart = 
-                    chart_builder.build_cartesian_3d(x_spec, y_spec, z_spec).unwrap();
+                let mut chart = chart_builder
+                    .build_cartesian_3d(x_spec, y_spec, z_spec)
+                    .unwrap();
 
-                chart.configure_axes().draw().unwrap();
+                chart
+                    .configure_axes()
+                    .draw()
+                    .unwrap();
 
-                chart.configure_series_labels()
+                chart
+                    .configure_series_labels()
                     .background_style(&WHITE.mix(0.8))
                     .border_style(&BLACK)
-                    .draw().unwrap();
+                    .draw()
+                    .unwrap();
 
+                chart
+                    .draw_series(
+                        SurfaceSeries::xoz(
+                            (-100..100).map(|f| {f as f64 * earth_radius / 100.}),
+                            (-100..100).map(|f| {f as f64 * earth_radius / 100.}),
+                            |x, z| ((x * x + z * z).sqrt()),
+                        )
+                        .style(BLUE.mix(0.2).filled())).unwrap();
+
+                chart
+                    .draw_series(
+                        SurfaceSeries::xoz(
+                            (-100..100).map(|f| {f as f64 * earth_radius / 100.}),
+                            (-100..100).map(|f| {f as f64 * earth_radius / 100.}),
+                            |x, z| (-(x * x + z * z).sqrt()),
+                        )
+                        .style(BLUE.mix(0.2).filled())).unwrap()
+                    .label("Earth");
 
                 // chart.draw_series(LineSeries::new(
                 //     (x.iter().zip(y.iter()).zip(z.iter())).map(|((x, y), z)| (x, y, z)), &BLACK)).unwrap();
@@ -532,6 +538,24 @@ impl Orbit {
                     .draw().unwrap();
 
 
+                chart
+                    .draw_series(
+                        SurfaceSeries::xoz(
+                            (-1..1).map(|f| {f as f64 * earth_radius}),
+                            (-1..1).map(|f| {f as f64 * earth_radius}),
+                            |x, z| ((x * x + z * z).sqrt()),
+                        )
+                        .style(BLUE.mix(0.2).filled())).unwrap();
+                    
+                chart
+                    .draw_series(
+                        SurfaceSeries::xoz(
+                            (-1..1).map(|f| {f as f64 * earth_radius}),
+                            (-1..1).map(|f| {f as f64 * earth_radius}),
+                            |x, z| (-(x * x + z * z).sqrt()),
+                        )
+                        .style(BLUE.mix(0.2).filled())).unwrap()
+                    .label("Earth");
             
             },
             xyzt::ReferenceFrames::LLA => {
@@ -549,12 +573,12 @@ impl Orbit {
                     .border_style(&BLACK)
                     .draw().unwrap();
 
-                let iter = 
-                    x.iter().zip(y.iter()).map(|(x, y)| (x, y));
+                // let iter = 
+                    // x.iter().zip(y.iter()).map(|(x, y)| (x, y));
                 
-                let series = LineSeries::new(iter, BLU);
+                // let series = LineSeries::new(iter, BLUE);
                 
-                chart.draw_series(series).unwrap();
+                // chart.draw_series(series).unwrap();
             },
             xyzt::ReferenceFrames::PFCL => {
                 // 2d planar plot
