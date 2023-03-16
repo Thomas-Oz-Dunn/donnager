@@ -491,7 +491,8 @@ impl Orbit {
                     FontStyle::Bold, 
                     &BLACK)
                     .into_text_style(&drawing_area));
-        let earth_radius = cst::EARTH_RADIUS_EQUATOR
+
+        let earth_radius = cst::EARTH_RADIUS_EQUATOR;
         match frame{
             xyzt::ReferenceFrames::ECI => {
                 
@@ -499,7 +500,8 @@ impl Orbit {
                 let y_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
                 let z_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
 
-                let mut chart = chart_builder.build_cartesian_3d(x_spec, y_spec, z_spec).unwrap();
+                let mut chart = 
+                    chart_builder.build_cartesian_3d(x_spec, y_spec, z_spec).unwrap();
 
                 chart.configure_axes().draw().unwrap();
 
@@ -519,7 +521,8 @@ impl Orbit {
                 let y_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
                 let z_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
 
-                let mut chart = chart_builder.build_cartesian_3d(x_spec, y_spec, z_spec).unwrap();
+                let mut chart = 
+                    chart_builder.build_cartesian_3d(x_spec, y_spec, z_spec).unwrap();
 
                 chart.configure_axes().draw().unwrap();
 
@@ -533,10 +536,12 @@ impl Orbit {
             },
             xyzt::ReferenceFrames::LLA => {
                 // 2d Ground track
-                let x_spec: Range<f64> = -90.0..90.; 
-                let y_spec: Range<f64> = -180.0..180.;
-                let mut chart = chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
-s
+                // TODO-TD: add global shoreline trace
+                let x_spec: Range<f64> = -90.0..90.;  // N to S poles
+                let y_spec: Range<f64> = -180.0..180.;  // International date line
+                let mut chart = 
+                    chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
+
                 chart.configure_mesh().draw().unwrap();
 
                 chart.configure_series_labels()
@@ -544,17 +549,21 @@ s
                     .border_style(&BLACK)
                     .draw().unwrap();
 
-                // chart.draw_series(
-                //     LineSeries::new(
-                //     x.iter().zip(y.iter()).map(|(x, y)| (x, y)),
-                //     &BLUE)).unwrap();
+                let iter = 
+                    x.iter().zip(y.iter()).map(|(x, y)| (x, y));
+                
+                let series = LineSeries::new(iter, BLU);
+                
+                chart.draw_series(series).unwrap();
             },
             xyzt::ReferenceFrames::PFCL => {
                 // 2d planar plot
-
-                let x_spec: Range<i32> = 0..100; 
-                let y_spec: Range<i32> = 0..100;
-                let mut chart = chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
+                let semi_major: f64 = self.semi_major_axis;
+                let semi_latus: f64 = semi_major * (1. - self.eccentricity);
+                let x_spec: Range<f64> = -semi_major..semi_major; 
+                let y_spec: Range<f64> = -semi_latus..semi_latus;
+                let mut chart = 
+                    chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
 
                 chart.configure_mesh().draw().unwrap();
 
