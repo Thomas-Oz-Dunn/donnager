@@ -429,27 +429,18 @@ impl Orbit {
 
         let pathname = format!("{}_orbit_{:?}.png", self.name, &frame);
         let plottitle = format!("{} orbit {:?} frame", self.name, &frame);
-
-        let mut x_mut: Vec<f64> = Vec::new();
-        let mut y_mut: Vec<f64> = Vec::new();
-        let mut z_mut: Vec<f64> = Vec::new();
-        let mut t_mut: Vec<f64> = Vec::new();
         
-        let mut i: usize = 0;
-        let mut time: f64 = self.epoch.timestamp() as f64;
-        while i < 100 {
+        let t_start = self.epoch.timestamp() as f64;
+        let t_step = 60.;
+        let times = (
+            (t_start)..(t_start + t_step*100.0)
+        ).step(t_step).values();
+        
+        let mut pos_mut: Vec<Vector3<f64>> = Vec::new();
+        times.for_each(|time| {
             let motion_frame = self.calc_pos_vel(time, frame);
-            x_mut.push(motion_frame.0[0]);
-            y_mut.push(motion_frame.0[1]);
-            z_mut.push(motion_frame.0[2]);
-            t_mut.push(time);
-            time += 60.0;
-            i += 1;
-        }
-        let x = x_mut;
-        let y = y_mut;
-        let z = z_mut;
-        let t = t_mut;
+            pos_mut.push(motion_frame.0)
+        });
 
         // Plot
         let drawing_area = 
@@ -467,7 +458,7 @@ impl Orbit {
             .set_left_and_bottom_label_area_size(35)
             .caption(
                 plottitle, (
-                    "Calibri", 
+                    "Times New Roman", 
                     20, 
                     FontStyle::Bold, 
                     &BLACK)
@@ -500,25 +491,26 @@ impl Orbit {
 
                 chart
                     .draw_series(
-                        SurfaceSeries::xoz(
-                            (-100..100).map(|f| {f as f64 * earth_radius / 100.}),
-                            (-100..100).map(|f| {f as f64 * earth_radius / 100.}),
-                            |x, z| ((x * x + z * z).sqrt()),
+                        SurfaceSeries::xoy(
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).cos()}),
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).sin()}),
+                            |x, y| (-(x * x + y * y).sqrt()),
                         )
-                        .style(BLUE.mix(0.2).filled())).unwrap();
+                    ).unwrap();
 
                 chart
                     .draw_series(
-                        SurfaceSeries::xoz(
-                            (-100..100).map(|f| {f as f64 * earth_radius / 100.}),
-                            (-100..100).map(|f| {f as f64 * earth_radius / 100.}),
-                            |x, z| (-(x * x + z * z).sqrt()),
-                        )
-                        .style(BLUE.mix(0.2).filled())).unwrap()
+                        SurfaceSeries::xoy(
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).cos()}),
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).sin()}),
+                            |x, y| (-(x * x + y * y).sqrt()),
+                        )).unwrap()
                     .label("Earth");
 
-                // chart.draw_series(LineSeries::new(
-                //     (x.iter().zip(y.iter()).zip(z.iter())).map(|((x, y), z)| (x, y, z)), &BLACK)).unwrap();
+                chart.draw_series(
+                    LineSeries::new(
+                        pos_mut.iter(), &BLACK)
+                );
 
             },
             xyzt::ReferenceFrames::ECEF => {
@@ -532,7 +524,8 @@ impl Orbit {
 
                 chart.configure_axes().draw().unwrap();
 
-                chart.configure_series_labels()
+                chart
+                    .configure_series_labels()
                     .background_style(&WHITE.mix(0.8))
                     .border_style(&BLACK)
                     .draw().unwrap();
@@ -540,23 +533,28 @@ impl Orbit {
 
                 chart
                     .draw_series(
-                        SurfaceSeries::xoz(
-                            (-1..1).map(|f| {f as f64 * earth_radius}),
-                            (-1..1).map(|f| {f as f64 * earth_radius}),
-                            |x, z| ((x * x + z * z).sqrt()),
-                        )
-                        .style(BLUE.mix(0.2).filled())).unwrap();
-                    
+                        SurfaceSeries::xoy(
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).cos()}),
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).sin()}),
+                            |x, z| (-(x * x + z * z).sqrt()))
+                            .style(&BLUE.mix(0.5))  
+                    ).unwrap();
+
                 chart
                     .draw_series(
-                        SurfaceSeries::xoz(
-                            (-1..1).map(|f| {f as f64 * earth_radius}),
-                            (-1..1).map(|f| {f as f64 * earth_radius}),
-                            |x, z| (-(x * x + z * z).sqrt()),
-                        )
-                        .style(BLUE.mix(0.2).filled())).unwrap()
+                        SurfaceSeries::xoy(
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).cos()}),
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).sin()}),
+                            |x, z| (-(x * x + z * z).sqrt()))
+                        .style(&BLUE.mix(0.5))  
+                        ).unwrap()
                     .label("Earth");
-            
+
+                chart.draw_series(
+                    LineSeries::new(
+                        pos_mut.iter(), &BLACK)
+                );
+    
             },
             xyzt::ReferenceFrames::LLA => {
                 // 2d Ground track
@@ -594,7 +592,7 @@ impl Orbit {
                 chart.configure_series_labels()
                     .background_style(&WHITE.mix(0.8))
                     .border_style(&BLACK)
-                    .draw().unwrap()
+                    .draw().unwrap();
 
             }   
         }
