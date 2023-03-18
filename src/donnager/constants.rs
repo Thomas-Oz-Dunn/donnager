@@ -48,6 +48,8 @@ pub const SUN_MEAN_SOLAR_FLUX: f64 = 1366.91; // Watts * m-2
 pub const EARTH_MASS: f64 = 5.972e24; // kg
 /// Radius of Earth at equator in meters
 pub const EARTH_RADIUS_EQUATOR: f64 = 6.378137e6; // m
+pub const EARTH_POLAR_RADIUS: f64 = 6.3567e6;
+
 /// Earth centered gravitational parameter
 pub const EARTH_GRAV_PARAM: f64 = EARTH_MASS * GRAV_CONST; // m^3 * s^-2
 pub const EARTH_ECC: f64 = 0.08182;

@@ -16,7 +16,7 @@ fn main() {
     2 25544  51.6419 140.8390 0005926  43.3718 100.9839 15.49547192385127";
     
     let orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_tle(tle_str.to_string());
-    let frame = xyzt::ReferenceFrames::ECEF;
+    let frame = xyzt::ReferenceFrames::LLA;
 
     orbit.show(frame);
 

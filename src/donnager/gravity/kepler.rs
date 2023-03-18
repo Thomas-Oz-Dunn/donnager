@@ -434,12 +434,12 @@ impl Orbit {
         let t_step = 60.;
         let times = (
             (t_start)..(t_start + t_step*100.0)
-        ).step(t_step).values();
+        ).step(t_step);
         
         let mut pos_mut: Vec<Vector3<f64>> = Vec::new();
-        times.for_each(|time| {
+        times.values().for_each(|time| {
             let motion_frame = self.calc_pos_vel(time, frame);
-            pos_mut.push(motion_frame.0)
+            pos_mut.push(motion_frame.0);
         });
 
         // Plot
@@ -507,11 +507,6 @@ impl Orbit {
                         )).unwrap()
                     .label("Earth");
 
-                chart.draw_series(
-                    LineSeries::new(
-                        pos_mut.iter(), &BLACK)
-                );
-
             },
             xyzt::ReferenceFrames::ECEF => {
                 // 3D globe w/ spin
@@ -549,11 +544,6 @@ impl Orbit {
                         .style(&BLUE.mix(0.5))  
                         ).unwrap()
                     .label("Earth");
-
-                chart.draw_series(
-                    LineSeries::new(
-                        pos_mut.iter(), &BLACK)
-                );
     
             },
             xyzt::ReferenceFrames::LLA => {
@@ -571,12 +561,15 @@ impl Orbit {
                     .border_style(&BLACK)
                     .draw().unwrap();
 
-                // let iter = 
-                    // x.iter().zip(y.iter()).map(|(x, y)| (x, y));
-                
-                // let series = LineSeries::new(iter, BLUE);
-                
-                // chart.draw_series(series).unwrap();
+                chart.draw_series(
+                    PointSeries::of_element(
+                        pos_mut.iter().map(|p| (p.x, p.y)),
+                        1,
+                        &BLACK,
+                        &|c, s, st| {
+                            Circle::new((c.0, c.1), s, st.filled())}
+                    )
+                ).unwrap();
             },
             xyzt::ReferenceFrames::PFCL => {
                 // 2d planar plot
@@ -593,7 +586,16 @@ impl Orbit {
                     .background_style(&WHITE.mix(0.8))
                     .border_style(&BLACK)
                     .draw().unwrap();
-
+                
+                chart.draw_series(
+                    PointSeries::of_element(
+                        pos_mut.iter().map(|p| (p.x, p.y)),
+                        1,
+                        &BLACK,
+                        &|c, s, st| {
+                            Circle::new((c.0, c.1), s, st.filled())}
+                    )
+                ).unwrap();
             }   
         }
     }
