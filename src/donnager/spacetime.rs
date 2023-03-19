@@ -224,7 +224,7 @@ pub fn calc_eci_ecef_rotam(date_time: DateTime<Utc>) -> Matrix3<f64> {
     let sidereal_time: f64 = (hours + (minutes + seconds / 60.) / 60.) / 24.;
 
     let rot_rate_rad_day: f64 = 
-        cst::EARTH_ROT_RATE * 3600. * cst::EARTH_SIDEREAL_DAY; 
+        cst::EARTH::ROT_RATE * 3600. * cst::EARTH::SIDEREAL_DAY; 
     let theta: f64 = 
         rot_rate_rad_day * (julian_day + sidereal_time - cst::J2000_DAY);
 
@@ -262,7 +262,7 @@ pub fn calc_day_length(
     let m: f64 = (357.5291 + 0.98560028 * j_star) % 360.;
     let eq_cen: f64 = 1.9148*(m.sin()) + 0.02*((2.*m).sin()) + 0.0003*((3.*m).sin());
     let lambda: f64 = (m + eq_cen + 180. + cst::EARTH_ARG_PERIHELION) % 360.;
-    let sun_dec_rad: f64 = (lambda.sin() * (cst::EARTH_AXIAL_TILT).sin()).asin();
+    let sun_dec_rad: f64 = (lambda.sin() * (cst::EARTH::AXIAL_TILT).sin()).asin();
     let tan_lat: f64 = (lat_deg * cst::DEG_TO_RAD).tan();
 
     let hour_angle_rad: f64 = (-(sun_dec_rad).tan() * tan_lat).acos();
@@ -465,8 +465,8 @@ pub fn calc_angular_size(
 ///     Geodetic coordinates in degrees
 pub fn ecef_to_lla(ecef: Vector3<f64>) -> Vector3<f64> {
     // Zhu's method
-    let a: f64 = cst::EARTH_RADIUS_EQUATOR;
-    let b: f64 = cst::EARTH_POLAR_RADIUS;
+    let a: f64 = cst::EARTH::RADIUS_EQUATOR;
+    let b: f64 = cst::EARTH::RADIUS_POLE;
     
     let ecc_2: f64 = (a.powi(2) - b.powi(2)) / a.powi(2);
     let ecc_2_prime: f64 = a.powi(2) / b.powi(2) - 1.0;
@@ -519,7 +519,7 @@ pub fn lla_to_ecef(lla: Vector3<f64>) -> Vector3<f64> {
     let radius: f64 = calc_prime_vertical(lla[0]);
     let x: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].cos();
     let y: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].sin();
-    let z: f64 = ((1.0 - cst::EARTH_ECC.powi(2)) * radius + lla[2]) * lla[0].sin();
+    let z: f64 = ((1.0 - cst::EARTH::ECC.powi(2)) * radius + lla[2]) * lla[0].sin();
     let xyz: Vector3<f64> = Vector3::new(x, y, z); 
     return xyz
 }
@@ -533,7 +533,7 @@ pub fn lla_to_ecef(lla: Vector3<f64>) -> Vector3<f64> {
 pub fn calc_prime_vertical(lat_deg: f64) -> f64 {
     let lat_radians: f64 = PI * lat_deg / 180.0;
     let radius: f64 = 
-        cst::EARTH_ORBIT_SEMI_MAJOR / (1.0 - (cst::EARTH_ECC * lat_radians.sin()).powi(2)).sqrt();
+        cst::EARTH_ORBIT_SEMI_MAJOR / (1.0 - (cst::EARTH::ECC * lat_radians.sin()).powi(2)).sqrt();
     return radius
 }
 

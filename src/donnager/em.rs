@@ -180,7 +180,7 @@ mod electromag_tests{
     #[test]
     fn test_power(){
         let efficiency = 0.1;
-        let solar_flux_mag = cst::SUN_MEAN_SOLAR_FLUX;
+        let solar_flux_mag = cst::SUN::MEAN_SOLAR_FLUX;
         let em_flux_vec: Vector3<f64> = Vector3::new(0., 0., 1.) * solar_flux_mag;
         let panel_area_vec: Vector3<f64> = 
             Vector3::new(0., 0., 1.);

@@ -14,10 +14,10 @@ fn main() {
     // Config
     let earth: xyzt::Body = xyzt::Body {
         name: "Earth".to_string(),
-        grav_param: cst::EARTH_GRAV_PARAM,
-        eq_radius: cst::EARTH_RADIUS_EQUATOR,
-        rotation_rate: cst::EARTH_ROT_RATE,
-        eccentricity: cst::EARTH_ECC
+        grav_param: cst::EARTH::GRAV_PARAM,
+        eq_radius: cst::EARTH::RADIUS_EQUATOR,
+        rotation_rate: cst::EARTH::ROT_RATE,
+        eccentricity: cst::EARTH::ECC
     };
     
     let launch_site: xyzt::SurfacePoint = xyzt::SurfacePoint {

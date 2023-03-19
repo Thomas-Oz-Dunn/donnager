@@ -199,11 +199,11 @@ impl Orbit {
 
         // Two Line element usage assumes Earth Centered
         let semi_major_axis: f64 = calc_semi_major_axis(
-            cst::EARTH_GRAV_PARAM, mean_motion);
+            cst::EARTH::GRAV_PARAM, mean_motion);
     
         Orbit {
             name: name.to_string(),
-            grav_param: cst::EARTH_GRAV_PARAM,
+            grav_param: cst::EARTH::GRAV_PARAM,
             semi_major_axis,
             raan,
             eccentricity: ecc,
@@ -464,7 +464,7 @@ impl Orbit {
                     &BLACK)
                     .into_text_style(&drawing_area));
 
-        let earth_radius = cst::EARTH_RADIUS_EQUATOR;
+        let earth_radius = cst::EARTH::RADIUS_EQUATOR;
 
         match frame{
             xyzt::ReferenceFrames::ECI => {
@@ -810,10 +810,10 @@ mod orbit_tests {
 
     #[test]
     fn test_hill_sphere(){
-        let earth_mass: f64 = crate::donnager::constants::EARTH_MASS;
-        let sun_mass: f64 = crate::donnager::constants::SUN_MASS;
-        let earth_orbit_semi_major: f64 = crate::donnager::constants::EARTH_ORBIT_SEMI_MAJOR;
-        let earth_orbit_ecc: f64 = crate::donnager::constants::EARTH_ORBIT_ECC;
+        let earth_mass: f64 = cst::EARTH::MASS;
+        let sun_mass: f64 = cst::SUN::MASS;
+        let earth_orbit_semi_major: f64 = cst::EARTH_ORBIT_SEMI_MAJOR;
+        let earth_orbit_ecc: f64 = cst::EARTH_ORBIT_ECC;
 
         let sphere_rad: f64 = calc_hill_sphere(
             sun_mass, 
