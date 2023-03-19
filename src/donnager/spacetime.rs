@@ -471,22 +471,18 @@ pub fn ecef_to_lla(ecef: Vector3<f64>) -> Vector3<f64> {
     let ecc_2: f64 = (a.powi(2) - b.powi(2)) / a.powi(2);
     let ecc_2_prime: f64 = a.powi(2) / b.powi(2) - 1.0;
     
-    let x: f64  = ecef[0];
-    let y: f64 = ecef[1];
-    let z: f64 = ecef[2];
+    let x: f64 = ecef[0] * cst::KILO;
+    let y: f64 = ecef[1] * cst::KILO;
+    let z: f64 = ecef[2] * cst::KILO;
 
     let p: f64 = (x.powi(2) + y.powi(2)).sqrt();
     let g: f64 = p.powi(2) + (1.0 - ecc_2) * z.powi(2) - 
-    ecc_2 * (a.powi(2) - b.powi(2));
+        ecc_2 * (a.powi(2) - b.powi(2));
     let f: f64 = 54.0 * b.powi(2) * z.powi(2);
     let c: f64 = ecc_2.powi(2) * f * p.powi(2) / (g.powi(3));
     
-    let s: f64 = (1.0 + c + (c.powi(2) + 2.0 * c).sqrt()).powf(1.0 / 3.0);
+    let s: f64 = (1.0 + c + (c.powi(2) + 2.0 * c).sqrt()).powf(1. / 3.);
     let cap_p: f64 = f / (3.0 * (s + 1.0 + 1.0 / s).powi(2) * g.powi(2));
-
-    println!("Debug c: {}", c);
-    println!("Debug s: {}", s);
-    println!("Debug cap_p: {}", cap_p);
 
     let q: f64 = (1.0 + 2.0 * ecc_2.powi(2) * cap_p).sqrt();
     let r_0: f64 = -cap_p * ecc_2 * p /(1.0+q) + 
@@ -499,10 +495,9 @@ pub fn ecef_to_lla(ecef: Vector3<f64>) -> Vector3<f64> {
     let v: f64 = ((p - ecc_2*r_0).powi(2) + (1.0 - ecc_2)*z.powi(2)).sqrt();
     let z_0: f64 = b.powi(2) * z / (a * v);
 
-    let alt: f64 = u * (1.0 - b.powi(2) / (a * v));
-    let lat: f64 = cst::to_degrees((z + ecc_2_prime*z_0).atan2(p));
+    let lat: f64 = cst::to_degrees((z + ecc_2_prime * z_0).atan2(p));
     let lon: f64 =  cst::to_degrees(y.atan2(x));
-    println!("Debug lat: {}", lat);
+    let alt: f64 = u * (1.0 - b.powi(2) / (a * v));
 
     let lla: Vector3<f64> = Vector3::new(lat, lon, alt);
     return lla

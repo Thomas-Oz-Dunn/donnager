@@ -291,7 +291,7 @@ impl Orbit {
             mean_anom - ecc * cst::DEG_TO_RAD * (1.0 - cos_mean_anom)) * cst::DEG_TO_RAD;
         
         let true_anomaly_rad: f64 = 2.0 * (
-            ecc_anom.sin() - ecc_anom.cos()).atan();
+            ecc_anom.sin()).atan2(-ecc_anom.cos());
         let cos_true_anom: f64 = true_anomaly_rad.cos();
         let sin_true_anom: f64 = true_anomaly_rad.sin();
 
@@ -431,9 +431,9 @@ impl Orbit {
         let plottitle = format!("{} orbit {:?} frame", self.name, &frame);
         
         let t_start = self.epoch.timestamp() as f64;
-        let t_step = 60.;
+        let t_step = 1.;
         let times = (
-            (t_start)..(t_start + t_step*100.0)
+            (t_start)..(t_start + self.mean_motion * 43.)
         ).step(t_step);
         
         let mut pos_mut: Vec<Vector3<f64>> = Vec::new();
@@ -549,27 +549,34 @@ impl Orbit {
             xyzt::ReferenceFrames::LLA => {
                 // 2d Ground track
                 // TODO-TD: add global shoreline trace
-                let x_spec: Range<f64> = -90.0..90.;  // N to S poles
-                let y_spec: Range<f64> = -180.0..180.;  // International date line
+                let y_spec: Range<f64> = -90.0..90.;  // N to S poles
+                let x_spec: Range<f64> = -180.0..180.;  // International date line
                 let mut chart = 
                     chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
 
                 chart.configure_mesh().draw().unwrap();
+
+                chart.draw_series(
+                    PointSeries::of_element(
+                        pos_mut.iter().map(|p| (p.y, p.x)),
+                        1,
+                        &BLUE,
+                        &|c, s, st| {
+                            Circle::new((c.0, c.1), s, st.filled())}
+                    )
+                ).unwrap()
+                .label("Orbit")
+                .legend(
+                    |(x, y)| 
+                    PathElement::new(vec![(x, y), (x + 20, y)], 
+                    &BLUE));
+
 
                 chart.configure_series_labels()
                     .background_style(&WHITE.mix(0.8))
                     .border_style(&BLACK)
                     .draw().unwrap();
 
-                chart.draw_series(
-                    PointSeries::of_element(
-                        pos_mut.iter().map(|p| (p.x, p.y)),
-                        1,
-                        &BLACK,
-                        &|c, s, st| {
-                            Circle::new((c.0, c.1), s, st.filled())}
-                    )
-                ).unwrap();
             },
             xyzt::ReferenceFrames::PFCL => {
                 // 2d planar plot
