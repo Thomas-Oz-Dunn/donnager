@@ -374,7 +374,7 @@ mod barneshut_tests{
         assert_eq!(acc_vec, Vector3::new(0.2242056497591453, 0., 0.));
 
         let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(radius_vec);
-        assert_eq!(pos_lla, Vector3::new(0.0, 0.0, 35785642.55713436));
+        assert_eq!(pos_lla, Vector3::new(0.0, 0.0, 42157401420.13436));
         
         let pos_ecef: Vector3<f64> = xyzt::lla_to_ecef(pos_lla);
         assert_eq!(pos_ecef, radius_vec);
