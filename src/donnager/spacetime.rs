@@ -394,7 +394,6 @@ pub fn date_to_julian_day_num(
     return julian_day_num
 }
 
-
 /// Julian day number to gregorian year, month, day
 /// 
 /// Inputs
@@ -426,7 +425,17 @@ pub fn julian_to_gregorian(
 
 }
 
-// Calculate schwarzchild radius of a given mass
+/// Calculate schwarzchild radius of a given mass
+/// 
+/// Inputs
+/// ------
+/// mass: `f64`
+///     Mass of object in kg
+/// 
+/// Outputs
+/// -------
+/// radius: `f64`
+///     Schwarzchild radius in km
 pub fn calc_schwarzchild_radius(
     mass: f64
 ) -> f64 {
@@ -434,7 +443,20 @@ pub fn calc_schwarzchild_radius(
     return radius
 }
 
-// Calculate time dilation of relative velocity
+/// Calculate time dilation of relative velocity
+/// 
+/// Inputs
+/// ------
+/// t_1: `f64`
+///     Time in seconds
+/// 
+/// rel_vel: `f64`
+///     Relative velocity in km/s
+/// 
+/// Outputs
+/// -------
+/// t_2: `f64`
+///     Dilated time in seconds
 pub fn calc_time_dilation(
     t_1: f64,
     rel_vel: f64
@@ -444,7 +466,15 @@ pub fn calc_time_dilation(
     return t_2
 }
 
-// Calculate apparant angular size of object in fov
+/// Calculate apparant angular size of object in field of view
+/// 
+/// Inputs
+/// ------
+/// object_radius: `f64`
+///     Radius of object in km
+/// 
+/// radial_distance: `f64`
+///     Distance from observer to object in km
 pub fn calc_angular_size(
     object_radius: f64,
     radial_distance: f64
@@ -452,6 +482,7 @@ pub fn calc_angular_size(
     let arc_rads: f64 = (object_radius / radial_distance).atan(); 
     return arc_rads
 }
+
 /// Rectangular coordinates to geodetic
 /// 
 /// Inputs
@@ -537,13 +568,13 @@ pub fn calc_prime_vertical(lat_deg: f64) -> f64 {
     return radius
 }
 
-
 /// Map between fixed frame observation to enu
 /// 
 /// Inputs
 /// ------
 /// pos_lla: `Vector3<f64>`
 ///     Lattitude, Longitude, Altitude
+/// 
 /// ecef_2: `Vector3<f64>`
 ///     ECEF
 /// 
@@ -635,6 +666,5 @@ mod spacetime_tests {
 
     #[test]
     fn test_ecef_to_lla(){
-
     }
 }

@@ -281,22 +281,24 @@ impl Orbit {
         time: f64, 
         frame: xyzt::ReferenceFrames
     ) -> (Vector3<f64>, Vector3<f64>) {
-        let ecc: f64 = self.eccentricity;
-
         let mean_anom: f64 = (
             self.mean_anomaly + self.mean_motion * time) * cst::DEG_TO_RAD;
-        let cos_mean_anom: f64 = mean_anom.cos();
 
         let ecc_anom: f64 = (
-            mean_anom - ecc * cst::DEG_TO_RAD * (1.0 - cos_mean_anom)) * cst::DEG_TO_RAD;
+            mean_anom - self.eccentricity * cst::DEG_TO_RAD * (
+                1.0 - mean_anom.cos())) * cst::DEG_TO_RAD;
         
         let true_anomaly_rad: f64 = 2.0 * (
             ecc_anom.sin()).atan2(-ecc_anom.cos());
         let cos_true_anom: f64 = true_anomaly_rad.cos();
         let sin_true_anom: f64 = true_anomaly_rad.sin();
 
-        let radius: f64 = self.semi_major_axis * (1.0 - ecc.powi(2)) / (1.0 + ecc * cos_true_anom);
+        let radius: f64 = self.semi_major_axis * (
+            1.0 - self.eccentricity.powi(2)) / 
+            (1.0 + self.eccentricity * cos_true_anom);
         
+        // FIXME-TD: stack pos, vel, acc, jerl etc along `order` axis
+        // Vectorize with [n_evals, 3dim, n_order]
         // Perifocal
         let x_pos: f64 = radius * cos_true_anom;
         let y_pos: f64 = radius * sin_true_anom;
@@ -305,7 +307,7 @@ impl Orbit {
 
         // Perifocal
         let x_vel: f64 = -self.mean_motion * radius * sin_true_anom;
-        let y_vel: f64 = self.mean_motion * radius * (ecc + cos_true_anom);
+        let y_vel: f64 = self.mean_motion * radius * (self.eccentricity + cos_true_anom);
         let z_vel: f64 = 0.0;
         let vel: Vector3<f64> = Vector3::new(x_vel, y_vel, z_vel);
         
@@ -668,15 +670,19 @@ impl Orbit {
     }
 
 
-    /// Calulcate ground coverage
+    /// Calculate ground coverage
+    /// 
+    /// Inputs
+    /// ------
+    /// time: `f64`
+    ///     Time for evaluation
     pub fn calc_ground_coverage_radius(&self, time: f64) -> f64 {
-        let rad_eq = cst::EARTH::RADIUS_EQUATOR;
-        let frame = xyzt::ReferenceFrames::ECEF;
-        let motion_ecef: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(time, frame);
-        let pos_lla = xyzt::ecef_to_lla(motion_ecef.0);
-        let height = pos_lla.z;
-        let theta = (rad_eq / (rad_eq + height)).acos();
-        let cov_radius = theta * rad_eq;
+        let motion_ecef: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(
+            time, xyzt::ReferenceFrames::ECEF);
+        let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(motion_ecef.0);
+        let theta: f64 = (
+            cst::EARTH::RADIUS_EQUATOR / (cst::EARTH::RADIUS_EQUATOR + pos_lla.z)).acos();
+        let cov_radius: f64 = theta * cst::EARTH::RADIUS_EQUATOR;
         return cov_radius
     }
 
@@ -744,10 +750,18 @@ pub fn calc_inclination(spec_ang_moment: Vector3<f64>) -> f64 {
 
 /// Calculate the mean motion of an orbit.
 /// 
-/// # Arguments
+/// Inputs
+/// ------
+/// semi_major_axis: `f64`
+///     Semi major axis of orbit
 /// 
-/// * `semi_major_axis` - The semi-major axis of the orbit.
-/// * `grav_param` - The gravitational parameter of the body.
+/// grav_param: `f64`
+///     Gravitational parameter of central body
+/// 
+/// Outputs
+/// -------
+/// mean_motion: `f64`
+///     Mean motion of orbit
 pub fn calc_mean_motion(semi_major_axis: f64, grav_param: f64) -> f64 {
     let mean_motion: f64 = 1.0 / (2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt());
     mean_motion
@@ -757,6 +771,16 @@ pub fn calc_mean_motion(semi_major_axis: f64, grav_param: f64) -> f64 {
 /// 
 /// Inputs
 /// ------
+/// grav_param: `f64`
+///     Gravitational parameter of central body
+/// 
+/// mean_motion: `f64`
+///     Mean motion of orbit
+/// 
+/// Outputs
+/// -------
+/// semi_major_axis: `f64`
+///     Semi major axis of orbit
 pub fn calc_semi_major_axis(grav_param: f64, mean_motion: f64) -> f64 {
     let semi_major_axis: f64 = ((grav_param)/mean_motion.powi(2)).powf(1.0/3.0);
     semi_major_axis
