@@ -2,12 +2,11 @@
 Space time related functions
  */
 
-use nalgebra as na;
-use na::{Vector3, Matrix3};
+use nalgebra::{Vector3, Matrix3};
 use std::f64::consts::PI;
 use chrono::{DateTime, Utc, Datelike, Timelike};
 
-use crate::constants as cst;
+use crate::donnager::constants as cst;
 
 /// Gravitational Body
 #[derive(Clone, Debug, PartialEq)]
@@ -19,11 +18,12 @@ pub struct Body{
     pub eccentricity: f64
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ReferenceFrames {
     ECI,
     ECEF,
     PFCL,
+    LLA
 }
 
 /// Gravitational Body
@@ -109,72 +109,6 @@ impl Body {
         return r_mag
     }
 
-    /// Geodetic to rectangular coordinates
-    /// E.g. Latitude, Longitude, Altitude to ECEF
-    /// 
-    /// Inputs
-    /// ------
-    /// lla: `Vector3<f64>`
-    ///     geodetic coords
-    /// 
-    /// Outputs
-    /// -------
-    /// xyz: `Vector3<f64>`
-    ///     Cartesian coords
-    pub fn geodetic_to_xyz(&self, lla: Vector3<f64>) -> Vector3<f64> {
-        let radius: f64 = self.calc_prime_vertical(lla[0]);
-        let x: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].cos();
-        let y: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].sin();
-        let z: f64 = ((1.0 - self.eccentricity.powi(2)) * radius + lla[2]) * lla[0].sin();
-        let xyz: Vector3<f64> = Vector3::new(x, y, z); 
-        return xyz
-    }
-
-    /// Calculate prime vertical radius to surface at latitude
-    /// 
-    /// Inputs
-    /// ------
-    /// lat_deg: `f64`
-    ///     Lattitude in degrees
-    pub fn calc_prime_vertical(&self, lat_deg: f64) -> f64 {
-        let lat_radians: f64 = PI * lat_deg / 180.0;
-        let radius: f64 = 
-            self.eq_radius / (1.0 - (self.eccentricity * lat_radians.sin()).powi(2)).sqrt();
-        return radius
-    }
-
-    /// Rectangular coordinates to geodetic
-    /// E.g. ECEF to LLH
-    pub fn xyz_to_geodetic(&self, xyz: Vector3<f64>) -> Vector3<f64> {
-        // Zhu's method
-        let a: f64 = self.eq_radius;
-        let ecc_2: f64 = self.eccentricity.powi(2);
-
-        let b: f64 = (a.powi(2)*(1.0 - ecc_2)).sqrt();
-        let ecc_2_prime: f64 = a.powi(2) / b.powi(2) - 1.0;
-        let p: f64 = (xyz[0].powi(2) + xyz[1].powi(2)).sqrt();
-        let g: f64 = p.powi(2) + (1.0 - ecc_2) * xyz[2].powi(2) - 
-            ecc_2 * (a.powi(2) - b.powi(2));
-        let c: f64 = ecc_2.powi(2) * 54.0 * b.powi(2) * xyz[2].powi(2) * p.powi(2) / (g.powi(3));
-        let s: f64 = (1.0 + c + (c.powi(2) + 2.0 * c).sqrt()).powf(1.0 / 3.0);
-        let cap_p: f64 = 54.0 * b.powi(2)*xyz[2].powi(2) / 
-            (3.0 * (s + 1.0 + 1.0 / s).powi(2) * g.powi(2));
-        let q: f64 = (1.0 + 2.0 * ecc_2.powi(2) * cap_p).sqrt();
-        let r_0: f64 = -cap_p * ecc_2 * p /(1.0+q) + 
-            ((a.powi(2)/2.0)*(1.0 + 1.0 / q) - 
-            cap_p * (1.0 - ecc_2) * xyz[2].powi(2) / (q * (1.0 + q)) - 
-            cap_p*p.powi(2)/2.0).sqrt();
-        let u: f64 = ((p - ecc_2*r_0).powi(2) + xyz[2].powi(2)).sqrt();
-        let v: f64 = ((p - ecc_2*r_0).powi(2) + (1.0 - ecc_2)*xyz[2].powi(2)).sqrt();
-        let z_0: f64 = b.powi(2) * xyz[2] / (a * v);
-
-        let alt: f64 = u * (1.0 - b.powi(2) / (a * v));
-        let lat: f64 = ((xyz[2] + ecc_2_prime*z_0)/p).atan();
-        let lon: f64 = (xyz[1] / xyz[0]).atan();
-        let lla: Vector3<f64> = Vector3::new(lat, lon, alt);
-        return lla
-    }
-
 }
 
 /// Gravitational Particle
@@ -245,8 +179,8 @@ impl SurfacePoint{
     /// radius : `Vector3<f64>`
     ///     Radial vector in meters
     pub fn calc_surface_radius(&self) -> Vector3<f64> {
-        let prime_vertical: f64 = self.body.calc_prime_vertical(self.pos_lla[0]);
-        let dir: Vector3<f64> = self.body.geodetic_to_xyz(self.pos_lla);
+        let prime_vertical: f64 = calc_prime_vertical(self.pos_lla[0]);
+        let dir: Vector3<f64> = lla_to_ecef(self.pos_lla);
         let radius: Vector3<f64> = (prime_vertical + self.pos_lla[2]) * dir;
         return radius
     }
@@ -269,35 +203,6 @@ impl SurfacePoint{
     }
 
 
-    /// Map between fixed frame observation to enu
-    pub fn ecef_to_enu(&self, ecef_2: Vector3<f64>) -> Vector3<f64> {
-        let pos_lla: Vector3<f64> = self.pos_lla;
-        let pos_ecef: Vector3<f64> = self.body.geodetic_to_xyz(pos_lla);
-        let vec_ecef: Vector3<f64> = ecef_2 - pos_ecef;
-        let ecef_enu: Matrix3<f64> = Matrix3::new(
-            -pos_lla[1].sin(), pos_lla[1].cos(), 0.0,
-            -pos_lla[1].cos()*pos_lla[0].sin(), -pos_lla[1].sin()*pos_lla[0].sin(), pos_lla[0].cos(),
-            pos_lla[1].cos()*pos_lla[0].cos(), pos_lla[1].sin()*pos_lla[0].cos(), pos_lla[0].sin());
-        let enu: Vector3<f64> = ecef_enu * vec_ecef;
-        return enu
-    }
-
-    /// Map between enu and fixed frame
-    /// 
-    /// 
-    pub fn enu_to_ecef(&self, enu: Vector3<f64>) -> Vector3<f64> {
-        let pos_lla: Vector3<f64> = self.pos_lla;
-        let enu_ecef: Matrix3<f64> = Matrix3::new(
-            -pos_lla[1].sin(), -pos_lla[1].cos()*pos_lla[0].sin(), pos_lla[1].cos()*pos_lla[0].cos(),
-            pos_lla[1].cos(), -pos_lla[1].sin()*pos_lla[0].sin(), pos_lla[1].sin()*pos_lla[0].cos(),
-            0.0, pos_lla[0].cos(), pos_lla[0].sin()
-        );
-        let vec_ecef: Vector3<f64> = enu_ecef * enu;
-        let pos_ecef: Vector3<f64> = self.body.geodetic_to_xyz(self.pos_lla);
-        let ecef: Vector3<f64> = vec_ecef - pos_ecef;
-        return ecef
-    }
-
 }
 
 // Calculate eci to ecef rotation matrix
@@ -319,7 +224,7 @@ pub fn calc_eci_ecef_rotam(date_time: DateTime<Utc>) -> Matrix3<f64> {
     let sidereal_time: f64 = (hours + (minutes + seconds / 60.) / 60.) / 24.;
 
     let rot_rate_rad_day: f64 = 
-        cst::EARTH_ROT_RATE * 3600. * cst::EARTH_SIDEREAL_DAY; 
+        cst::EARTH::ROT_RATE * 3600. * cst::EARTH::SIDEREAL_DAY; 
     let theta: f64 = 
         rot_rate_rad_day * (julian_day + sidereal_time - cst::J2000_DAY);
 
@@ -357,7 +262,7 @@ pub fn calc_day_length(
     let m: f64 = (357.5291 + 0.98560028 * j_star) % 360.;
     let eq_cen: f64 = 1.9148*(m.sin()) + 0.02*((2.*m).sin()) + 0.0003*((3.*m).sin());
     let lambda: f64 = (m + eq_cen + 180. + cst::EARTH_ARG_PERIHELION) % 360.;
-    let sun_dec_rad: f64 = (lambda.sin() * (cst::EARTH_AXIAL_TILT).sin()).asin();
+    let sun_dec_rad: f64 = (lambda.sin() * (cst::EARTH::AXIAL_TILT).sin()).asin();
     let tan_lat: f64 = (lat_deg * cst::DEG_TO_RAD).tan();
 
     let hour_angle_rad: f64 = (-(sun_dec_rad).tan() * tan_lat).acos();
@@ -489,7 +394,6 @@ pub fn date_to_julian_day_num(
     return julian_day_num
 }
 
-
 /// Julian day number to gregorian year, month, day
 /// 
 /// Inputs
@@ -521,9 +425,207 @@ pub fn julian_to_gregorian(
 
 }
 
+/// Calculate schwarzchild radius of a given mass
+/// 
+/// Inputs
+/// ------
+/// mass: `f64`
+///     Mass of object in kg
+/// 
+/// Outputs
+/// -------
+/// radius: `f64`
+///     Schwarzchild radius in km
+pub fn calc_schwarzchild_radius(
+    mass: f64
+) -> f64 {
+    let radius: f64 = 2.0 * mass * cst::GRAV_CONST / cst::SPEED_OF_LIGHT.powi(2);
+    return radius
+}
+
+/// Calculate time dilation of relative velocity
+/// 
+/// Inputs
+/// ------
+/// t_1: `f64`
+///     Time in seconds
+/// 
+/// rel_vel: `f64`
+///     Relative velocity in km/s
+/// 
+/// Outputs
+/// -------
+/// t_2: `f64`
+///     Dilated time in seconds
+pub fn calc_time_dilation(
+    t_1: f64,
+    rel_vel: f64
+) -> f64 {
+    let lorentz: f64 = (1.0 - rel_vel.powi(2)/cst::SPEED_OF_LIGHT.powi(2)).sqrt();
+    let t_2: f64 = t_1 / (lorentz);
+    return t_2
+}
+
+/// Calculate apparant angular size of object in field of view
+/// 
+/// Inputs
+/// ------
+/// object_radius: `f64`
+///     Radius of object in km
+/// 
+/// radial_distance: `f64`
+///     Distance from observer to object in km
+pub fn calc_angular_size(
+    object_radius: f64,
+    radial_distance: f64
+) -> f64 {
+    let arc_rads: f64 = (object_radius / radial_distance).atan(); 
+    return arc_rads
+}
+
+/// Rectangular coordinates to geodetic
+/// 
+/// Inputs
+/// ------
+/// ecef: `Vector3<f64>
+///     Rectangular coordinates in km
+/// 
+/// Outputs
+/// -------
+/// lla: `Vector3<f64>`
+///     Geodetic coordinates in degrees
+pub fn ecef_to_lla(ecef: Vector3<f64>) -> Vector3<f64> {
+    // Zhu's method
+    let a: f64 = cst::EARTH::RADIUS_EQUATOR;
+    let b: f64 = cst::EARTH::RADIUS_POLE;
+    
+    let ecc_2: f64 = (a.powi(2) - b.powi(2)) / a.powi(2);
+    let ecc_2_prime: f64 = a.powi(2) / b.powi(2) - 1.0;
+    
+    let x: f64 = ecef[0] * cst::KILO;
+    let y: f64 = ecef[1] * cst::KILO;
+    let z: f64 = ecef[2] * cst::KILO;
+
+    let p: f64 = (x.powi(2) + y.powi(2)).sqrt();
+    let g: f64 = p.powi(2) + (1.0 - ecc_2) * z.powi(2) - 
+        ecc_2 * (a.powi(2) - b.powi(2));
+    let f: f64 = 54.0 * b.powi(2) * z.powi(2);
+    let c: f64 = ecc_2.powi(2) * f * p.powi(2) / (g.powi(3));
+    
+    let s: f64 = (1.0 + c + (c.powi(2) + 2.0 * c).sqrt()).powf(1. / 3.);
+    let cap_p: f64 = f / (3.0 * (s + 1.0 + 1.0 / s).powi(2) * g.powi(2));
+
+    let q: f64 = (1.0 + 2.0 * ecc_2.powi(2) * cap_p).sqrt();
+    let r_0: f64 = -cap_p * ecc_2 * p /(1.0+q) + 
+        ((a.powi(2)/2.0)*(1.0 + 1.0 / q) - 
+        cap_p * (1.0 - ecc_2) * z.powi(2) / (q * (1.0 + q)) - 
+        cap_p*p.powi(2)/2.0).sqrt();
+
+
+    let u: f64 = ((p - ecc_2*r_0).powi(2) + z.powi(2)).sqrt();
+    let v: f64 = ((p - ecc_2*r_0).powi(2) + (1.0 - ecc_2)*z.powi(2)).sqrt();
+    let z_0: f64 = b.powi(2) * z / (a * v);
+
+    let lat: f64 = cst::to_degrees((z + ecc_2_prime * z_0).atan2(p));
+    let lon: f64 =  cst::to_degrees(y.atan2(x));
+    let alt: f64 = u * (1.0 - b.powi(2) / (a * v));
+
+    let lla: Vector3<f64> = Vector3::new(lat, lon, alt);
+    return lla
+}
+
+/// Geodetic to rectangular coordinates
+/// E.g. Latitude, Longitude, Altitude to ECEF
+/// 
+/// Inputs
+/// ------
+/// lla: `Vector3<f64>`
+///     geodetic coords
+/// 
+/// Outputs
+/// -------
+/// xyz: `Vector3<f64>`
+///     Cartesian coords
+pub fn lla_to_ecef(lla: Vector3<f64>) -> Vector3<f64> {
+    let radius: f64 = calc_prime_vertical(lla[0]);
+    let x: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].cos();
+    let y: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].sin();
+    let z: f64 = ((1.0 - cst::EARTH::ECC.powi(2)) * radius + lla[2]) * lla[0].sin();
+    let xyz: Vector3<f64> = Vector3::new(x, y, z); 
+    return xyz
+}
+
+/// Calculate prime vertical radius to surface at latitude
+/// 
+/// Inputs
+/// ------
+/// lat_deg: `f64`
+///     Lattitude in degrees
+pub fn calc_prime_vertical(lat_deg: f64) -> f64 {
+    let lat_radians: f64 = PI * lat_deg / 180.0;
+    let radius: f64 = 
+        cst::EARTH_ORBIT_SEMI_MAJOR / (1.0 - (cst::EARTH::ECC * lat_radians.sin()).powi(2)).sqrt();
+    return radius
+}
+
+/// Map between fixed frame observation to enu
+/// 
+/// Inputs
+/// ------
+/// pos_lla: `Vector3<f64>`
+///     Lattitude, Longitude, Altitude
+/// 
+/// ecef_2: `Vector3<f64>`
+///     ECEF
+/// 
+/// Outputs
+/// -------
+/// enu: `Vector3<f64>`
+///     East, North, Up
+pub fn ecef_to_enu(
+    pos_lla: Vector3<f64>, 
+    ecef_2: Vector3<f64>
+) -> Vector3<f64> {
+    let pos_ecef: Vector3<f64> = lla_to_ecef(pos_lla);
+    let vec_ecef: Vector3<f64> = ecef_2 - pos_ecef;
+    let ecef_enu: Matrix3<f64> = Matrix3::new(
+        -pos_lla[1].sin(), pos_lla[1].cos(), 0.0,
+        -pos_lla[1].cos()*pos_lla[0].sin(), -pos_lla[1].sin()*pos_lla[0].sin(), pos_lla[0].cos(),
+        pos_lla[1].cos()*pos_lla[0].cos(), pos_lla[1].sin()*pos_lla[0].cos(), pos_lla[0].sin());
+    let enu: Vector3<f64> = ecef_enu * vec_ecef;
+    return enu
+}
+
+/// Map between enu and fixed frame
+/// 
+/// Inputs
+/// ------
+/// pos_lla: `Vector3<f64>`
+///     Lattitude, Longitude, Altitude
+/// enu: `Vector3<f64>`
+///     East, North, Up
+/// 
+/// Outputs
+/// -------
+/// ecef: `Vector3<f64>`
+///     ECE
+pub fn enu_to_ecef(
+    pos_lla: Vector3<f64>, 
+    enu: Vector3<f64>
+) -> Vector3<f64> {
+    let enu_ecef: Matrix3<f64> = Matrix3::new(
+        -pos_lla[1].sin(), -pos_lla[1].cos()*pos_lla[0].sin(), pos_lla[1].cos()*pos_lla[0].cos(),
+        pos_lla[1].cos(), -pos_lla[1].sin()*pos_lla[0].sin(), pos_lla[1].sin()*pos_lla[0].cos(),
+        0.0, pos_lla[0].cos(), pos_lla[0].sin()
+    );
+    let vec_ecef: Vector3<f64> = enu_ecef * enu;
+    let pos_ecef: Vector3<f64> = lla_to_ecef(pos_lla);
+    let ecef: Vector3<f64> = vec_ecef - pos_ecef;
+    return ecef
+}
 
 #[cfg(test)]
-mod time_tests {
+mod spacetime_tests {
     use super::*;
 
     #[test]
@@ -559,5 +661,10 @@ mod time_tests {
         let day_light_hrs: f64 = calc_day_length(lat_deg, long_deg, julian_day);
         assert_eq!(day_light_hrs, 8.54933135165009);
 
+    }
+
+
+    #[test]
+    fn test_ecef_to_lla(){
     }
 }

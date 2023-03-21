@@ -2,12 +2,13 @@
 Gravitational Bodies
 */
 
-use nalgebra as na;
-use na::{Vector3, Matrix3};
+use nalgebra::{Vector3, Matrix3};
 use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc};
+use plotters::prelude::*;
 use std::f64::consts::PI;
+use std::ops::Range;
 
-use crate::{cosmos::spacetime as spacetime, constants as cst};
+use crate::donnager::{spacetime as xyzt, constants as cst};
 
 /// Orbit structure
 /// 
@@ -134,7 +135,7 @@ impl Orbit {
             .parse::<u32>()
             .unwrap();
 
-        let md: (u32, u32) = spacetime::calc_month_day(day_of_year, year);
+        let md: (u32, u32) = xyzt::calc_month_day(day_of_year, year);
         let date: NaiveDate = NaiveDate::from_ymd_opt(
             year, md.0, md.1).unwrap();
         
@@ -198,11 +199,11 @@ impl Orbit {
 
         // Two Line element usage assumes Earth Centered
         let semi_major_axis: f64 = calc_semi_major_axis(
-            cst::EARTH_GRAV_PARAM, mean_motion);
+            cst::EARTH::GRAV_PARAM, mean_motion);
     
         Orbit {
             name: name.to_string(),
-            grav_param: cst::EARTH_GRAV_PARAM,
+            grav_param: cst::EARTH::GRAV_PARAM,
             semi_major_axis,
             raan,
             eccentricity: ecc,
@@ -278,24 +279,26 @@ impl Orbit {
     pub fn calc_pos_vel(
         &self, 
         time: f64, 
-        frame: spacetime::ReferenceFrames
+        frame: xyzt::ReferenceFrames
     ) -> (Vector3<f64>, Vector3<f64>) {
-        let ecc: f64 = self.eccentricity;
-
         let mean_anom: f64 = (
             self.mean_anomaly + self.mean_motion * time) * cst::DEG_TO_RAD;
-        let cos_mean_anom: f64 = mean_anom.cos();
 
         let ecc_anom: f64 = (
-            mean_anom - ecc * cst::DEG_TO_RAD * (1.0 - cos_mean_anom)) * cst::DEG_TO_RAD;
+            mean_anom - self.eccentricity * cst::DEG_TO_RAD * (
+                1.0 - mean_anom.cos())) * cst::DEG_TO_RAD;
         
         let true_anomaly_rad: f64 = 2.0 * (
-            ecc_anom.sin() - ecc_anom.cos()).atan();
+            ecc_anom.sin()).atan2(-ecc_anom.cos());
         let cos_true_anom: f64 = true_anomaly_rad.cos();
         let sin_true_anom: f64 = true_anomaly_rad.sin();
 
-        let radius: f64 = self.semi_major_axis * (1.0 - ecc.powi(2)) / (1.0 + ecc * cos_true_anom);
+        let radius: f64 = self.semi_major_axis * (
+            1.0 - self.eccentricity.powi(2)) / 
+            (1.0 + self.eccentricity * cos_true_anom);
         
+        // FIXME-TD: stack pos, vel, acc, jerl etc along `order` axis
+        // Vectorize with [n_evals, 3dim, n_order]
         // Perifocal
         let x_pos: f64 = radius * cos_true_anom;
         let y_pos: f64 = radius * sin_true_anom;
@@ -304,18 +307,21 @@ impl Orbit {
 
         // Perifocal
         let x_vel: f64 = -self.mean_motion * radius * sin_true_anom;
-        let y_vel: f64 = self.mean_motion * radius * (ecc + cos_true_anom);
+        let y_vel: f64 = self.mean_motion * radius * (self.eccentricity + cos_true_anom);
         let z_vel: f64 = 0.0;
         let vel: Vector3<f64> = Vector3::new(x_vel, y_vel, z_vel);
-
+        
         match frame {
-            spacetime::ReferenceFrames::ECI => {
+            xyzt::ReferenceFrames::PFCL => {
+                return (pos, vel);
+            },
+            xyzt::ReferenceFrames::ECI => {
                 let rotam: Matrix3<f64> = self.calc_pfcl_eci_rotam();
                 let eci_pos: Vector3<f64> = rotam * pos;
                 let eci_vel: Vector3<f64> = rotam * vel;
                 return (eci_pos, eci_vel);
             },
-            spacetime::ReferenceFrames::ECEF => {
+            xyzt::ReferenceFrames::ECEF => {
                 let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_eci_rotam();
                 let eci_pos: Vector3<f64> = pfcl_eci_rotam * pos;
                 let eci_vel: Vector3<f64> = pfcl_eci_rotam * vel;
@@ -323,14 +329,28 @@ impl Orbit {
                 let new_time: f64 = self.epoch.timestamp() as f64 + time;
                 let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
                     new_time as i64, 0).unwrap();
-                let eci_ecef_rotam: Matrix3<f64>  = spacetime::calc_eci_ecef_rotam(new_epoch_datetime);
+                let eci_ecef_rotam: Matrix3<f64>  = xyzt::calc_eci_ecef_rotam(new_epoch_datetime);
 
                 let ecef_pos: Vector3<f64> = eci_ecef_rotam * eci_pos;
                 let ecef_vel: Vector3<f64> = eci_ecef_rotam * eci_vel;
                 return (ecef_pos, ecef_vel);
             },
-            spacetime::ReferenceFrames::PFCL => {
-                return (pos, vel);
+            xyzt::ReferenceFrames::LLA => {
+                let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_eci_rotam();
+                let eci_pos: Vector3<f64> = pfcl_eci_rotam * pos;
+                let eci_vel: Vector3<f64> = pfcl_eci_rotam * vel;
+
+                let new_time: f64 = self.epoch.timestamp() as f64 + time;
+                let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
+                    new_time as i64, 0).unwrap();
+                let eci_ecef_rotam: Matrix3<f64>  = xyzt::calc_eci_ecef_rotam(new_epoch_datetime);
+
+                let ecef_pos: Vector3<f64> = eci_ecef_rotam * eci_pos;
+                let ecef_vel: Vector3<f64> = eci_ecef_rotam * eci_vel;
+
+                let lla_pos: Vector3<f64> = xyzt::ecef_to_lla(ecef_pos);
+                let lla_vel: Vector3<f64> = xyzt::ecef_to_lla(ecef_vel);
+                return (lla_pos, lla_vel);
             }
         }
     }
@@ -391,7 +411,7 @@ impl Orbit {
     /// None.
     pub fn propogate_in_place(&mut self, dt: f64) {
         let new_time: f64 = self.epoch.timestamp() as f64 + dt;
-        let frame = spacetime::ReferenceFrames::ECI;
+        let frame = xyzt::ReferenceFrames::ECI;
         let motion: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(new_time, frame);
         let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
             new_time as i64, 0).unwrap();
@@ -405,7 +425,269 @@ impl Orbit {
         *self = new_orbit;
 
         }
+
+    /// Show orbit plot
+    pub fn show(&self, frame: xyzt::ReferenceFrames) {
+
+        let pathname = format!("{}_orbit_{:?}.png", self.name, &frame);
+        let plottitle = format!("{} orbit {:?} frame", self.name, &frame);
+        
+        let t_start = self.epoch.timestamp() as f64;
+        let t_step = 1.;
+        let times = (
+            (t_start)..(t_start + self.mean_motion * 43.)
+        ).step(t_step);
+        
+        let mut pos_mut: Vec<Vector3<f64>> = Vec::new();
+        times.values().for_each(|time| {
+            let motion_frame = self.calc_pos_vel(time, frame);
+            pos_mut.push(motion_frame.0);
+        });
+
+        // Plot
+        let drawing_area = 
+            BitMapBackend::new(&pathname, (500, 300))
+            .into_drawing_area();
+
+        let mut chart_builder = ChartBuilder::on(&drawing_area);
+
+        drawing_area
+            .fill(&WHITE)
+            .unwrap();
+
+        chart_builder
+            .margin(5)
+            .set_left_and_bottom_label_area_size(35)
+            .caption(
+                plottitle, (
+                    "Times New Roman", 
+                    20, 
+                    FontStyle::Bold, 
+                    &BLACK)
+                    .into_text_style(&drawing_area));
+
+        let earth_radius = cst::EARTH::RADIUS_EQUATOR;
+
+        match frame {
+            xyzt::ReferenceFrames::ECI => {
+                
+                let x_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius; 
+                let y_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
+                let z_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
+
+                let mut chart = chart_builder
+                    .build_cartesian_3d(x_spec, y_spec, z_spec)
+                    .unwrap();
+
+                chart
+                    .configure_axes()
+                    .draw()
+                    .unwrap();
+
+                chart
+                    .configure_series_labels()
+                    .background_style(&WHITE.mix(0.8))
+                    .border_style(&BLACK)
+                    .draw()
+                    .unwrap();
+
+                chart
+                    .draw_series(
+                        SurfaceSeries::xoy(
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).cos()}),
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).sin()}),
+                            |x, y| (-(x * x + y * y).sqrt()),
+                        )
+                    ).unwrap();
+
+                chart
+                    .draw_series(
+                        SurfaceSeries::xoy(
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).cos()}),
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).sin()}),
+                            |x, y| (-(x * x + y * y).sqrt()),
+                        )).unwrap()
+                    .label("Earth");
+
+            },
+            xyzt::ReferenceFrames::ECEF => {
+                // 3D globe w/ spin
+                let x_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius; 
+                let y_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
+                let z_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
+
+                let mut chart = 
+                    chart_builder.build_cartesian_3d(x_spec, y_spec, z_spec).unwrap();
+
+                chart.configure_axes().draw().unwrap();
+
+                chart
+                    .configure_series_labels()
+                    .background_style(&WHITE.mix(0.8))
+                    .border_style(&BLACK)
+                    .draw().unwrap();
+
+
+                chart
+                    .draw_series(
+                        SurfaceSeries::xoy(
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).cos()}),
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).sin()}),
+                            |x, z| (-(x * x + z * z).sqrt()))
+                            .style(&BLUE.mix(0.5))  
+                    ).unwrap();
+
+                chart
+                    .draw_series(
+                        SurfaceSeries::xoy(
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).cos()}),
+                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).sin()}),
+                            |x, z| (-(x * x + z * z).sqrt()))
+                        .style(&BLUE.mix(0.5))  
+                        ).unwrap()
+                    .label("Earth");
+    
+            },
+            xyzt::ReferenceFrames::LLA => {
+                // 2d Ground track
+                // TODO-TD: add global shoreline trace
+                let y_spec: Range<f64> = -90.0..90.;  // N to S poles
+                let x_spec: Range<f64> = -180.0..180.;  // International date line
+                let mut chart = 
+                    chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
+
+                chart.configure_mesh().draw().unwrap();
+
+                chart.draw_series(
+                    PointSeries::of_element(
+                        pos_mut.iter().map(|p| (p.y, p.x)),
+                        1,
+                        &BLUE,
+                        &|c, s, st| {
+                            Circle::new((c.0, c.1), s, st.filled())}
+                    )
+                ).unwrap()
+                .label("Orbit")
+                .legend(
+                    |(x, y)| 
+                    PathElement::new(vec![(x, y), (x + 20, y)], 
+                    &BLUE));
+
+
+                chart.configure_series_labels()
+                    .background_style(&WHITE.mix(0.8))
+                    .border_style(&BLACK)
+                    .draw().unwrap();
+
+            },
+            xyzt::ReferenceFrames::PFCL => {
+                // 2d planar plot
+                let semi_major: f64 = self.semi_major_axis;
+                let semi_latus: f64 = semi_major * (1. - self.eccentricity);
+                let x_spec: Range<f64> = -semi_major..semi_major; 
+                let y_spec: Range<f64> = -semi_latus..semi_latus;
+                let mut chart = 
+                    chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
+
+                chart.configure_mesh().draw().unwrap();
+
+                chart.configure_series_labels()
+                    .background_style(&WHITE.mix(0.8))
+                    .border_style(&BLACK)
+                    .draw().unwrap();
+                
+                chart.draw_series(
+                    PointSeries::of_element(
+                        pos_mut.iter().map(|p| (p.x, p.y)),
+                        1,
+                        &BLACK,
+                        &|c, s, st| {
+                            Circle::new((c.0, c.1), s, st.filled())}
+                    )
+                ).unwrap();
+
+                let mut earth_surf: Vec<(f64, f64)> = Vec::new();
+                for theta in 0..360{
+                    earth_surf.push(
+                        (earth_radius * (theta as f64 * cst::DEG_TO_RAD).cos(),
+                        earth_radius * (theta as f64 * cst::DEG_TO_RAD).sin()))
+                }
+
+                chart.draw_series(
+                    PointSeries::of_element(
+                        earth_surf.iter().map(|p|{(p.0, p.1)}), 
+                        1,
+                        &BLUE,
+                        &|c, s, st| {
+                            Circle::new((c.0, c.1), s, st.filled())}
+                    )
+                ).unwrap();
+
+            }   
+        }
     }
+
+
+    /// Convert orbit to KML string
+    /// 
+    /// Inputs
+    /// ------
+    /// None
+    /// 
+    /// Outputs
+    /// -------
+    /// kml_string: `String`
+    ///     KML string of orbit
+    pub fn to_kml(&self) -> String {
+        let mut kml_string_mut: String = String::new();
+        kml_string_mut.push_str("<Placemark>\n");
+        kml_string_mut.push_str("<name>");
+        kml_string_mut.push_str(&self.name);
+        kml_string_mut.push_str("</name>\n");
+        kml_string_mut.push_str("<LineString>\n");
+        kml_string_mut.push_str("<extrude>1</extrude>\n");
+        kml_string_mut.push_str("<tessellate>1</tessellate>\n");
+        kml_string_mut.push_str("<altitudeMode>absolute</altitudeMode>\n");
+        kml_string_mut.push_str("<coordinates>\n");
+        let mut time: f64 = self.epoch.timestamp() as f64;
+        let frame = xyzt::ReferenceFrames::ECEF;
+
+        let mut motion_ecef: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(time, frame);
+        let pos_lla = xyzt::ecef_to_lla(motion_ecef.0);
+        kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
+        time += 60.0;
+        while time < self.epoch.timestamp() as f64 + 86400.0 {
+            motion_ecef = self.calc_pos_vel(time, frame);
+            let pos_lla = xyzt::ecef_to_lla(motion_ecef.0);
+            kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
+            time += 60.0;
+        }
+        kml_string_mut.push_str("</coordinates>\n");
+        kml_string_mut.push_str("</LineString>\n");
+        kml_string_mut.push_str("</Placemark>\n");
+        let kml_string = kml_string_mut;
+        return kml_string
+    }
+
+
+    /// Calculate ground coverage
+    /// 
+    /// Inputs
+    /// ------
+    /// time: `f64`
+    ///     Time for evaluation
+    pub fn calc_ground_coverage_radius(&self, time: f64) -> f64 {
+        let motion_ecef: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(
+            time, xyzt::ReferenceFrames::ECEF);
+        let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(motion_ecef.0);
+        let theta: f64 = (
+            cst::EARTH::RADIUS_EQUATOR / (cst::EARTH::RADIUS_EQUATOR + pos_lla.z)).acos();
+        let cov_radius: f64 = theta * cst::EARTH::RADIUS_EQUATOR;
+        return cov_radius
+    }
+
+
+}
 
 /// Calculate the eccentricity vector from the velocity and position vectors
 /// 
@@ -468,10 +750,18 @@ pub fn calc_inclination(spec_ang_moment: Vector3<f64>) -> f64 {
 
 /// Calculate the mean motion of an orbit.
 /// 
-/// # Arguments
+/// Inputs
+/// ------
+/// semi_major_axis: `f64`
+///     Semi major axis of orbit
 /// 
-/// * `semi_major_axis` - The semi-major axis of the orbit.
-/// * `grav_param` - The gravitational parameter of the body.
+/// grav_param: `f64`
+///     Gravitational parameter of central body
+/// 
+/// Outputs
+/// -------
+/// mean_motion: `f64`
+///     Mean motion of orbit
 pub fn calc_mean_motion(semi_major_axis: f64, grav_param: f64) -> f64 {
     let mean_motion: f64 = 1.0 / (2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt());
     mean_motion
@@ -481,6 +771,16 @@ pub fn calc_mean_motion(semi_major_axis: f64, grav_param: f64) -> f64 {
 /// 
 /// Inputs
 /// ------
+/// grav_param: `f64`
+///     Gravitational parameter of central body
+/// 
+/// mean_motion: `f64`
+///     Mean motion of orbit
+/// 
+/// Outputs
+/// -------
+/// semi_major_axis: `f64`
+///     Semi major axis of orbit
 pub fn calc_semi_major_axis(grav_param: f64, mean_motion: f64) -> f64 {
     let semi_major_axis: f64 = ((grav_param)/mean_motion.powi(2)).powf(1.0/3.0);
     semi_major_axis
@@ -565,10 +865,10 @@ mod orbit_tests {
 
     #[test]
     fn test_hill_sphere(){
-        let earth_mass: f64 = crate::constants::EARTH_MASS;
-        let sun_mass: f64 = crate::constants::SUN_MASS;
-        let earth_orbit_semi_major: f64 = crate::constants::EARTH_ORBIT_SEMI_MAJOR;
-        let earth_orbit_ecc: f64 = crate::constants::EARTH_ORBIT_ECC;
+        let earth_mass: f64 = cst::EARTH::MASS;
+        let sun_mass: f64 = cst::SUN::MASS;
+        let earth_orbit_semi_major: f64 = cst::EARTH_ORBIT_SEMI_MAJOR;
+        let earth_orbit_ecc: f64 = cst::EARTH_ORBIT_ECC;
 
         let sphere_rad: f64 = calc_hill_sphere(
             sun_mass, 

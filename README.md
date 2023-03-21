@@ -29,23 +29,23 @@ donnager = "0.1.2"
 
 ## Modules
 - `constants`
-- `cosmos`
+- `spacetime`
 - `dynamics`
 - `propulsion`
+- `em`
 
 ## Example Usage
 
 ```Rust
 use donnager::constants as cst;
-use donnager::cosmos as cosm;
+use donnager::spacetime as xyzt;
 use donnager::propulsion as prop;
 use donnager::dynamics as dynam;
 
-use nalgebra as na;
-use na::Vector3;
+us nalgebra::Vector3;
 
 // Config
-let earth: cosm::gravity::Body = cosm::gravity::Body {
+let earth: xyzt::Body = xyzt::Body {
     name: "Earth".to_string(),
     grav_param: cst::EARTH_GRAV_PARAM,
     eq_radius: cst::EARTH_RADIUS_EQUATOR,
@@ -53,7 +53,7 @@ let earth: cosm::gravity::Body = cosm::gravity::Body {
     eccentricity: cst::EARTH_ECC
 };
 
-let launch_site: cosm::space::SurfacePoint = cosm::space::SurfacePoint {
+let launch_site: xyzt::SurfacePoint = xyzt::SurfacePoint {
     name: "Cape Canaveral Launch Site".to_string(),
     body: earth.clone(),
     pos_lla: Vector3::new(28.396837, -80.605659, 0.0)

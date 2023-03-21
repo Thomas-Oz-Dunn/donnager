@@ -1,12 +1,11 @@
 /* 
-Propogator scrap file
+Propogator 
 */
 
-use nalgebra as na;
-use na::Vector3;
-use crate::gravity::kepler as kepler;
+use nalgebra::Vector3;
 use chrono::{DateTime as DateTime, Utc};
 
+use crate::donnager::gravity::kepler as kepler;
 // State
 // Objects- pos, vel, mass, grav field model
 
