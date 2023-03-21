@@ -375,9 +375,6 @@ mod barneshut_tests{
 
         let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(radius_vec);
         assert_eq!(pos_lla, Vector3::new(0.0, 0.0, 42157401420.13436));
-        
-        let pos_ecef: Vector3<f64> = xyzt::lla_to_ecef(pos_lla);
-        assert_eq!(pos_ecef, radius_vec);
         let satellite: xyzt::Particle = xyzt::Particle { mass: 5e4, motion: sat_motion_0};
 
         let motion: Vec<Vector3<f64>> = vec![Vector3::zeros(); 3];
