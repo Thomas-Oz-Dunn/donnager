@@ -16,13 +16,13 @@ fn main() {
     2 25544  51.6419 140.8390 0005926  43.3718 100.9839 15.49547192385127";
     
     let orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_tle(tle_str.to_string());
-    let frame = xyzt::ReferenceFrames::LLA;
+    let frame = xyzt::ReferenceFrames::PFCL;
 
     orbit.show(frame);
 
     let dt: f64 = 10.1;
     let new_orb = orbit.propogate(dt);
-    let p_v_ecef: (Vector3<f64>, Vector3<f64>) = new_orb.calc_pos_vel(0., frame);
+    let p_v_ecef: (Vector3<f64>, Vector3<f64>) = new_orb.calc_pos_vel(0., xyzt::ReferenceFrames::ECEF);
 
     let p_lla: Vector3<f64> = xyzt::ecef_to_lla(p_v_ecef.0);
     

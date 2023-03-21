@@ -466,7 +466,7 @@ impl Orbit {
 
         let earth_radius = cst::EARTH::RADIUS_EQUATOR;
 
-        match frame{
+        match frame {
             xyzt::ReferenceFrames::ECI => {
                 
                 let x_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius; 
@@ -603,6 +603,24 @@ impl Orbit {
                             Circle::new((c.0, c.1), s, st.filled())}
                     )
                 ).unwrap();
+
+                let mut earth_surf: Vec<(f64, f64)> = Vec::new();
+                for theta in 0..360{
+                    earth_surf.push(
+                        (earth_radius * (theta as f64 * cst::DEG_TO_RAD).cos(),
+                        earth_radius * (theta as f64 * cst::DEG_TO_RAD).sin()))
+                }
+
+                chart.draw_series(
+                    PointSeries::of_element(
+                        earth_surf.iter().map(|p|{(p.0, p.1)}), 
+                        1,
+                        &BLUE,
+                        &|c, s, st| {
+                            Circle::new((c.0, c.1), s, st.filled())}
+                    )
+                ).unwrap();
+
             }   
         }
     }
