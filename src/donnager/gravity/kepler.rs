@@ -668,6 +668,19 @@ impl Orbit {
     }
 
 
+    /// Calulcate ground coverage
+    pub fn calc_ground_coverage_radius(&self, time: f64) -> f64 {
+        let rad_eq = cst::EARTH::RADIUS_EQUATOR;
+        let frame = xyzt::ReferenceFrames::ECEF;
+        let motion_ecef: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(time, frame);
+        let pos_lla = xyzt::ecef_to_lla(motion_ecef.0);
+        let height = pos_lla.z;
+        let theta = (rad_eq / (rad_eq + height)).acos();
+        let cov_radius = theta * rad_eq;
+        return cov_radius
+    }
+
+
 }
 
 /// Calculate the eccentricity vector from the velocity and position vectors
