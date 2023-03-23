@@ -33,12 +33,15 @@ pub const NANO: f64 = 1e-9;
 /// Newtonian Gravitational constant
 pub const GRAV_CONST: f64 = 6.6743015e-11; // m^3 * kg^-1 * s^-2
 
+pub const J2000_DAY: f64 = 2451545.0;
+
 pub struct SUN;
 impl SUN {
     /// Mass of the Sun in kilograms
     pub const MASS: f64 = 1.9891e30; // kg
     /// Radius of the Sun in meters
     pub const RADIUS_EQUATOR: f64 = 9.6e7; // m
+    pub const RADIUS_POLE: f64 = 9.5e7; // m
     /// Sun centered gravitational parameter
     pub const GRAV_PARAM: f64 = SUN::MASS * GRAV_CONST;
     pub const LUMINOSITY: f64 = 3.828e26; // Watts
@@ -61,6 +64,17 @@ impl EARTH {
     pub const ROT_RATE: f64 = 7.2921150e-5; // radians per second;
     pub const DAYS_PER_YEAR: f64 = 365.25;
     pub const AXIAL_TILT: f64 = -23.44;
+
+}
+
+/// Earth-Sun System
+pub struct EarthSunOrbit;
+impl EarthSunOrbit{
+    pub const SEMI_MAJOR: f64 = 149.60e6; // km
+    pub const ECC: f64 = 0.0167086;
+    pub const ARG_PERIHELION: f64 = 102.9372;
+    pub const INC: f64 = 0.0;
+    pub const RAAN: f64 = 0.0;
 }
 
 pub struct MOON;
@@ -70,12 +84,16 @@ impl MOON{
     pub const GRAV_PARAM: f64 = MOON::MASS * GRAV_CONST; // m^3 * s^-2
 }
 
-pub const J2000_DAY: f64 = 2451545.0;
+// Moon-Earth System
+pub struct MoonEarthOrbit;
+impl MoonEarthOrbit{
+    pub const ECC: f64 = 0.0549;
+    pub const SEMI_MAJOR: f64 = 384400.0; // km   
+    pub const INC: f64 = 5.145;
+    pub const RAAN: f64 = 125.08;
+    pub const ARG_PERIHELION: f64 = 318.15;
+}
 
-/// Earth-Sun System
-pub const EARTH_ORBIT_SEMI_MAJOR: f64 = 149.60e6; // km
-pub const EARTH_ORBIT_ECC: f64 = 0.0167086;
-pub const EARTH_ARG_PERIHELION: f64 = 102.9372;
 
 pub struct MARS;
 impl MARS{
@@ -87,7 +105,10 @@ impl MARS{
     pub const ROT_RATE: f64 = 7.088e-5; // radians per second
 }
 
-
+// Mars-Sun System
+pub const MARS_ORBIT_SEMI_MAJOR: f64 = 227.9e6; // km
+pub const MARS_ORBIT_ECC: f64 = 0.0934;
+pub const MARS_ARG_PERIHELION: f64 = 286.5016;
 
 
 /// Electromagnetism
