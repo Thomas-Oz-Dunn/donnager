@@ -77,6 +77,19 @@ pub const EARTH_ORBIT_SEMI_MAJOR: f64 = 149.60e6; // km
 pub const EARTH_ORBIT_ECC: f64 = 0.0167086;
 pub const EARTH_ARG_PERIHELION: f64 = 102.9372;
 
+pub struct MARS;
+impl MARS{
+    pub const MASS: f64 = 6.4171e23; // kg
+    pub const RADIUS_EQUATOR: f64 = 3.3895e6; // m
+    pub const GRAV_PARAM: f64 = MARS::MASS * GRAV_CONST; // m^3 * s^-2
+    pub const ECC: f64 = 0.0934;
+    pub const SIDEREAL_DAY: f64 = 24.6229; // hours
+    pub const ROT_RATE: f64 = 7.088e-5; // radians per second
+}
+
+
+
+
 /// Electromagnetism
 /// ----------------
 
