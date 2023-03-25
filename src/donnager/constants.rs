@@ -106,9 +106,12 @@ impl MARS{
 }
 
 // Mars-Sun System
-pub const MARS_ORBIT_SEMI_MAJOR: f64 = 227.9e6; // km
-pub const MARS_ORBIT_ECC: f64 = 0.0934;
-pub const MARS_ARG_PERIHELION: f64 = 286.5016;
+pub struct MarsSunOrbit;
+impl MarsSunOrbit{
+    pub const SEMI_MAJOR: f64 = 227.9e6; // km
+    pub const ECC: f64 = 0.0934;
+    pub const ARG_PERIHELION: f64 = 286.5016;
+}
 
 
 /// Electromagnetism

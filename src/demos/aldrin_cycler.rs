@@ -3,6 +3,7 @@ Aldrin Cycler between Earth and Mars
 */
 
 use nalgebra::Vector3;
+use chrono::DateTime;
 
 use donnager::donnager::constants as cst;
 use donnager::donnager::spacetime as xyzt;
@@ -40,22 +41,21 @@ fn main() {
     let earth_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
         "Earth_Sun",
         sun::grav_param,
-        cst::EARTH_ORBIT_SEMI_MAJOR,
-        cst::EARTH_ORBIT_ECC
+        cst::EarthSunOrbit::SEMI_MAJOR,
+        cst::EarthSunOrbit::ORBIT_ECC
     );
 
     // Mars-Sun orbit
     let mars_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
         "Mars_Sun",
         sun::grav_param,
-        cst::MARS_ORBIT_SEMI_MAJOR,
-        cst::MARS_ORBIT_ECC
+        cst::MarsSunOrbit::SEMI_MAJOR,
+        cst::MarsSunOrbit::ECC
     );
-
-
 
     // select start datetime
     // search forward for optimal launch windows
+    // Compare patched conic vs 3bp fidelity
     // compare passive and active cyclers
     // plot trajectory, fuel, time
 
