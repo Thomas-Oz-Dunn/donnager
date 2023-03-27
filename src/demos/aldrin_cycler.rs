@@ -52,8 +52,10 @@ fn main() {
         cst::MarsSunOrbit::SEMI_MAJOR,
         cst::MarsSunOrbit::ECC
     );
-
+ 
     // select start datetime
+    let start_datetime = DateTime<UTC>;
+
     // search forward for optimal launch windows
     // Compare patched conic vs 3bp fidelity
     // compare passive and active cyclers
