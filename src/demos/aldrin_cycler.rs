@@ -54,7 +54,7 @@ fn main() {
     );
  
     // select start datetime
-    let start_datetime = DateTime<UTC>;
+    let start_datetime = DateTime<UTC>
 
     // search forward for optimal launch windows
     // Compare patched conic vs 3bp fidelity

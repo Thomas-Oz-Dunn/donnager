@@ -2,7 +2,7 @@
 Gravitational Bodies
 */
 
-use nalgebra::{Vector3, Matrix3};
+use nalgebra::{Vector3, Matrix3, Vector};
 use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc};
 use plotters::prelude::*;
 use std::f64::consts::PI;
@@ -10,11 +10,70 @@ use std::ops::Range;
 
 use crate::donnager::{spacetime as xyzt, constants as cst};
 
+/// Patched Conic
+pub struct PatchedConic{
+    pub name: String,
+    pub orbits: Vector<Orbit>,
+    pub maneuvers: Vector<Vector3<f64>>,
+    pub epochs: Vector<DateTime<Utc>>,
+}
+impl PatchedConic{
+
+    pub fn new(
+        name: String, 
+        orbits: Vector<Orbit>, 
+        maneuvers: Vector<Vector3<f64>>, 
+        epochs: Vector<DateTime<Utc>>
+    ) -> Self{
+        PatchedConic{
+            name: name,
+            orbits: orbits,
+            maneuvers: maneuvers,
+            epochs: epochs
+        }
+    }
+
+    pub fn calc_hohmann_maneuvers(
+        &self, 
+        start_orbit: Orbit,
+        end_orbit: Orbit,
+        start_datetime: DateTime<Utc>
+    )
+
+}
+
+
 /// Orbit structure
 /// 
 /// Variables
 /// ---------
 /// name : `String`
+/// 
+/// grav_param : `f64`
+/// 
+/// semi_major_axis : `f64`
+/// 
+/// eccentricity : `f64`
+/// 
+/// inclination : `f64`
+/// 
+/// raan : `f64`
+/// 
+/// argument_of_perigee : `f64`
+/// 
+/// mean_anomaly : `f64`
+/// 
+/// mean_motion : `f64`
+/// 
+/// epoch : `DateTime<Utc>`
+/// 
+/// Methods
+/// -------
+/// from_keplerian : `fn`
+///     Populate Orbit from Keplerian parameters
+/// 
+/// propagate : `fn`
+///     Propagate Orbit forward in time
 #[derive(Clone, Debug, PartialEq)]
 pub struct Orbit{
     pub name: String,
