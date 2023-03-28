@@ -80,22 +80,6 @@ impl Body {
         return vel
     }
 
-    /// Calculate period of orbit at semi major axis
-    /// 
-    /// Inputs
-    /// ------
-    /// semi_major_axis: `f64`
-    ///     Semi major axis of orbital ellipse
-    /// 
-    /// Outputs
-    /// -------
-    /// period: `f64`
-    ///    Period of orbit in seconds
-    pub fn calc_period(&self, semi_major_axis: f64) -> f64 {
-        let period: f64 = 2.0 * PI * (semi_major_axis.powi(3)/self.grav_param).sqrt();
-        return period
-    }
-    
     /// Calculate radius for stationary orbit above body surface
     /// 
     /// Outputs

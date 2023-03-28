@@ -2,7 +2,7 @@
 Gravitational Bodies
 */
 
-use nalgebra::{Vector3, Matrix3, Vector};
+use nalgebra::{Vector3, Matrix3};
 use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc};
 use plotters::prelude::*;
 use std::f64::consts::PI;
@@ -10,35 +10,44 @@ use std::ops::Range;
 
 use crate::donnager::{spacetime as xyzt, constants as cst};
 
-/// Patched Conic
-pub struct PatchedConic{
-    pub name: String,
-    pub orbits: Vector<Orbit>,
-    pub maneuvers: Vector<Vector3<f64>>,
-    pub epochs: Vector<DateTime<Utc>>,
+pub struct Maneuver{
+    pub delta_v: Vector3<f64>,
+    pub act_time: f64
 }
-impl PatchedConic{
 
-    pub fn new(
-        name: String, 
-        orbits: Vector<Orbit>, 
-        maneuvers: Vector<Vector3<f64>>, 
-        epochs: Vector<DateTime<Utc>>
-    ) -> Self{
-        PatchedConic{
-            name: name,
-            orbits: orbits,
-            maneuvers: maneuvers,
-            epochs: epochs
-        }
-    }
+pub fn calc_maneuvers(
+    orbit_0: Orbit,
+    orbit_f: Orbit,
+    epoch_datetime: DateTime<Utc>
+) -> Vec<Maneuver> {
+    let frame = xyzt::ReferenceFrames::ECI;
 
-    pub fn calc_hohmann_maneuvers(
-        &self, 
-        start_orbit: Orbit,
-        end_orbit: Orbit,
-        start_datetime: DateTime<Utc>
-    )
+    // Check if coplanar
+    let radius_1 = orbit_0.semi_major_axis;
+    let radius_2 = orbit_f.semi_major_axis;
+    let t_start = epoch_datetime.timestamp() as f64;
+    let (pos_0, vel_0) = orbit_0.calc_pos_vel(t_start, frame);
+    let (del1, del2) = calc_hohmann_transfer(radius_1, radius_2, vel_0.norm());
+
+    // Maneuver 1
+    let dv_1 = del1 * vel_0 / vel_0.norm();
+    let Maneuver1: Maneuver = Maneuver { delta_v: (dv_1), act_time: (t_start) };
+    
+    let name = "Transfer orbit";
+    let vel = vel_0 + dv_1;
+    let trans_orbit: Orbit = Orbit::from_pos_vel(
+        name.to_string(), orbit_0.grav_param, pos_0, vel, epoch_datetime);
+
+    let period = calc_period(trans_orbit.semi_major_axis, trans_orbit.grav_param);
+
+    // Maneuver 2
+    let time_2 = t_start + period/2.;
+    let (pos_2, vel2) = trans_orbit.calc_pos_vel(time_2, frame);
+    let dv_2 = del2 * vel2 / vel2.norm();
+    let Maneuver2: Maneuver = Maneuver { delta_v: (dv_2), act_time: (time_2) };
+
+    let maneuvers = vec![Maneuver1, Maneuver2];
+    return maneuvers
 
 }
 
@@ -748,6 +757,26 @@ impl Orbit {
 
 }
 
+
+/// Calculate period of orbit at semi major axis
+/// 
+/// Inputs
+/// ------
+/// semi_major_axis: `f64`
+///     Semi major axis of orbital ellipse
+/// 
+/// grav_param: `f64`
+///     Gravitational Parameter
+/// 
+/// Outputs
+/// -------
+/// period: `f64`
+///    Period of orbit in seconds
+pub fn calc_period(semi_major_axis: f64, grav_param: f64) -> f64 {
+    let period: f64 = 2.0 * PI * (semi_major_axis.powi(3)/grav_param).sqrt();
+    return period
+}
+
 /// Calculate the eccentricity vector from the velocity and position vectors
 /// 
 /// Inputs
@@ -860,19 +889,18 @@ pub fn calc_semi_major_axis(grav_param: f64, mean_motion: f64) -> f64 {
 /// 
 /// Outputs
 /// -------
-/// delta_v_total : `f64`
+/// delta_v_1, delta_v_2 : `f64`
 ///     Total delta v for maneuver
 pub fn calc_hohmann_transfer(
     radius_1: f64,
     radius_2: f64,
     vel_0: f64
-) -> f64 {
+) -> (f64, f64) {
     let delta_v_1: f64 = vel_0 * (((2.0 * radius_2)/(radius_1 + radius_2)).sqrt()- 1.0);
     let delta_v_2_num: f64 = (radius_1 / radius_2).sqrt() + (2.0 * radius_1);
     let delta_v_2_den: f64 = (radius_2 *(1.0 + radius_2 / radius_1)).sqrt();
     let delta_v_2: f64 = vel_0 * delta_v_2_num / delta_v_2_den; 
-    let delta_v_total: f64 = delta_v_1 + delta_v_2;
-    return delta_v_total
+    return (delta_v_1, delta_v_2);
 }
 
 /// Calculate sphere of influence for a body
@@ -916,9 +944,9 @@ mod orbit_tests {
         let radius_1: f64 = 5000.;
         let radius_2: f64 = 5500.;
         let vel_0: f64 = 10.;
-        let deltav: f64 = calc_hohmann_transfer(radius_1, radius_2, vel_0);
-
-        assert_eq!(deltav, 930.8082549013038);
+        let deltav: (f64, f64) = calc_hohmann_transfer(radius_1, radius_2, vel_0);
+        // TODO-TD: fix
+        assert_eq!(deltav, (930.8082549013038, 0.));
 
     }
 
