@@ -20,33 +20,44 @@ pub fn calc_maneuvers(
     orbit_f: Orbit,
     epoch_datetime: DateTime<Utc>
 ) -> Vec<Maneuver> {
-    let frame = xyzt::ReferenceFrames::ECI;
+    let frame: xyzt::ReferenceFrames = xyzt::ReferenceFrames::ECI;
 
-    // Check if coplanar
-    let radius_1 = orbit_0.semi_major_axis;
-    let radius_2 = orbit_f.semi_major_axis;
-    let t_start = epoch_datetime.timestamp() as f64;
+    if orbit_0.inclination != orbit_f.inclination {
+        // Make coplanar
+
+
+    }
+
+    // Hohmann transfer
+    let radius_1: f64 = orbit_0.semi_major_axis;
+    let radius_2: f64 = orbit_f.semi_major_axis;
+    let t_start: f64 = epoch_datetime.timestamp() as f64;
     let (pos_0, vel_0) = orbit_0.calc_pos_vel(t_start, frame);
     let (del1, del2) = calc_hohmann_transfer(radius_1, radius_2, vel_0.norm());
 
     // Maneuver 1
     let dv_1 = del1 * vel_0 / vel_0.norm();
-    let Maneuver1: Maneuver = Maneuver { delta_v: (dv_1), act_time: (t_start) };
+    let man1: Maneuver = Maneuver { delta_v: (dv_1), act_time: (t_start) };
     
     let name = "Transfer orbit";
     let vel = vel_0 + dv_1;
     let trans_orbit: Orbit = Orbit::from_pos_vel(
-        name.to_string(), orbit_0.grav_param, pos_0, vel, epoch_datetime);
+        name.to_string(), 
+        orbit_0.grav_param, 
+        pos_0, 
+        vel, 
+        epoch_datetime);
 
-    let period = calc_period(trans_orbit.semi_major_axis, trans_orbit.grav_param);
+    let period: f64 = calc_period(trans_orbit.semi_major_axis, trans_orbit.grav_param);
 
     // Maneuver 2
-    let time_2 = t_start + period/2.;
+    let time_2: f64 = t_start + period/2.;
     let (pos_2, vel2) = trans_orbit.calc_pos_vel(time_2, frame);
     let dv_2 = del2 * vel2 / vel2.norm();
-    let Maneuver2: Maneuver = Maneuver { delta_v: (dv_2), act_time: (time_2) };
+    let man2: Maneuver = Maneuver { delta_v: (dv_2), act_time: (time_2) };
 
-    let maneuvers = vec![Maneuver1, Maneuver2];
+    let maneuvers = vec![man1, man2];
+
     return maneuvers
 
 }
@@ -954,8 +965,8 @@ mod orbit_tests {
     fn test_hill_sphere(){
         let earth_mass: f64 = cst::EARTH::MASS;
         let sun_mass: f64 = cst::SUN::MASS;
-        let earth_orbit_semi_major: f64 = cst::EARTH_ORBIT_SEMI_MAJOR;
-        let earth_orbit_ecc: f64 = cst::EARTH_ORBIT_ECC;
+        let earth_orbit_semi_major: f64 = cst::EarthSunOrbit::SEMI_MAJOR;
+        let earth_orbit_ecc: f64 = cst::EarthSunOrbit::ECC;
 
         let sphere_rad: f64 = calc_hill_sphere(
             sun_mass, 

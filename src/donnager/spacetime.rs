@@ -76,9 +76,27 @@ impl Body {
     /// val: `f64`
     ///     Required tangential velocity magnitude
     pub fn calc_orbital_velocity_mag(&self, radius: f64) -> f64 {
-        let vel: f64 = (2.0 * self.grav_param / radius).sqrt();
+        let vel: f64 = (self.grav_param / radius).sqrt();
         return vel
     }
+
+
+    /// Calculate required escape velocity at radial distance
+    /// 
+    /// Inputs
+    /// ------
+    /// radius: `f64`
+    ///     Radius in km from Body center
+    ///     
+    /// Outputs
+    /// -------
+    /// val: `f64`
+    ///     Required tangential velocity magnitude
+    pub fn calc_escape_velocity_mag(&self, radius: f64) -> f64 {
+        let vel: f64 = (2. as f64).sqrt() * self.calc_orbital_velocity_mag(radius);
+        return vel
+    }
+
 
     /// Calculate radius for stationary orbit above body surface
     /// 
@@ -245,7 +263,7 @@ pub fn calc_day_length(
     let j_star: f64 = (j2000_days as f64) - long_deg / 360.;
     let m: f64 = (357.5291 + 0.98560028 * j_star) % 360.;
     let eq_cen: f64 = 1.9148*(m.sin()) + 0.02*((2.*m).sin()) + 0.0003*((3.*m).sin());
-    let lambda: f64 = (m + eq_cen + 180. + cst::EARTH_ARG_PERIHELION) % 360.;
+    let lambda: f64 = (m + eq_cen + 180. + cst::EarthSunOrbit::ARG_PERIHELION) % 360.;
     let sun_dec_rad: f64 = (lambda.sin() * (cst::EARTH::AXIAL_TILT).sin()).asin();
     let tan_lat: f64 = (lat_deg * cst::DEG_TO_RAD).tan();
 
@@ -548,7 +566,7 @@ pub fn lla_to_ecef(lla: Vector3<f64>) -> Vector3<f64> {
 pub fn calc_prime_vertical(lat_deg: f64) -> f64 {
     let lat_radians: f64 = PI * lat_deg / 180.0;
     let radius: f64 = 
-        cst::EARTH_ORBIT_SEMI_MAJOR / (1.0 - (cst::EARTH::ECC * lat_radians.sin()).powi(2)).sqrt();
+        cst::EARTH::RADIUS_EQUATOR / (1.0 - (cst::EARTH::ECC * lat_radians.sin()).powi(2)).sqrt();
     return radius
 }
 
