@@ -36,7 +36,11 @@ pub fn calc_next_hohmann_launch_windows(
     let period_2 = orbit_2.calc_period();
     let synodic_period = period_1 / period_2;
 
-    
+    let epoch_time = start_datetime.timestamp as f64 - orbit_1.epoch.timestamp as f64;;
+    let true_anonmaly_0_1 = orbit_1.calc_true_anomaly(epoch_time);
+
+    let epoch_time = start_datetime.timestamp as f64 - orbit_2.epoch.timestamp as f64;;
+    let true_anonmaly_0_2 = orbit_2.calc_true_anomaly(epoch_time);
 
 }
 

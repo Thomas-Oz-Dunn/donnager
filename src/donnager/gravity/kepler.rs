@@ -360,15 +360,9 @@ impl Orbit {
         time: f64, 
         frame: xyzt::ReferenceFrames
     ) -> (Vector3<f64>, Vector3<f64>) {
-        let mean_anom: f64 = (
-            self.mean_anomaly + self.mean_motion * time) * cst::DEG_TO_RAD;
+ 
 
-        let ecc_anom: f64 = (
-            mean_anom - self.eccentricity * cst::DEG_TO_RAD * (
-                1.0 - mean_anom.cos())) * cst::DEG_TO_RAD;
-        
-        let true_anomaly_rad: f64 = 2.0 * (
-            ecc_anom.sin()).atan2(-ecc_anom.cos());
+        let true_anomaly_rad: f64 = self.calc_true_anomaly(time);
         let cos_true_anom: f64 = true_anomaly_rad.cos();
         let sin_true_anom: f64 = true_anomaly_rad.sin();
 
@@ -432,6 +426,19 @@ impl Orbit {
                 return (lla_pos, lla_vel);
             }
         }
+    }
+
+    /// Calculate true anomaly in radians
+    fn calc_true_anomaly(&self, time: f64) -> f64 {
+        let mean_anom: f64 = (
+            self.mean_anomaly + self.mean_motion * time) * cst::DEG_TO_RAD;
+        let ecc_anom: f64 = (
+            mean_anom - self.eccentricity * cst::DEG_TO_RAD * (
+                1.0 - mean_anom.cos())) * cst::DEG_TO_RAD;
+        
+        let true_anomaly_rad: f64 = 2.0 * (
+            ecc_anom.sin()).atan2(-ecc_anom.cos());
+        return true_anomaly_rad
     }
 
     /// Calculate perifocal to eci rotation matrix
@@ -766,6 +773,11 @@ impl Orbit {
     }
 
 
+    /// Calculate orbital period
+    pub fn calc_period(&self) -> f64 {
+        return calc_period(self.semi_major_axis, self.grav_param)
+    }
+
 }
 
 
@@ -805,7 +817,7 @@ pub fn calc_period(semi_major_axis: f64, grav_param: f64) -> f64 {
 /// -------
 /// ecc_vec: `Vector3<f64>`           
 ///     Eccentricity vector
-fn calc_ecc_vec(
+pub fn calc_ecc_vec(
     pos: Vector3<f64>,
     vel: Vector3<f64>, 
     grav_param: f64
