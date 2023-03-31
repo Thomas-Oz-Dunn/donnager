@@ -67,3 +67,9 @@ pub fn calc_lagrange_points(
     let l5 = Vec3::new([mass_ratio - 0.5, (3.).sqrt()/2., 0.]);
     return vec![l1, l2, l3, l4, l5]
 }
+
+
+#[cfg(test)]
+mod interplan_tests {
+
+}
