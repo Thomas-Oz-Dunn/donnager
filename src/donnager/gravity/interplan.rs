@@ -46,7 +46,7 @@ pub fn calc_next_hohmann_launch_windows(
 
 
 
-/// Calculate planar lagrange point locations in DU
+/// Calculate lagrange point locations in DU
 /// 
 /// Inputs
 /// ------
@@ -58,10 +58,12 @@ pub fn calc_next_hohmann_launch_windows(
 pub fn calc_lagrange_points(
     mass_1: f64,
     mass_2: f64
-) -> Vec<Vec2<f64>> {
+) -> Vec<Vec3<f64>> {
     let mass_ratio: f64= mass_2 / (mass_1 + mass2);
-
-    let l4 = Vec2::new([mass_ratio - 0.5, -(3.).sqrt()/2.]);
-    let l5 = Vec2::new([mass_ratio - 0.5, (3.).sqrt()/2.]);
-    return vec![l4, l5]
+    let l1 = Vec3::new([xl1,0.,0.]);
+    let l2 = Vec3::new([xl2 ,0.,0.]);
+    let l3 = Vec3::new([xl3 ,0.,0.]);
+    let l4 = Vec3::new([mass_ratio - 0.5, -(3.).sqrt()/2., 0.]);
+    let l5 = Vec3::new([mass_ratio - 0.5, (3.).sqrt()/2., 0.]);
+    return vec![l1, l2, l3, l4, l5]
 }
