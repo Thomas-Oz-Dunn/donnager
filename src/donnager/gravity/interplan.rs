@@ -64,10 +64,13 @@ pub fn calc_lagrange_points(
 ) -> Vec<Vec3<f64>> {
     let mass_ratio: f64= mass_2 / (mass_1 + mass2);
 
-    // involves real quintic roots
-    let l1 = Vec3::new([xl1,0.,0.]);
-    let l2 = Vec3::new([xl2 ,0.,0.]);
-    let l3 = Vec3::new([xl3 ,0.,0.]);
+    // Permissible if mass_2 is <<<< mass_1
+    let xl12 = (mass_2/(3*mass_1)).powf(1./3.);
+    let xl3 = 7*mass_2 / (12 * mass_1);
+
+    let l1 = Vec3::new([1 - xl12, 0.,0.]);
+    let l2 = Vec3::new([1 + xl12 ,0.,0.]);
+    let l3 = Vec3::new([-xl3 ,0.,0.]);
     let l4 = Vec3::new([mass_ratio - 0.5, -(3.).sqrt()/2., 0.]);
     let l5 = Vec3::new([mass_ratio - 0.5, (3.).sqrt()/2., 0.]);
     return vec![l1, l2, l3, l4, l5]
