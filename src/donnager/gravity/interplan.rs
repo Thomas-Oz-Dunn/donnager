@@ -23,27 +23,30 @@ pub fn calc_esc_vel(
 }
 
 
-/// Calculate next hohmann transfer launch windows
+/// Calculate next hohmann transfer launch window
 /// 
-pub fn calc_next_hohmann_launch_windows(
+pub fn calc_next_hohmann_launch_window(
     start_datetime: DateTime<UTC>,
     orbit_1: kepler::Orbit,
-    orbit_2: kepler::Orbit,
-    n_windows: usize
+    orbit_2: kepler::Orbit
 ) -> Vec<DateTime<UTC>>{
 
     let period_1 = orbit_1.calc_period();
     let period_2 = orbit_2.calc_period();
     let synodic_period = period_1 / period_2;
 
-    let epoch_time = start_datetime.timestamp as f64 - orbit_1.epoch.timestamp as f64;;
+    let epoch_time = start_datetime.timestamp as f64;
     let true_anonmaly_0_1 = orbit_1.calc_true_anomaly(epoch_time);
 
-    let epoch_time = start_datetime.timestamp as f64 - orbit_2.epoch.timestamp as f64;;
+    let epoch_time = start_datetime.timestamp as f64;
     let true_anonmaly_0_2 = orbit_2.calc_true_anomaly(epoch_time);
 
-}
+    let diff = true_anonmaly_0_2 - true_anonmaly_0_1;
+    // Find diff =  +/- 180
+    let distance = (180 - diff) / synodic_period;
 
+
+}
 
 
 /// Calculate lagrange point locations in DU
@@ -60,6 +63,8 @@ pub fn calc_lagrange_points(
     mass_2: f64
 ) -> Vec<Vec3<f64>> {
     let mass_ratio: f64= mass_2 / (mass_1 + mass2);
+
+    // involves real quintic roots
     let l1 = Vec3::new([xl1,0.,0.]);
     let l2 = Vec3::new([xl2 ,0.,0.]);
     let l3 = Vec3::new([xl3 ,0.,0.]);
@@ -72,4 +77,10 @@ pub fn calc_lagrange_points(
 #[cfg(test)]
 mod interplan_tests {
 
+    use super::*;
+
+    #[test]
+    fn test_calc_esc_vel()
+    {
+    }
 }
