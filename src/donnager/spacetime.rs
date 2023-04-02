@@ -437,7 +437,7 @@ pub fn julian_to_gregorian(
 /// Outputs
 /// -------
 /// radius: `f64`
-///     Schwarzchild radius in km
+///     Schwarzchild radius in m
 pub fn calc_schwarzchild_radius(
     mass: f64
 ) -> f64 {
@@ -663,6 +663,14 @@ mod spacetime_tests {
         let day_light_hrs: f64 = calc_day_length(lat_deg, long_deg, julian_day);
         assert_eq!(day_light_hrs, 8.54933135165009);
 
+    }
+
+
+    #[test]
+    fn test_schwarzchild_radius(){
+        let mass: f64 = 1.0;
+        let radius: f64 = calc_schwarzchild_radius(mass);
+        assert_eq!(radius, 2.9515931089239486);
     }
 
 

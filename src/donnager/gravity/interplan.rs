@@ -85,5 +85,9 @@ mod interplan_tests {
     #[test]
     fn test_calc_esc_vel()
     {
+        let orb_radius_0 = 1.;
+        let orb_radius_f = 2.;
+        let esc_vel = calc_esc_vel(orb_radius_0, orb_radius_f);
+        assert_eq!(esc_vel, 0.5);
     }
 }
