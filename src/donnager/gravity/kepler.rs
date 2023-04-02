@@ -429,7 +429,7 @@ impl Orbit {
     }
 
     /// Calculate true anomaly in radians
-    fn calc_true_anomaly(&self, time: f64) -> f64 {
+    pub fn calc_true_anomaly(&self, time: f64) -> f64 {
         let mean_anom: f64 = (
             self.mean_anomaly + self.mean_motion * time) * cst::DEG_TO_RAD;
         let ecc_anom: f64 = (
