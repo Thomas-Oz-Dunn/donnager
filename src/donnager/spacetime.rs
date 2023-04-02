@@ -676,5 +676,28 @@ mod spacetime_tests {
 
     #[test]
     fn test_ecef_to_lla(){
+        let pos_ecef = Vector3::new(
+            -2383.0,
+            -4662.0,
+            5124.0
+        );
+        let pos_lla = ecef_to_lla(pos_ecef);
+        assert_eq!(pos_lla, Vector3::new(
+            44.54968779193849, 
+            -117.07402908139512, 
+            958238.4011472173));
+    }
+
+    #[test]
+    fn test_lla_to_ecef(){
+        let pos_lla = Vector3::new(
+            44.54968779193849, 
+            -117.07402908139512, 
+            958238.4011472173);
+        let pos_ecef = lla_to_ecef(pos_lla);
+        assert_eq!(pos_ecef, Vector3::new(
+            -2383.0,
+            -4662.0,
+            5124.0));
     }
 }

@@ -8,12 +8,38 @@ use plotters::prelude::*;
 use std::f64::consts::PI;
 use std::ops::Range;
 
-use crate::donnager::{spacetime as xyzt, constants as cst};
+use crate::donnager::{spacetime as xyzt, constants::{self as cst, DEG_TO_RAD}};
 
 pub struct Maneuver{
     pub delta_v: Vector3<f64>,
     pub act_time: f64
 }
+
+pub fn calc_coplanar_maneuver(
+    orbit_0: Orbit,
+    orbit_f: Orbit,
+    epoch_datetime: DateTime<Utc>
+) -> Maneuver {
+
+    let cos_i_0 = (orbit_0.inclination * DEG_TO_RAD).cos();
+    let cos_i_1 = (orbit_f.inclination * DEG_TO_RAD).cos();
+    let sin_i_0 = (orbit_0.inclination * DEG_TO_RAD).sin();
+    let sin_i_1 = (orbit_f.inclination * DEG_TO_RAD).sin();
+    let theta= ((
+        orbit_f.raan * DEG_TO_RAD - orbit_0.raan * DEG_TO_RAD).cos()* sin_i_1 * sin_i_0 + cos_i_0*cos_i_1).acos();
+
+    let frame: xyzt::ReferenceFrames = xyzt::ReferenceFrames::ECI;
+    let t_start: f64 = epoch_datetime.timestamp() as f64;
+
+    let (_, vel_0) = orbit_0.calc_pos_vel(t_start, frame);
+    let (_, vel_f) = orbit_f.calc_pos_vel(t_start, frame);
+
+    let delv = vel_f - vel_0;
+    let man: Maneuver = Maneuver { delta_v: (delv), act_time: (t_start) };
+
+    return man
+}
+
 
 pub fn calc_maneuvers(
     orbit_0: Orbit,
@@ -24,7 +50,8 @@ pub fn calc_maneuvers(
 
     if orbit_0.inclination != orbit_f.inclination {
         // Make coplanar
-
+        let delv = calc_coplanar_maneuver(orbit_0, orbit_f, epoch_datetime);
+        return vec![delv]
 
     }
 
@@ -52,7 +79,7 @@ pub fn calc_maneuvers(
 
     // Maneuver 2
     let time_2: f64 = t_start + period/2.;
-    let (pos_2, vel2) = trans_orbit.calc_pos_vel(time_2, frame);
+    let (_, vel2) = trans_orbit.calc_pos_vel(time_2, frame);
     let dv_2 = del2 * vel2 / vel2.norm();
     let man2: Maneuver = Maneuver { delta_v: (dv_2), act_time: (time_2) };
 
