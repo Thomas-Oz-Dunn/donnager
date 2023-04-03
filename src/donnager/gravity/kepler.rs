@@ -70,12 +70,12 @@ pub fn calc_maneuvers(
     let vel = vel_0 + dv_1;
     let trans_orbit: Orbit = Orbit::from_pos_vel(
         name.to_string(), 
-        orbit_0.grav_param, 
+        orbit_0.central_body, 
         pos_0, 
         vel, 
         epoch_datetime);
 
-    let period: f64 = calc_period(trans_orbit.semi_major_axis, trans_orbit.grav_param);
+    let period: f64 = trans_orbit.calc_period();
 
     // Maneuver 2
     let time_2: f64 = t_start + period/2.;
@@ -124,7 +124,7 @@ pub fn calc_maneuvers(
 #[derive(Clone, Debug, PartialEq)]
 pub struct Orbit{
     pub name: String,
-    pub grav_param: f64,
+    pub central_body: xyzt::Body,
     pub semi_major_axis: f64, 
     pub eccentricity: f64,
     pub inclination: f64,
@@ -177,7 +177,7 @@ impl Orbit {
     ///     Orbit structure with populated Keplerian parameters.
     pub fn from_keplerian(
         name: String,
-        grav_param: f64,
+        central_body: xyzt::Body,
         semi_major_axis: f64, 
         eccentricity: f64,
         inclination: f64,
@@ -189,7 +189,7 @@ impl Orbit {
     ) -> Self {
         Orbit {
             name,
-            grav_param,
+            central_body,
             semi_major_axis,
             eccentricity,
             inclination,
@@ -306,10 +306,18 @@ impl Orbit {
         // Two Line element usage assumes Earth Centered
         let semi_major_axis: f64 = calc_semi_major_axis(
             cst::EARTH::GRAV_PARAM, mean_motion);
-    
+
+        let earth: xyzt::Body = xyzt::Body {
+            name: "Earth".to_string(),
+            grav_param: cst::EARTH::GRAV_PARAM,
+            eq_radius: cst::EARTH::RADIUS_EQUATOR,
+            rotation_rate: cst::EARTH::ROT_RATE,
+            eccentricity: cst::EARTH::ECC
+        };
+
         Orbit {
             name: name.to_string(),
-            grav_param: cst::EARTH::GRAV_PARAM,
+            central_body: earth,
             semi_major_axis,
             raan,
             eccentricity: ecc,
@@ -347,11 +355,12 @@ impl Orbit {
     ///     Orbit object with populated fields.
     pub fn from_pos_vel(
         name: String,
-        grav_param: f64,
+        central_body: xyzt::Body,
         pos: Vector3<f64>,
         vel: Vector3<f64>,
         epoch_datetime: DateTime<Utc>
     ) -> Self {
+        let grav_param: f64 = central_body.grav_param;
         let spec_ang_moment: Vector3<f64> = pos.cross(&vel);
         let ecc_vec: Vector3<f64> = calc_ecc_vec(pos, vel, grav_param);
         let ascend_node_vec: Vector3<f64> = Vector3::z_axis().cross(&spec_ang_moment);
@@ -361,7 +370,7 @@ impl Orbit {
 
         Orbit {
             name,
-            grav_param,
+            central_body,
             semi_major_axis,
             eccentricity: ecc_vec.norm(),
             raan: calc_raan(ascend_node_vec),
@@ -531,7 +540,7 @@ impl Orbit {
 
         let new_orbit: Orbit = Orbit::from_pos_vel(
             self.name.clone(), 
-            self.grav_param, 
+            self.central_body.clone(), 
             motion.0, 
             motion.1, 
             new_epoch_datetime);
@@ -802,7 +811,7 @@ impl Orbit {
 
     /// Calculate orbital period
     pub fn calc_period(&self) -> f64 {
-        return calc_period(self.semi_major_axis, self.grav_param)
+        return calc_period(self.semi_major_axis, self.central_body.grav_param)
     }
 
 }
