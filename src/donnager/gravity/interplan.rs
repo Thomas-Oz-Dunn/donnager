@@ -4,6 +4,7 @@ Interplanetary Planner
 
 use nalgebra::{Vector3};
 use chrono::{DateTime, Utc};
+use plotters::prelude::*;
 
 use crate::donnager::{constants as cst, gravity::kepler as kepler};
 
@@ -66,9 +67,33 @@ pub fn calc_next_hohmann_launch_window(
 }
 
 
-pub fn show_trajectory(){}
+pub fn show_trajectory(
+    Orbits: Vec<Orbit>,
+    Maneuvers: Vec<Maneuver>
+){
+    // Create drawing canvas of solar system bodies
 
-pub fn show_porkchop_plots(){}
+    // Plot each orbital ellipse in the plane
+
+    // Plot each maneuver location, magnitude, and direction
+
+
+}
+
+pub fn show_porkchop_plots(
+    start_datetime: DateTime<Utc>,
+    orbit_1: kepler::Orbit,
+    orbit_2: kepler::Orbit
+){
+    // Launch date x_axis
+    // Arrival date y_axis
+
+    // Plot Delta v contours
+
+
+    // Travel time lines
+
+}
 
 
 /// Calculate lagrange point locations in DU
