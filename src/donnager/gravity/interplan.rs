@@ -5,6 +5,7 @@ Interplanetary Planner
 use nalgebra::{Vector3};
 use chrono::{DateTime, Utc};
 use plotters::prelude::*;
+use std::ops::Range;
 
 use crate::donnager::{constants as cst, gravity::kepler as kepler};
 
@@ -120,15 +121,24 @@ pub fn show_porkchop_plots(
                 FontStyle::Bold, 
                 &BLACK)
                 .into_text_style(&drawing_area));
+    let x_spec: Range<chrono::NaiveDate> = 
+        (datetime_lauch_window.0.date_naive())..(datetime_lauch_window.1.date_naive());  
 
-        
+    // Determine from shortest trip from first date and longest trip from last date
+    let y_spec: Range<f64> = -180.0..180.;  
 
-    // Launch date x_axis
-    
-    // Arrival date y_axis
+    let mut chart = 
+            chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
+    chart
+        .configure_mesh()
+        .y_desc("Arrival Date")
+        .x_desc("Departure Date")
+        .draw()
+        .unwrap();
+
 
     // Plot Delta v contours
-
+                
 
     // Travel time lines
 
