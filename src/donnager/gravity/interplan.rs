@@ -26,66 +26,105 @@ pub fn calc_esc_vel(
 }
 
 
-/// Calculate next hohmann transfer launch window
+// /// Calculate next hohmann transfer launch window
+// /// 
+// /// Inputs
+// /// ------
+// /// start_datetime: `DateTime<Utc>`
+// ///     Start datetime for search
+// /// 
+// /// orbit_1: `Orbit`
+// ///     Orbit of starting planet
+// /// 
+// /// orbit_2: `Orbit`
+// ///     Orbit of ending planet
+// /// 
+// /// Outputs
+// /// -------
+// /// `Vec<DateTime<Utc>>`
+// ///     Vector of launch windows
+// pub fn calc_next_hohmann_launch_window(
+//     start_datetime: DateTime<Utc>,
+//     orbit_1: kepler::Orbit,
+//     orbit_2: kepler::Orbit
+// ) -> Vec<DateTime<Utc>>{
+
+//     let period_1 = orbit_1.calc_period();
+//     let period_2 = orbit_2.calc_period();
+//     let synodic_period = period_1 / period_2;
+
+//     let epoch_time = start_datetime.timestamp() as f64;
+//     let true_anonmaly_0_1 = orbit_1.calc_true_anomaly(epoch_time);
+
+//     let epoch_time = start_datetime.timestamp() as f64;
+//     let true_anonmaly_0_2 = orbit_2.calc_true_anomaly(epoch_time);
+
+//     let diff = true_anonmaly_0_2 - true_anonmaly_0_1;
+//     // Find diff =  +/- 180
+//     let distance = (180. - diff) / synodic_period;
+
+
+// }
+
+
+// pub fn show_trajectory(
+//     Orbits: Vec<Orbit>,
+//     Maneuvers: Vec<Maneuver>
+// ){
+//     // Create drawing canvas of solar system bodies
+
+//     // Plot each orbital ellipse in the plane
+
+//     // Plot each maneuver location, magnitude, and direction
+
+
+// }
+
+/// Show orbital transfer porkchop plots
 /// 
 /// Inputs
 /// ------
-/// start_datetime: `DateTime<Utc>`
-///     Start datetime for search
 /// 
-/// orbit_1: `Orbit`
-///     Orbit of starting planet
-/// 
-/// orbit_2: `Orbit`
-///     Orbit of ending planet
-/// 
-/// Outputs
-/// -------
-/// `Vec<DateTime<Utc>>`
-///     Vector of launch windows
-pub fn calc_next_hohmann_launch_window(
-    start_datetime: DateTime<Utc>,
-    orbit_1: kepler::Orbit,
-    orbit_2: kepler::Orbit
-) -> Vec<DateTime<Utc>>{
-
-    let period_1 = orbit_1.calc_period();
-    let period_2 = orbit_2.calc_period();
-    let synodic_period = period_1 / period_2;
-
-    let epoch_time = start_datetime.timestamp() as f64;
-    let true_anonmaly_0_1 = orbit_1.calc_true_anomaly(epoch_time);
-
-    let epoch_time = start_datetime.timestamp() as f64;
-    let true_anonmaly_0_2 = orbit_2.calc_true_anomaly(epoch_time);
-
-    let diff = true_anonmaly_0_2 - true_anonmaly_0_1;
-    // Find diff =  +/- 180
-    let distance = (180. - diff) / synodic_period;
-
-
-}
-
-
-pub fn show_trajectory(
-    Orbits: Vec<Orbit>,
-    Maneuvers: Vec<Maneuver>
-){
-    // Create drawing canvas of solar system bodies
-
-    // Plot each orbital ellipse in the plane
-
-    // Plot each maneuver location, magnitude, and direction
-
-
-}
-
 pub fn show_porkchop_plots(
-    start_datetime: DateTime<Utc>,
+    datetime_lauch_window: (DateTime<Utc>, DateTime<Utc>),
     orbit_1: kepler::Orbit,
     orbit_2: kepler::Orbit
 ){
+    let pathname = format!(
+        "{}_to_{}_time_vs_fuel_{:?}.png",  
+        orbit_1.central_body.name, 
+        orbit_2.central_body.name,
+        datetime_lauch_window.0);
+
+    let plottitle = format!(
+        "{} to {}", 
+        orbit_1.central_body.name, 
+        orbit_2.central_body.name);
+    let drawing_area = 
+        BitMapBackend::new(&pathname, (500, 500))
+            .into_drawing_area();
+
+    let mut chart_builder = ChartBuilder::on(&drawing_area);
+
+    drawing_area
+        .fill(&WHITE)
+        .unwrap();
+
+    chart_builder
+        .margin(5)
+        .set_left_and_bottom_label_area_size(35)
+        .caption(
+            plottitle, (
+                "Times New Roman", 
+                20, 
+                FontStyle::Bold, 
+                &BLACK)
+                .into_text_style(&drawing_area));
+
+        
+
     // Launch date x_axis
+    
     // Arrival date y_axis
 
     // Plot Delta v contours
