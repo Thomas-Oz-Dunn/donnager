@@ -85,7 +85,14 @@ pub fn calc_esc_vel(
 /// 
 /// Inputs
 /// ------
+/// datetime_launch_window: `(DateTime<Utc>, DateTime<Utc>)`
+///     Start and end datetime for plot
 /// 
+/// orbit_1: `Orbit`
+///     Orbit of starting planet
+/// 
+/// orbit_2: `Orbit`
+///     Orbit of ending planet
 pub fn show_porkchop_plots(
     datetime_lauch_window: (DateTime<Utc>, DateTime<Utc>),
     orbit_1: kepler::Orbit,
@@ -138,7 +145,7 @@ pub fn show_porkchop_plots(
 
 
     // Plot Delta v contours
-                
+
 
     // Travel time lines
 
