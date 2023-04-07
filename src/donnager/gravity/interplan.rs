@@ -193,4 +193,13 @@ mod interplan_tests {
         let esc_vel = calc_esc_vel(orb_radius_0, orb_radius_f);
         assert_eq!(esc_vel, 0.5);
     }
+
+    #[test]
+    fn test_calc_lagrange_points()
+    {
+        let mass_1 = 1.;
+        let mass_2 = 0.001;
+        let l_points = calc_lagrange_points(mass_1, mass_2);
+        assert_eq!(l_points[0], Vector3::new(0.999, 0., 0.));
+    }
 }
