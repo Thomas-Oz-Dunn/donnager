@@ -188,17 +188,17 @@ mod interplan_tests {
     #[test]
     fn test_calc_esc_vel()
     {
-        let orb_radius_0 = 1.;
-        let orb_radius_f = 2.;
-        let esc_vel = calc_esc_vel(orb_radius_0, orb_radius_f);
+        let orb_radius_0: f64 = 1.;
+        let orb_radius_f: f64 = 2.;
+        let esc_vel: f64 = calc_esc_vel(orb_radius_0, orb_radius_f);
         assert_eq!(esc_vel, 0.5);
     }
 
     #[test]
     fn test_calc_lagrange_points()
     {
-        let mass_1 = 1.;
-        let mass_2 = 0.001;
+        let mass_1: f64 = 1.;
+        let mass_2: f64 = 0.001;
         let l_points = calc_lagrange_points(mass_1, mass_2);
         assert_eq!(l_points[0], Vector3::new(0.999, 0., 0.));
     }

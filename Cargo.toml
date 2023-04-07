@@ -15,6 +15,10 @@ edition = "2021"
 name = "donnager"
 
 [[bin]]
+name = "aldrin_cyclers"
+path = "src/demos/aldrin_cycle.rs"
+
+[[bin]]
 name = "launch_cost"
 path = "src/demos/launch_cost.rs"
 
