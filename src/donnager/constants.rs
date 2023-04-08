@@ -6,15 +6,32 @@ Constants
 
 use std::f64::consts::PI;
 
-/// Math
-/// ----
-
-/// Degrees to radians
+/// Degrees to radians 
+/// 
+/// Source:
+/// 
+/// https://en.wikipedia.org/wiki/Radian
 pub const DEG_TO_RAD: f64 = PI / 180.0;
-/// Radians to degrees
+
+/// Convert degrees to radians 
+/// 
+/// Source:
+/// 
+/// https://en.wikipedia.org/wiki/Radian
+pub fn to_radians(degrees: f64) -> f64 {DEG_TO_RAD * degrees}
+
+/// Radians to degrees 
+/// 
+/// Source:
+/// 
+/// https://en.wikipedia.org/wiki/Degree_(angle)
 pub const RAD_TO_DEG: f64 = 180.0 / PI;
 
-pub fn to_radians(degrees: f64) -> f64 {DEG_TO_RAD * degrees}
+/// Convert radians to degrees
+///   
+/// Source:
+/// 
+/// https://en.wikipedia.org/wiki/Degree_(angle)
 pub fn to_degrees(radians: f64) -> f64 {RAD_TO_DEG * radians}
 
 pub const TERA: f64 = 1e12;
@@ -33,23 +50,33 @@ pub const NANO: f64 = 1e-9;
 /// -------
 
 /// Newtonian Gravitational constant
+/// 
+/// Source:
+/// https://en.wikipedia.org/wiki/Gravitational_constant
 pub const GRAV_CONST: f64 = 6.6743015e-11; // m^3 * kg^-1 * s^-2
 
+/// J2000 Reference Epoch Day
+/// 
+/// Source:
+/// https://en.wikipedia.org/wiki/J2000
 pub const J2000_DAY: f64 = 2451545.0;
 
+/// Physical Constants of the Sun
+/// 
+/// Source:
+/// https://en.wikipedia.org/wiki/Sun
 pub struct SUN;
 impl SUN {
     /// Mass of the Sun in kilograms
-    pub const MASS: f64 = 1.9891e30; // kg
+    pub const MASS: f64 = 1.9885e30; // kg
     /// Radius of the Sun in meters
-    pub const RADIUS_EQUATOR: f64 = 9.6e7; // m
-    pub const RADIUS_POLE: f64 = 9.5e7; // m
+    pub const RADIUS_EQUATOR: f64 = 6.957e8; // m
     /// Sun centered gravitational parameter
     pub const GRAV_PARAM: f64 = SUN::MASS * GRAV_CONST;
     pub const LUMINOSITY: f64 = 3.828e26; // Watts
     /// Mean Solar Flux at 1 AU
     pub const MEAN_SOLAR_FLUX: f64 = 1366.91; // Watts * m-2
-    pub const ECC: f64 = 0.016709;
+    pub const ECC: f64 = 1.799991e-5;
 }
 
 pub struct EARTH;
