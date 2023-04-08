@@ -33,6 +33,11 @@ fn main() {
         eccentricity: cst::SUN::ECC
     };
 
+    let (year, month, day) = xyzt::julian_to_gregorian(
+        cst::J2000_DAY as i32);
+    let epoch_date_time = xyzt::ymd_hms_to_datetime(
+        year, month as u32, day as u32, 0, 0, 0);
+
     // Earth-Sun orbit
     let earth_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
         "Earth-Sun Orbit".to_string(),
@@ -41,10 +46,10 @@ fn main() {
         cst::EarthSunOrbit::ECC,
         cst::EarthSunOrbit::INC,
         cst::EarthSunOrbit::RAAN,
-        argument_of_perigee
-        mean_anomaly
-        mean_motion
-        epoch
+        cst::EarthSunOrbit::ARG_PERIHELION,
+        cst::EarthSunOrbit::MEAN_ANOMALY,
+        cst::EarthSunOrbit::MEAN_MOTION,
+        epoch_date_time
     );
 
     // Mars-Sun orbit
@@ -55,9 +60,9 @@ fn main() {
         cst::MarsSunOrbit::ECC,
         cst::MarsSunOrbit::INC,
         cst::MarsSunOrbit::RAAN,
-        argument_of_perigee
-        mean_anomaly
-        mean_motion
+        cst::MarsSunOrbit::ARG_PERIHELION,
+        cst::MarsSunOrbit::MEAN_ANOMALY,
+        cst::MarsSunOrbit::MEAN_MOTION
         epoch
     );
 

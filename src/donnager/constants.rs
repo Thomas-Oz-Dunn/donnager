@@ -2,6 +2,8 @@
 Constants
 */
 
+// TODO-TD: Provide sources for every constant
+
 use std::f64::consts::PI;
 
 /// Math
@@ -47,6 +49,7 @@ impl SUN {
     pub const LUMINOSITY: f64 = 3.828e26; // Watts
     /// Mean Solar Flux at 1 AU
     pub const MEAN_SOLAR_FLUX: f64 = 1366.91; // Watts * m-2
+    pub const ECC: f64 = 0.016709;
 }
 
 pub struct EARTH;
@@ -75,6 +78,8 @@ impl EarthSunOrbit{
     pub const ARG_PERIHELION: f64 = 102.9372;
     pub const INC: f64 = 0.0;
     pub const RAAN: f64 = 0.0;
+    pub const MEAN_MOTION: f64 = 0.98560028; // radians per day
+    pub const MEAN_ANOMALY: f64 = 0.0; // radians
 }
 
 pub struct MOON;
@@ -111,6 +116,10 @@ impl MarsSunOrbit{
     pub const SEMI_MAJOR: f64 = 227.9e6; // km
     pub const ECC: f64 = 0.0934;
     pub const ARG_PERIHELION: f64 = 286.5016;
+    pub const INC: f64 = 1.850;
+    pub const RAAN: f64 = 49.57854;
+    pub const MEAN_MOTION: f64 = 0.524; // radians per day
+    pub const MEAN_ANOMALY: f64 = 0.0; // radians
 }
 
 
