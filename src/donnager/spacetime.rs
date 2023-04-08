@@ -4,7 +4,7 @@ Space time related functions
 
 use nalgebra::{Vector3, Matrix3};
 use std::f64::consts::PI;
-use chrono::{DateTime, Utc, Datelike, Timelike};
+use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, Datelike, Timelike, Utc};
 
 use crate::donnager::constants as cst;
 
@@ -238,9 +238,6 @@ pub fn calc_eci_ecef_rotam(date_time: DateTime<Utc>) -> Matrix3<f64> {
     return rotam
 }
 
-
-
-
 /// Calculate hours of sunlight at lattitude
 /// 
 /// Inputs
@@ -425,6 +422,48 @@ pub fn julian_to_gregorian(
 
     return (year, month, day)
 
+}
+
+/// Year Month Day Hour Minute Second to DateTime
+/// 
+/// Inputs
+/// ------
+/// year: `i32`
+///     Gregorian year of common era.
+/// 
+/// month: `u32`
+///     Month of year.
+/// 
+/// day: `u32`
+///     Day of month.
+/// 
+/// hour: `u32`
+///     Hour of day.
+/// 
+/// min: `u32`
+///     Minute of hour.
+/// 
+/// sec: `u32`
+///     Second of minute.
+/// 
+/// Outputs
+/// -------
+/// date_time: `DateTime<Utc>`
+///     DateTime object in UTC.
+pub fn ymd_hms_to_datetime(
+    year: i32,
+    month: u32,
+    day: u32,
+    hour: u32,
+    min: u32,
+    sec: u32
+)-> DateTime<Utc> {
+    let date: NaiveDate = NaiveDate::from_ymd_opt(year, month, day).unwrap();
+    let time: NaiveTime = NaiveTime::from_hms_opt(hour, min, sec).unwrap();
+
+    let dt: NaiveDateTime = NaiveDateTime::new(date, time);
+    let date_time: DateTime::<Utc> = DateTime::<Utc>::from_utc(dt, Utc); 
+    return date_time
 }
 
 /// Calculate schwarzchild radius of a given mass

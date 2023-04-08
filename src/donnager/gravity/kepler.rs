@@ -3,12 +3,12 @@ Gravitational Bodies
 */
 
 use nalgebra::{Vector3, Matrix3};
-use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, TimeZone, Utc};
+use chrono::{DateTime, TimeZone, Utc};
 use plotters::prelude::*;
 use std::f64::consts::PI;
 use std::ops::Range;
 
-use crate::donnager::{spacetime as xyzt, constants::{self as cst, DEG_TO_RAD}};
+use crate::donnager::{spacetime as xyzt, constants as cst};
 
 pub struct Maneuver{
     pub delta_v: Vector3<f64>,
@@ -21,12 +21,12 @@ pub fn calc_coplanar_maneuver(
     epoch_datetime: DateTime<Utc>
 ) -> Maneuver {
 
-    let cos_i_0 = (orbit_0.inclination * DEG_TO_RAD).cos();
-    let cos_i_1 = (orbit_f.inclination * DEG_TO_RAD).cos();
-    let sin_i_0 = (orbit_0.inclination * DEG_TO_RAD).sin();
-    let sin_i_1 = (orbit_f.inclination * DEG_TO_RAD).sin();
-    let theta= ((
-        orbit_f.raan * DEG_TO_RAD - orbit_0.raan * DEG_TO_RAD).cos()* sin_i_1 * sin_i_0 + cos_i_0*cos_i_1).acos();
+    // let cos_i_0 = (orbit_0.inclination * cst::DEG_TO_RAD).cos();
+    // let cos_i_1 = (orbit_f.inclination * cst::DEG_TO_RAD).cos();
+    // let sin_i_0 = (orbit_0.inclination * cst::DEG_TO_RAD).sin();
+    // let sin_i_1 = (orbit_f.inclination * cst::DEG_TO_RAD).sin();
+    // let theta= ((
+    //     orbit_f.raan * cst::DEG_TO_RAD - orbit_0.raan * cst::DEG_TO_RAD).cos()* sin_i_1 * sin_i_0 + cos_i_0*cos_i_1).acos();
 
     let frame: xyzt::ReferenceFrames = xyzt::ReferenceFrames::ECI;
     let t_start: f64 = epoch_datetime.timestamp() as f64;
@@ -96,7 +96,7 @@ pub fn calc_maneuvers(
 /// ---------
 /// name : `String`
 /// 
-/// grav_param : `f64`
+/// central_body : `xyzt::Body`
 /// 
 /// semi_major_axis : `f64`
 /// 
@@ -142,10 +142,10 @@ impl Orbit {
     /// Inputs
     /// ------
     /// name : `str`
-    ///     Name of body this orbit is for
+    ///     Name of orbit
     /// 
-    /// grav_param : `f64`           
-    ///     Gravitational parameter of central body
+    /// central_body : `xyzt::Body`           
+    ///     Central body of orbit
     /// 
     /// semi_major_axis : `f64`
     ///     Semi-major axis of orbit in meters
@@ -242,8 +242,6 @@ impl Orbit {
             .unwrap();
 
         let md: (u32, u32) = xyzt::calc_month_day(day_of_year, year);
-        let date: NaiveDate = NaiveDate::from_ymd_opt(
-            year, md.0, md.1).unwrap();
         
         let percent_of_day: f64 = 
         (".".to_owned() + &epoch_day_full[1].to_string())
@@ -261,11 +259,8 @@ impl Orbit {
         let seconds_dec: f64 = minutes_part * 60.;
         let seconds_whole: u32 = seconds_dec.div_euclid(60.).floor() as u32;
 
-        let time: NaiveTime = NaiveTime::from_hms_opt(
-            hours_whole, minutes_whole, seconds_whole).unwrap();
-        let dt: NaiveDateTime = NaiveDateTime::new(date, time);
-        let epoch_date_time: DateTime::<Utc> = DateTime::<Utc>::from_utc(dt, Utc); 
-        
+        let epoch_date_time = xyzt::ymd_hms_to_datetime(
+            year, md.0, md.1, hours_whole, minutes_whole, seconds_whole);
         // let mean_motion_prime: &str = line1[4];
         // let mean_motion_2: &str = line1[5];
         

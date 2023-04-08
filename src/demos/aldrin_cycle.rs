@@ -2,13 +2,11 @@
 Aldrin Cycler between Earth and Mars
 */
 
-use nalgebra::Vector3;
-use chrono::DateTime;
-
 use donnager::donnager::{constants as cst, spacetime as xyzt, gravity as grav};
 
 
 fn main() {
+    // Earth
     let earth: xyzt::Body = xyzt::Body {
         name: "Earth".to_string(),
         grav_param: cst::EARTH::GRAV_PARAM,
@@ -31,32 +29,36 @@ fn main() {
         name: "Sun".to_string(),
         grav_param: cst::SUN::GRAV_PARAM,
         eq_radius: cst::SUN::RADIUS_EQUATOR,
-        rotation_rate: cst::SUN::ROT_RATE,
+        rotation_rate: 0.,
         eccentricity: cst::SUN::ECC
     };
 
     // Earth-Sun orbit
     let earth_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
-        "Earth_Sun",
+        "Earth-Sun Orbit".to_string(),
         sun,
         cst::EarthSunOrbit::SEMI_MAJOR,
-        cst::EarthSunOrbit::ORBIT_ECC,
-        cst::EarthSunOrbit::INCLINATION,
-        cst::EarthSunOrbit::LONG_ASC_NODE,
-        cst::EarthSunOrbit::ARG_PERIAPSIS,
-        cst::EarthSunOrbit::MEAN_ANOMALY
+        cst::EarthSunOrbit::ECC,
+        cst::EarthSunOrbit::INC,
+        cst::EarthSunOrbit::RAAN,
+        argument_of_perigee
+        mean_anomaly
+        mean_motion
+        epoch
     );
 
     // Mars-Sun orbit
     let mars_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
-        "Mars_Sun",
+        "Mars-Sun Orbit".to_string(),
         sun,
         cst::MarsSunOrbit::SEMI_MAJOR,
         cst::MarsSunOrbit::ECC,
-        cst::MarsSunOrbit::INCLINATION,
-        cst::MarsSunOrbit::LONG_ASC_NODE,
-        cst::MarsSunOrbit::ARG_PERIAPSIS,
-        cst::MarsSunOrbit::MEAN_ANOMALY
+        cst::MarsSunOrbit::INC,
+        cst::MarsSunOrbit::RAAN,
+        argument_of_perigee
+        mean_anomaly
+        mean_motion
+        epoch
     );
 
  
@@ -66,10 +68,14 @@ fn main() {
     // compare passive and active cyclers
     // plot trajectory, fuel, time
 
+    let start_date_time = xyzt::ymd_hms_to_datetime(2023, 1, 1, 12, 0, 0);
+    let stop_date_time = xyzt::ymd_hms_to_datetime(2053, 1, 1, 12, 0, 0);
+    let window = (start_date_time, stop_date_time);
+
     grav::interplan::show_porkchop_plots(
-        (DateTime::parse_from_rfc3339("2020-01-01T00:00:00Z").unwrap(),
-        DateTime::parse_from_rfc3339("2030-01-01T00:00:00Z").unwrap()),
-        &earth_orbit,
-        &mars_orbit
+        window,
+        earth_orbit,
+        mars_orbit
     )
+
 }
