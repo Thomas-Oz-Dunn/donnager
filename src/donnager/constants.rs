@@ -46,8 +46,6 @@ pub const MILLI: f64 = 1e-3;
 pub const MICRO: f64 = 1e-6;
 pub const NANO: f64 = 1e-9;
 
-/// Gravity
-/// -------
 
 /// Newtonian Gravitational constant
 /// 
@@ -149,25 +147,39 @@ impl MarsSunOrbit{
     pub const MEAN_ANOMALY: f64 = 0.0; // radians
 }
 
-
-/// Electromagnetism
-/// ----------------
-
 /// Speed of light in a vacuum `m * s^-1`
+/// 
+/// Source:
+/// 
+/// https://en.wikipedia.org/wiki/Speed_of_light
 pub const SPEED_OF_LIGHT: f64 = 2.99792458e8;
-pub const ELECTRIC_CONST: f64 = 8.8541878123; // F * m^-1
-pub const PLANCKS_CONST: f64 = 6.62607015e-34; // J * Hz-1
-pub const BOLTZMAN_CONST: f64 = 1.380649e-23; // J * K-1
 
-/// Nuclear Physics
-/// ---------------
+/// Electrical Constant F * m^-1
+/// 
+/// Source:
+/// 
+/// https://en.wikipedia.org/wiki/Vacuum_permittivity
+pub const ELECTRIC_CONST: f64 = 8.8541878123e-12;
 
-pub const MASS_PROTON: f64 = 1.67262e-27; //kg
+/// Planck's Constant J * Hz-1
+/// 
+/// Source:
+/// 
+/// https://en.wikipedia.org/wiki/Planck_constant
+pub const PLANCKS_CONST: f64 = 6.62607015e-34;
+
+/// Boltzman Constat J * K-1
+/// 
+/// Source:
+/// 
+/// https://en.wikipedia.org/wiki/Boltzmann_constant
+pub const BOLTZMAN_CONST: f64 = 1.380649e-23; 
+
+/// Mass of Proton kg
+pub const MASS_PROTON: f64 = 1.67262e-27;
 pub const MASS_NEUTRON: f64 = 1.67492749e-27; //kg
 pub const ELECTRON_VOLT: f64 = 1.602e-19; // Joule
 
-/// Chemistry
-/// ---------
 
 pub const MOLE: f64 = 6.02e23; // molecules / mole
 pub const GAS_CONST: f64 = 8.317e3; // N * m * kg^-1 * mol^-1 * K^-1
