@@ -67,6 +67,22 @@ fn main() {
     );
 
  
+    let orbit_one= grav::kepler::Orbit::from_pos_vel(
+        "Earth Parking".to_string(),
+        earth,
+        position, 
+        velocity,
+        epoch_date_time
+    );
+
+    
+    let orbit_two = grav::kepler::Orbit::from_pos_vel(
+        "Mars Ending".to_string(),
+        mars,
+        position, 
+        velocity,
+        epoch_date_time
+    );
     // select start datetime
     // search forward for optimal launch windows
     // Compare patched conic vs 3bp fidelity
@@ -79,8 +95,8 @@ fn main() {
 
     grav::interplan::show_porkchop_plots(
         window,
-        earth_orbit,
-        mars_orbit
+        orbit_1,
+        orbit_2
     )
 
 }
