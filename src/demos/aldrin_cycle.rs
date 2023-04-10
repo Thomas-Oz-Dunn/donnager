@@ -41,7 +41,7 @@ fn main() {
     // Earth-Sun orbit
     let earth_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
         "Earth-Sun Orbit".to_string(),
-        sun,
+        sun.clone(),
         cst::EarthSunOrbit::SEMI_MAJOR,
         cst::EarthSunOrbit::ECC,
         cst::EarthSunOrbit::INC,
@@ -62,8 +62,8 @@ fn main() {
         cst::MarsSunOrbit::RAAN,
         cst::MarsSunOrbit::ARG_PERIHELION,
         cst::MarsSunOrbit::MEAN_ANOMALY,
-        cst::MarsSunOrbit::MEAN_MOTION
-        epoch
+        cst::MarsSunOrbit::MEAN_MOTION,
+        epoch_date_time
     );
 
  
