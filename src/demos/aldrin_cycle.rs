@@ -2,7 +2,7 @@
 Aldrin Cycler between Earth and Mars
 */
 
-use std::vec;
+use nalgebra::Vector3;
 
 use donnager::donnager::{constants as cst, spacetime as xyzt, gravity as grav};
 
@@ -70,8 +70,8 @@ fn main() {
 
     
     // Start in LEO
-    let pos_leo = Vector3<f64>[0,0,0];
-    let vel_leo = Vector3<f64>[0,0,0];
+    let pos_leo: Vector3<f64> = Vector3::new(x_pos_lmo, y_pos_lmo, z_pos_lmo);
+    let vel_leo: Vector3<f64> = Vector3::new(x_vel_lmo, y_vel_lmo, z_vel_lmo);
     let orbit_one= grav::kepler::Orbit::from_pos_vel(
         "Earth Parking".to_string(),
         earth,
@@ -81,8 +81,8 @@ fn main() {
     );
 
     // End in LMO
-    let pos_lmo = Vector3<f64>[0,0,0];
-    let vel_lmo = Vector3<f64>[0,0,0];
+    let pos_lmo: Vector3<f64> = Vector3::new(x_pos_lmo, y_pos_lmo, z_pos_lmo);
+    let vel_lmo: Vector3<f64> = Vector3::new(x_vel_lmo, y_vel_lmo, z_vel_lmo);
     let orbit_two = grav::kepler::Orbit::from_pos_vel(
         "Mars Ending".to_string(),
         mars,
