@@ -2,6 +2,8 @@
 Aldrin Cycler between Earth and Mars
 */
 
+use std::vec;
+
 use donnager::donnager::{constants as cst, spacetime as xyzt, gravity as grav};
 
 
@@ -66,21 +68,26 @@ fn main() {
         epoch_date_time
     );
 
- 
+    
+    // Start in LEO
+    let pos_leo = Vector3<f64>[0,0,0];
+    let vel_leo = Vector3<f64>[0,0,0];
     let orbit_one= grav::kepler::Orbit::from_pos_vel(
         "Earth Parking".to_string(),
         earth,
-        position, 
-        velocity,
+        pos_leo, 
+        vel_leo,
         epoch_date_time
     );
 
-    
+    // End in LMO
+    let pos_lmo = Vector3<f64>[0,0,0];
+    let vel_lmo = Vector3<f64>[0,0,0];
     let orbit_two = grav::kepler::Orbit::from_pos_vel(
         "Mars Ending".to_string(),
         mars,
-        position, 
-        velocity,
+        pos_lmo, 
+        vel_lmos,
         epoch_date_time
     );
     // select start datetime
