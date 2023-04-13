@@ -104,7 +104,7 @@ pub fn show_porkchop_plots(
         let v_inf = calc_esc_vel(
 
         )
-        
+
     //  calculate deltavs for two impulse maneuvers (min, max)
     //  calculate total time of flight for each
 
@@ -156,7 +156,23 @@ pub fn show_porkchop_plots(
 
     // Plot Delta v contours
 
-    // Travel time lines
+    // Travel time lines of -1 slope
+    // for intercept in integer_tof_years:
+    chart.draw_series(
+        PointSeries::of_element(
+            .iter().map(|p| (p.y, p.x)),
+            1,
+            &BLUE,
+            &|c, s, st| {
+                Circle::new((c.0, c.1), s, st.filled())}
+        )
+    ).unwrap()
+    .label("Const ToF")
+    .legend(
+        |(x, y)| 
+        PathElement::new(vec![(x, y), (x + 20, y)], 
+        &BLUE));
+    
 
 }
 
