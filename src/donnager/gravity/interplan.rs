@@ -99,8 +99,12 @@ pub fn show_porkchop_plots(
     orbit_2: kepler::Orbit
 ){
 
-    // for launch_date in window
+    for launch_date in datetime_lauch_window.iter():
     //  calculate location of origin planet
+        let v_inf = calc_esc_vel(
+
+        )
+        
     //  calculate deltavs for two impulse maneuvers (min, max)
     //  calculate total time of flight for each
 
