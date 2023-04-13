@@ -70,6 +70,7 @@ fn main() {
 
     
     // Start in LEO
+    // TODO-TD: Calculate nominal LEO Orbit
     let pos_leo: Vector3<f64> = Vector3::new(x_pos_lmo, y_pos_lmo, z_pos_lmo);
     let vel_leo: Vector3<f64> = Vector3::new(x_vel_lmo, y_vel_lmo, z_vel_lmo);
     let orbit_one= grav::kepler::Orbit::from_pos_vel(
@@ -81,6 +82,7 @@ fn main() {
     );
 
     // End in LMO
+    // TODO-TD: Calculate nominal LMO Orbit
     let pos_lmo: Vector3<f64> = Vector3::new(x_pos_lmo, y_pos_lmo, z_pos_lmo);
     let vel_lmo: Vector3<f64> = Vector3::new(x_vel_lmo, y_vel_lmo, z_vel_lmo);
     let orbit_two = grav::kepler::Orbit::from_pos_vel(

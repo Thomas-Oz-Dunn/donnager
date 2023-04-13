@@ -98,6 +98,12 @@ pub fn show_porkchop_plots(
     orbit_1: kepler::Orbit,
     orbit_2: kepler::Orbit
 ){
+
+    // for launch_date in window
+    //  calculate location of origin planet
+    //  calculate deltavs for two impulse maneuvers (min, max)
+    //  calculate total time of flight for each
+
     let pathname = format!(
         "{}_to_{}_time_vs_fuel_{:?}.png",  
         orbit_1.central_body.name, 
@@ -132,7 +138,7 @@ pub fn show_porkchop_plots(
         (datetime_lauch_window.0.date_naive())..(datetime_lauch_window.1.date_naive());  
 
     // Determine from shortest trip from first date and longest trip from last date
-    let y_spec: Range<f64> = -180.0..180.;  
+    let y_spec: Range<f64> = shortest_tof..longest_tof;  
 
     let mut chart = 
             chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
@@ -145,7 +151,6 @@ pub fn show_porkchop_plots(
 
 
     // Plot Delta v contours
-
 
     // Travel time lines
 
