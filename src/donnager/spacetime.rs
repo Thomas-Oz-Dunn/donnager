@@ -18,6 +18,34 @@ pub struct Body{
     pub eccentricity: f64
 }
 
+/// Earth
+pub const EARTH: Body = Body {
+    name: "Earth".to_string(),
+    grav_param: cst::EARTH::GRAV_PARAM,
+    eq_radius: cst::EARTH::RADIUS_EQUATOR,
+    rotation_rate: cst::EARTH::ROT_RATE,
+    eccentricity: cst::EARTH::ECC
+};
+
+/// Mars
+pub const MARS: Body = Body{
+    name: "Mars".to_string(),
+    grav_param: cst::MARS::GRAV_PARAM,
+    eq_radius: cst::MARS::RADIUS_EQUATOR,
+    rotation_rate: cst::MARS::ROT_RATE,
+    eccentricity: cst::MARS::ECC
+};
+
+/// Sun
+pub const SUN: Body = Body {
+    name: "Sun".to_string(),
+    grav_param: cst::SUN::GRAV_PARAM,
+    eq_radius: cst::SUN::RADIUS_EQUATOR,
+    rotation_rate: 0.,
+    eccentricity: cst::SUN::ECC
+};
+
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ReferenceFrames {
     ECI,
