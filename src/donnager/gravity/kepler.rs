@@ -420,13 +420,19 @@ impl Orbit {
                 return (pos, vel);
             },
             xyzt::ReferenceFrames::ECI => {
-                let rotam: Matrix3<f64> = self.calc_pfcl_eci_rotam();
+                let rotam: Matrix3<f64> = self.calc_pfcl_inertial_rotam();
+                let eci_pos: Vector3<f64> = rotam * pos;
+                let eci_vel: Vector3<f64> = rotam * vel;
+                return (eci_pos, eci_vel);
+            },
+            xyzt::ReferenceFrames::Heliocentric => {
+                let rotam: Matrix3<f64> = self.calc_pfcl_inertial_rotam();
                 let eci_pos: Vector3<f64> = rotam * pos;
                 let eci_vel: Vector3<f64> = rotam * vel;
                 return (eci_pos, eci_vel);
             },
             xyzt::ReferenceFrames::ECEF => {
-                let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_eci_rotam();
+                let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_inertial_rotam();
                 let eci_pos: Vector3<f64> = pfcl_eci_rotam * pos;
                 let eci_vel: Vector3<f64> = pfcl_eci_rotam * vel;
 
@@ -440,7 +446,7 @@ impl Orbit {
                 return (ecef_pos, ecef_vel);
             },
             xyzt::ReferenceFrames::LLA => {
-                let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_eci_rotam();
+                let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_inertial_rotam();
                 let eci_pos: Vector3<f64> = pfcl_eci_rotam * pos;
                 let eci_vel: Vector3<f64> = pfcl_eci_rotam * vel;
 
@@ -473,7 +479,7 @@ impl Orbit {
     }
 
     /// Calculate perifocal to eci rotation matrix
-    pub fn calc_pfcl_eci_rotam(&self) -> Matrix3<f64> {
+    pub fn calc_pfcl_inertial_rotam(&self) -> Matrix3<f64> {
         let cos_raan: f64 = self.raan.cos();
         let sin_raan: f64 = self.raan.sin();
         let cos_inc: f64 = self.inclination.cos();
@@ -583,14 +589,14 @@ impl Orbit {
                     &BLACK)
                     .into_text_style(&drawing_area));
 
-        let earth_radius = cst::EARTH::RADIUS_EQUATOR;
+        let body_rad = self.central_body.eq_radius;
 
         match frame {
-            xyzt::ReferenceFrames::ECI => {
+            xyzt::ReferenceFrames::Heliocentric => {
                 
-                let x_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius; 
-                let y_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
-                let z_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
+                let x_spec: Range<f64> = -1.5 * body_rad..1.5 * body_rad; 
+                let y_spec: Range<f64> = -1.5 * body_rad..1.5 * body_rad;
+                let z_spec: Range<f64> = -1.5 * body_rad..1.5 * body_rad;
 
                 let mut chart = chart_builder
                     .build_cartesian_3d(x_spec, y_spec, z_spec)
@@ -611,8 +617,8 @@ impl Orbit {
                 chart
                     .draw_series(
                         SurfaceSeries::xoy(
-                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).cos()}),
-                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).sin()}),
+                            (-100..100).map(|f| {(f as f64 * body_rad / 100.).cos()}),
+                            (-100..100).map(|f| {(f as f64 * body_rad / 100.).sin()}),
                             |x, y| (-(x * x + y * y).sqrt()),
                         )
                     ).unwrap();
@@ -620,8 +626,49 @@ impl Orbit {
                 chart
                     .draw_series(
                         SurfaceSeries::xoy(
-                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).cos()}),
-                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).sin()}),
+                            (-100..100).map(|f| {(f as f64 * body_rad / 100.).cos()}),
+                            (-100..100).map(|f| {(f as f64 * body_rad / 100.).sin()}),
+                            |x, y| (-(x * x + y * y).sqrt()),
+                        )).unwrap()
+                    .label("Sun");
+
+            },
+            xyzt::ReferenceFrames::ECI => {
+                
+                let x_spec: Range<f64> = -1.5 * body_rad..1.5 * body_rad; 
+                let y_spec: Range<f64> = -1.5 * body_rad..1.5 * body_rad;
+                let z_spec: Range<f64> = -1.5 * body_rad..1.5 * body_rad;
+
+                let mut chart = chart_builder
+                    .build_cartesian_3d(x_spec, y_spec, z_spec)
+                    .unwrap();
+
+                chart
+                    .configure_axes()
+                    .draw()
+                    .unwrap();
+
+                chart
+                    .configure_series_labels()
+                    .background_style(&WHITE.mix(0.8))
+                    .border_style(&BLACK)
+                    .draw()
+                    .unwrap();
+
+                chart
+                    .draw_series(
+                        SurfaceSeries::xoy(
+                            (-100..100).map(|f| {(f as f64 * body_rad / 100.).cos()}),
+                            (-100..100).map(|f| {(f as f64 * body_rad / 100.).sin()}),
+                            |x, y| (-(x * x + y * y).sqrt()),
+                        )
+                    ).unwrap();
+
+                chart
+                    .draw_series(
+                        SurfaceSeries::xoy(
+                            (-100..100).map(|f| {(f as f64 * body_rad / 100.).cos()}),
+                            (-100..100).map(|f| {(f as f64 * body_rad / 100.).sin()}),
                             |x, y| (-(x * x + y * y).sqrt()),
                         )).unwrap()
                     .label("Earth");
@@ -629,9 +676,9 @@ impl Orbit {
             },
             xyzt::ReferenceFrames::ECEF => {
                 // 3D globe w/ spin
-                let x_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius; 
-                let y_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
-                let z_spec: Range<f64> = -1.5*earth_radius..1.5*earth_radius;
+                let x_spec: Range<f64> = -1.5 * body_rad..1.5 * body_rad; 
+                let y_spec: Range<f64> = -1.5 * body_rad..1.5 * body_rad;
+                let z_spec: Range<f64> = -1.5 * body_rad..1.5 * body_rad;
 
                 let mut chart = 
                     chart_builder.build_cartesian_3d(x_spec, y_spec, z_spec).unwrap();
@@ -648,8 +695,8 @@ impl Orbit {
                 chart
                     .draw_series(
                         SurfaceSeries::xoy(
-                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).cos()}),
-                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).sin()}),
+                            (-100..100).map(|f| {(f as f64 * body_rad / 100.).cos()}),
+                            (-100..100).map(|f| {(f as f64 * body_rad / 100.).sin()}),
                             |x, z| (-(x * x + z * z).sqrt()))
                             .style(&BLUE.mix(0.5))  
                     ).unwrap();
@@ -657,8 +704,8 @@ impl Orbit {
                 chart
                     .draw_series(
                         SurfaceSeries::xoy(
-                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).cos()}),
-                            (-100..100).map(|f| {(f as f64 * earth_radius / 100.).sin()}),
+                            (-100..100).map(|f| {(f as f64 * body_rad / 100.).cos()}),
+                            (-100..100).map(|f| {(f as f64 * body_rad / 100.).sin()}),
                             |x, z| (-(x * x + z * z).sqrt()))
                         .style(&BLUE.mix(0.5))  
                         ).unwrap()
@@ -723,16 +770,16 @@ impl Orbit {
                     )
                 ).unwrap();
 
-                let mut earth_surf: Vec<(f64, f64)> = Vec::new();
+                let mut bod_surf: Vec<(f64, f64)> = Vec::new();
                 for theta in 0..360{
-                    earth_surf.push(
-                        (earth_radius * (theta as f64 * cst::DEG_TO_RAD).cos(),
-                        earth_radius * (theta as f64 * cst::DEG_TO_RAD).sin()))
+                    bod_surf.push(
+                        (body_rad * (theta as f64 * cst::DEG_TO_RAD).cos(),
+                        body_rad * (theta as f64 * cst::DEG_TO_RAD).sin()))
                 }
 
                 chart.draw_series(
                     PointSeries::of_element(
-                        earth_surf.iter().map(|p|{(p.0, p.1)}), 
+                        bod_surf.iter().map(|p|{(p.0, p.1)}), 
                         1,
                         &BLUE,
                         &|c, s, st| {

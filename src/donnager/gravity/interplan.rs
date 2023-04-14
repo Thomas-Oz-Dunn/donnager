@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use plotters::prelude::*;
 use std::ops::Range;
 
-use crate::donnager::{constants as cst, gravity::kepler as kepler};
+use crate::donnager::{constants as cst, gravity::kepler as kepler, spacetime as xyzt};
 
 /// Calculate interplanetary mission escape velocity
 /// 
@@ -25,6 +25,7 @@ pub fn calc_esc_vel(
     let av_radius: f64 = (orb_radius_0 + orb_radius_f) / 2.;
     return (cst::SUN::GRAV_PARAM *(2. / orb_radius_0 - 1. / av_radius)).sqrt();
 }
+
 
 
 // /// Calculate next hohmann transfer launch window
@@ -94,16 +95,19 @@ pub fn calc_esc_vel(
 /// orbit_2: `Orbit`
 ///     Orbit of ending planet
 pub fn show_porkchop_plots(
-    datetime_lauch_window: (DateTime<Utc>, DateTime<Utc>),
+    start_date_time: DateTime<Utc>,
+    stop_date_time: DateTime<Utc>,
     orbit_1: kepler::Orbit,
     orbit_2: kepler::Orbit
 ){
+    let frame = xyzt::ReferenceFrames::Heliocentric;
+    
+    for launch_time in start_date_time.timestamp()..stop_date_time.timestamp() {
+        let (pos1, _) = orbit_1.calc_pos_vel(launch_time as f64, frame);
+        let (pos2, _) = orbit_2.calc_pos_vel(launch_time as f64, frame);
+        let v_inf: f64 = calc_esc_vel(pos1.norm(), pos2.norm());
 
-    for launch_date in datetime_lauch_window.iter():
-    //  calculate location of origin planet
-        let v_inf = calc_esc_vel(
-
-        )
+    }
 
     //  calculate deltavs for two impulse maneuvers (min, max)
     //  calculate total time of flight for each
@@ -112,12 +116,13 @@ pub fn show_porkchop_plots(
         "{}_to_{}_time_vs_fuel_{:?}.png",  
         orbit_1.central_body.name, 
         orbit_2.central_body.name,
-        datetime_lauch_window.0);
+        start_date_time);
 
     let plottitle = format!(
         "{} to {}", 
         orbit_1.central_body.name, 
         orbit_2.central_body.name);
+
     let drawing_area = 
         BitMapBackend::new(&pathname, (500, 500))
             .into_drawing_area();
@@ -138,11 +143,13 @@ pub fn show_porkchop_plots(
                 FontStyle::Bold, 
                 &BLACK)
                 .into_text_style(&drawing_area));
-    let x_spec: Range<chrono::NaiveDate> = 
-        (datetime_lauch_window.0.date_naive())..(datetime_lauch_window.1.date_naive());  
 
-    // Determine from shortest trip from first date and longest trip from last date
-    let y_spec: Range<f64> = shortest_tof..longest_tof;  
+    let x_spec: Range<chrono::NaiveDate> = 
+        (start_date_time.date_naive())..(stop_date_time.date_naive());  
+
+    let longest_tof: chrono::Duration = 
+        stop_date_time.date_naive() - start_date_time.date_naive();
+    let y_spec: Range<chrono::Duration> = chrono::Duration{secs: 0, nanos: 0}..longest_tof;  
 
     let mut chart = 
             chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
@@ -156,22 +163,22 @@ pub fn show_porkchop_plots(
 
     // Plot Delta v contours
 
-    // Travel time lines of -1 slope
-    // for intercept in integer_tof_years:
-    chart.draw_series(
-        PointSeries::of_element(
-            .iter().map(|p| (p.y, p.x)),
-            1,
-            &BLUE,
-            &|c, s, st| {
-                Circle::new((c.0, c.1), s, st.filled())}
-        )
-    ).unwrap()
-    .label("Const ToF")
-    .legend(
-        |(x, y)| 
-        PathElement::new(vec![(x, y), (x + 20, y)], 
-        &BLUE));
+    // Lines of -1 year slope
+    // // for intercept in integer_tof_years:
+    // chart.draw_series(
+    //     PointSeries::of_element(
+    //         .iter().map(|p| (p.y, p.x)),
+    //         1,
+    //         &BLUE,
+    //         &|c, s, st| {
+    //             Circle::new((c.0, c.1), s, st.filled())}
+    //     )
+    // ).unwrap()
+    // .label("Const ToF")
+    // .legend(
+    //     |(x, y)| 
+    //     PathElement::new(vec![(x, y), (x + 20, y)], 
+    //     &BLUE));
     
 
 }
