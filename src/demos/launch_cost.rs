@@ -12,17 +12,9 @@ use donnager::donnager::dynamics as dynam;
 
 fn main() {
     // Config
-    let earth: xyzt::Body = xyzt::Body {
-        name: "Earth".to_string(),
-        grav_param: cst::EARTH::GRAV_PARAM,
-        eq_radius: cst::EARTH::RADIUS_EQUATOR,
-        rotation_rate: cst::EARTH::ROT_RATE,
-        eccentricity: cst::EARTH::ECC
-    };
-    
     let launch_site: xyzt::SurfacePoint = xyzt::SurfacePoint {
         name: "Cape Canaveral Launch Site".to_string(),
-        body: earth.clone(),
+        body: xyzt::EARTH.clone(),
         pos_lla: Vector3::new(28.396837, -80.605659, 0.0)
     };
 

@@ -15,7 +15,7 @@ fn main() {
 
     // Earth-Sun orbit
     let earth_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
-        "Earth-Sun Orbit".to_string(),
+        "Earth-Sun Orbit",
         xyzt::SUN.clone(),
         cst::EarthSunOrbit::SEMI_MAJOR,
         cst::EarthSunOrbit::ECC,
@@ -29,7 +29,7 @@ fn main() {
 
     // Mars-Sun orbit
     let mars_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
-        "Mars-Sun Orbit".to_string(),
+        "Mars-Sun Orbit",
         xyzt::SUN.clone(),
         cst::MarsSunOrbit::SEMI_MAJOR,
         cst::MarsSunOrbit::ECC,
@@ -47,7 +47,7 @@ fn main() {
     let pos_leo: Vector3<f64> = Vector3::new(x_pos_leo, y_pos_leo, z_pos_leo);
     let vel_leo: Vector3<f64> = Vector3::new(x_vel_leo, y_vel_leo, z_vel_leo);
     let orbit_one= grav::kepler::Orbit::from_pos_vel(
-        "Earth Parking".to_string(),
+        "Earth Parking",
         xyzt::EARTH.clone(),
         pos_leo, 
         vel_leo,
@@ -59,7 +59,7 @@ fn main() {
     let pos_lmo: Vector3<f64> = Vector3::new(x_pos_lmo, y_pos_lmo, z_pos_lmo);
     let vel_lmo: Vector3<f64> = Vector3::new(x_vel_lmo, y_vel_lmo, z_vel_lmo);
     let orbit_two = grav::kepler::Orbit::from_pos_vel(
-        "Mars Ending".to_string(),
+        "Mars Ending",
         xyzt::MARS.clone(),
         pos_lmo, 
         vel_lmos,

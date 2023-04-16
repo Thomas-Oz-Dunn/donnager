@@ -11,7 +11,7 @@ use crate::donnager::constants as cst;
 /// Gravitational Body
 #[derive(Clone, Debug, PartialEq)]
 pub struct Body{
-    pub name: &'static str,
+    pub name: &str,
     pub grav_param: f64,
     pub eq_radius: f64,
     pub rotation_rate: f64,
@@ -166,7 +166,7 @@ impl Particle {
     /// 
     /// eccentricity : `f64`
     ///     Body oblateness
-    pub fn to_body(&self, name: String, eq_radius: f64, rotation_rate: f64, eccentricity: f64) -> Body {
+    pub fn to_body(&self, name: &str, eq_radius: f64, rotation_rate: f64, eccentricity: f64) -> Body {
         let grav_param: f64 = self.mass * cst::GRAV_CONST;
         let body: Body = Body {
             name,
