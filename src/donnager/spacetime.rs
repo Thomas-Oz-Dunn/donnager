@@ -11,7 +11,7 @@ use crate::donnager::constants as cst;
 /// Gravitational Body
 #[derive(Clone, Debug, PartialEq)]
 pub struct Body{
-    pub name: String,
+    pub name: &'static str,
     pub grav_param: f64,
     pub eq_radius: f64,
     pub rotation_rate: f64,
@@ -20,7 +20,7 @@ pub struct Body{
 
 /// Earth
 pub const EARTH: Body = Body {
-    name: "Earth".to_string(),
+    name: "Earth",
     grav_param: cst::EARTH::GRAV_PARAM,
     eq_radius: cst::EARTH::RADIUS_EQUATOR,
     rotation_rate: cst::EARTH::ROT_RATE,
@@ -29,7 +29,7 @@ pub const EARTH: Body = Body {
 
 /// Mars
 pub const MARS: Body = Body{
-    name: "Mars".to_string(),
+    name: "Mars",
     grav_param: cst::MARS::GRAV_PARAM,
     eq_radius: cst::MARS::RADIUS_EQUATOR,
     rotation_rate: cst::MARS::ROT_RATE,
@@ -38,7 +38,7 @@ pub const MARS: Body = Body{
 
 /// Sun
 pub const SUN: Body = Body {
-    name: "Sun".to_string(),
+    name: "Sun",
     grav_param: cst::SUN::GRAV_PARAM,
     eq_radius: cst::SUN::RADIUS_EQUATOR,
     rotation_rate: 0.,
