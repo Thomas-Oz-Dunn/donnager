@@ -11,7 +11,7 @@ use crate::donnager::constants as cst;
 /// Gravitational Body
 #[derive(Clone, Debug, PartialEq)]
 pub struct Body{
-    pub name: &str,
+    pub name: String,
     pub grav_param: f64,
     pub eq_radius: f64,
     pub rotation_rate: f64,
@@ -20,7 +20,7 @@ pub struct Body{
 
 /// Earth
 pub const EARTH: Body = Body {
-    name: "Earth",
+    name: String::from("Earth"),
     grav_param: cst::EARTH::GRAV_PARAM,
     eq_radius: cst::EARTH::RADIUS_EQUATOR,
     rotation_rate: cst::EARTH::ROT_RATE,
@@ -29,7 +29,7 @@ pub const EARTH: Body = Body {
 
 /// Mars
 pub const MARS: Body = Body{
-    name: "Mars",
+    name: "Mars".to_string(),
     grav_param: cst::MARS::GRAV_PARAM,
     eq_radius: cst::MARS::RADIUS_EQUATOR,
     rotation_rate: cst::MARS::ROT_RATE,
@@ -38,7 +38,7 @@ pub const MARS: Body = Body{
 
 /// Sun
 pub const SUN: Body = Body {
-    name: "Sun",
+    name: "Sun".to_string(),
     grav_param: cst::SUN::GRAV_PARAM,
     eq_radius: cst::SUN::RADIUS_EQUATOR,
     rotation_rate: 0.,
@@ -166,7 +166,7 @@ impl Particle {
     /// 
     /// eccentricity : `f64`
     ///     Body oblateness
-    pub fn to_body(&self, name: &str, eq_radius: f64, rotation_rate: f64, eccentricity: f64) -> Body {
+    pub fn to_body(&self, name: String, eq_radius: f64, rotation_rate: f64, eccentricity: f64) -> Body {
         let grav_param: f64 = self.mass * cst::GRAV_CONST;
         let body: Body = Body {
             name,

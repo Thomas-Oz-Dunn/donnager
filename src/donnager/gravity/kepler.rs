@@ -852,6 +852,34 @@ impl Orbit {
 }
 
 
+/// Calculate lagrange point locations in DU
+/// 
+/// Inputs
+/// ------
+/// mass_1: `f64`
+///     Larger mass
+/// 
+/// mass_2: `f64`
+///     Smaller mass
+pub fn calc_lagrange_points(
+    mass_1: f64,
+    mass_2: f64
+) -> Vec<Vector3<f64>> {
+    let mass_ratio: f64= mass_2 / (mass_1 + mass_2);
+
+    // Permissible if mass_2 is <<<< mass_1
+    let xl12 = (mass_2/(3.*mass_1)).powf(1./3.);
+    let xl3 = 7.*mass_2 / (12. * mass_1);
+
+    let l1: Vector3<f64> = Vector3::new(1. - xl12, 0.,0.);
+    let l2: Vector3<f64> = Vector3::new(1. + xl12 ,0.,0.);
+    let l3: Vector3<f64> = Vector3::new(-xl3 ,0.,0.);
+    let l4: Vector3<f64> = Vector3::new(mass_ratio - 0.5, -(3_f64).sqrt()/2., 0.);
+    let l5: Vector3<f64> = Vector3::new(mass_ratio - 0.5, (3_f64).sqrt()/2., 0.);
+    return vec![l1, l2, l3, l4, l5]
+}
+
+
 /// Calculate period of orbit at semi major axis
 /// 
 /// Inputs
