@@ -69,18 +69,18 @@ pub fn calc_esc_vel(
 // }
 
 
-// pub fn show_trajectory(
-//     Orbits: Vec<Orbit>,
-//     Maneuvers: Vec<Maneuver>
-// ){
-//     // Create drawing canvas of solar system bodies
+pub fn show_trajectory(
+    Orbits: Vec<kepler::Orbit>,
+    Maneuvers: Vec<xyzt::Maneuver>
+){
+    // Create drawing canvas of solar system bodies
 
-//     // Plot each orbital ellipse in the plane
+    // Plot each orbital ellipse in the plane
 
-//     // Plot each maneuver location, magnitude, and direction
+    // Plot each maneuver location, magnitude, and direction
 
 
-// }
+}
 
 /// Show orbital transfer porkchop plots
 /// 
