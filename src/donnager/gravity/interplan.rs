@@ -71,10 +71,15 @@ pub fn calc_esc_vel(
 
 pub fn show_trajectory(
     Orbits: Vec<kepler::Orbit>,
-    Maneuvers: Vec<xyzt::Maneuver>
+    Maneuvers: Vec<kepler::Maneuver>
 ){
     // Create drawing canvas of solar system bodies
 
+    let drawing_area = 
+        BitMapBackend::new(&pathname, (500, 500))
+            .into_drawing_area();
+
+    let mut chart_builder = ChartBuilder::on(&drawing_area);
     // Plot each orbital ellipse in the plane
 
     // Plot each maneuver location, magnitude, and direction
@@ -112,13 +117,13 @@ pub fn show_porkchop_plots(
     //  calculate deltavs for two impulse maneuvers (min, max)
     //  calculate total time of flight for each
 
-    let pathname = format!(
+    let pathname: String = format!(
         "{}_to_{}_time_vs_fuel_{:?}.png",  
         orbit_1.central_body.name, 
         orbit_2.central_body.name,
         start_date_time);
 
-    let plottitle = format!(
+    let plottitle: String = format!(
         "{} to {}", 
         orbit_1.central_body.name, 
         orbit_2.central_body.name);
