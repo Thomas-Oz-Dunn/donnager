@@ -8,6 +8,34 @@ use donnager::donnager::{constants as cst, spacetime as xyzt, gravity as grav};
 
 
 fn main() {
+        
+    /// Earth
+    let EARTH: Body = Body {
+        name: String::from("Earth"),
+        grav_param: cst::EARTH::GRAV_PARAM,
+        eq_radius: cst::EARTH::RADIUS_EQUATOR,
+        rotation_rate: cst::EARTH::ROT_RATE,
+        eccentricity: cst::EARTH::ECC
+    };
+
+    /// Mars
+    let MARS: Body = Body{
+        name: "Mars".to_string(),
+        grav_param: cst::MARS::GRAV_PARAM,
+        eq_radius: cst::MARS::RADIUS_EQUATOR,
+        rotation_rate: cst::MARS::ROT_RATE,
+        eccentricity: cst::MARS::ECC
+    };
+
+    /// Sun
+    let SUN: Body = Body {
+        name: "Sun".to_string(),
+        grav_param: cst::SUN::GRAV_PARAM,
+        eq_radius: cst::SUN::RADIUS_EQUATOR,
+        rotation_rate: 0.,
+        eccentricity: cst::SUN::ECC
+    };
+
     let (year, month, day) = xyzt::julian_to_gregorian(
         cst::J2000_DAY as i32);
     let epoch_date_time = xyzt::ymd_hms_to_datetime(
@@ -16,7 +44,7 @@ fn main() {
     // Earth-Sun orbit
     let earth_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
         "Earth-Sun Orbit",
-        xyzt::SUN.clone(),
+        SUN.clone(),
         cst::EarthSunOrbit::SEMI_MAJOR,
         cst::EarthSunOrbit::ECC,
         cst::EarthSunOrbit::INC,
@@ -30,7 +58,7 @@ fn main() {
     // Mars-Sun orbit
     let mars_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
         "Mars-Sun Orbit",
-        xyzt::SUN.clone(),
+        SUN.clone(),
         cst::MarsSunOrbit::SEMI_MAJOR,
         cst::MarsSunOrbit::ECC,
         cst::MarsSunOrbit::INC,

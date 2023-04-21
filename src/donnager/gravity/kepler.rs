@@ -69,7 +69,7 @@ pub fn calc_maneuvers(
     let name = "Transfer orbit";
     let vel = vel_0 + dv_1;
     let trans_orbit: Orbit = Orbit::from_pos_vel(
-        name, 
+        name.to_string(), 
         orbit_0.central_body, 
         pos_0, 
         vel, 
@@ -123,7 +123,7 @@ pub fn calc_maneuvers(
 ///     Propagate Orbit forward in time
 #[derive(Clone, Debug, PartialEq)]
 pub struct Orbit{
-    pub name: &'static str,
+    pub name: String,
     pub central_body: xyzt::Body,
     pub semi_major_axis: f64, 
     pub eccentricity: f64,
@@ -176,7 +176,7 @@ impl Orbit {
     /// orbit : `Orbit`           
     ///     Orbit structure with populated Keplerian parameters.
     pub fn from_keplerian(
-        name: &str,
+        name: String,
         central_body: xyzt::Body,
         semi_major_axis: f64, 
         eccentricity: f64,
@@ -188,7 +188,7 @@ impl Orbit {
         epoch: DateTime<Utc>
     ) -> Self {
         Orbit {
-            name,
+            name: name.to_string(),
             central_body,
             semi_major_axis,
             eccentricity,
@@ -302,10 +302,18 @@ impl Orbit {
         let semi_major_axis: f64 = calc_semi_major_axis(
             cst::EARTH::GRAV_PARAM, mean_motion);
 
+        /// Earth
+        let EARTH: xyzt::Body = xyzt::Body {
+            name: String::from("Earth"),
+            grav_param: cst::EARTH::GRAV_PARAM,
+            eq_radius: cst::EARTH::RADIUS_EQUATOR,
+            rotation_rate: cst::EARTH::ROT_RATE,
+            eccentricity: cst::EARTH::ECC
+        };
 
         Orbit {
-            name,
-            central_body: xyzt::EARTH,
+            name: name.to_string(),
+            central_body: EARTH,
             semi_major_axis,
             raan,
             eccentricity: ecc,
@@ -342,7 +350,7 @@ impl Orbit {
     /// orbit : `Orbit`
     ///     Orbit object with populated fields.
     pub fn from_pos_vel(
-        name: &str,
+        name: String,
         central_body: xyzt::Body,
         pos: Vector3<f64>,
         vel: Vector3<f64>,
@@ -357,7 +365,7 @@ impl Orbit {
             spec_ang_moment.norm_squared() * (1.0 - ecc_vec.norm_squared()) / grav_param;
 
         Orbit {
-            name,
+            name: name.to_string(),
             central_body,
             semi_major_axis,
             eccentricity: ecc_vec.norm(),
@@ -379,13 +387,15 @@ impl Orbit {
     ///     
     /// frame: `str`
     ///     Reference frame
+    /// 
+    /// Outputs
+    /// -------
     pub fn calc_pos_vel(
         &self, 
         time: f64, 
         frame: xyzt::ReferenceFrames
     ) -> (Vector3<f64>, Vector3<f64>) {
  
-
         let true_anomaly_rad: f64 = self.calc_true_anomaly(time);
         let cos_true_anom: f64 = true_anomaly_rad.cos();
         let sin_true_anom: f64 = true_anomaly_rad.sin();
