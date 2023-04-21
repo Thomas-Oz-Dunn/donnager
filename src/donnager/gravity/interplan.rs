@@ -7,7 +7,7 @@ use chrono::{DateTime, Utc};
 use plotters::prelude::*;
 use std::ops::Range;
 
-use crate::donnager::{constants as cst, gravity::kepler as kepler, spacetime as xyzt};
+use crate::donnager::{constants as cst, gravity::kepler as kepler, spacetime::{self as xyzt, SUN}};
 
 /// Calculate interplanetary mission escape velocity
 /// 
@@ -74,13 +74,25 @@ pub fn show_trajectory(
     Maneuvers: Vec<kepler::Maneuver>
 ){
     // Create drawing canvas of solar system bodies
+    let pathname: String = format!("SolarSystemTrajectory.png");
 
     let drawing_area = 
         BitMapBackend::new(&pathname, (500, 500))
             .into_drawing_area();
 
     let mut chart_builder = ChartBuilder::on(&drawing_area);
+    
     // Plot each orbital ellipse in the plane
+    for orbit in Orbits{
+        if orbit.central_body != SUN{
+            // Calculate central body trajectory
+            
+        }
+        else {
+            // Plot trajectory directly
+
+        }
+    }
 
     // Plot each maneuver location, magnitude, and direction
 
@@ -203,12 +215,4 @@ mod interplan_tests {
         assert_eq!(esc_vel, 0.5);
     }
 
-    #[test]
-    fn test_calc_lagrange_points()
-    {
-        let mass_1: f64 = 1.;
-        let mass_2: f64 = 0.001;
-        let l_points = calc_lagrange_points(mass_1, mass_2);
-        assert_eq!(l_points[0], Vector3::new(0.999, 0., 0.));
-    }
 }

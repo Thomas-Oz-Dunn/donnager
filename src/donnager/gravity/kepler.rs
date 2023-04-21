@@ -1103,4 +1103,13 @@ mod orbit_tests {
         assert_eq!(kep.raan, 264.7747);
         assert_eq!(kep.argument_of_perigee, 314.4274);
     }
+    
+    #[test]
+    fn test_calc_lagrange_points()
+    {
+        let mass_1: f64 = 1.;
+        let mass_2: f64 = 0.001;
+        let l_points = calc_lagrange_points(mass_1, mass_2);
+        assert_eq!(l_points[0], Vector3::new(0.999, 0., 0.));
+    }
 }
