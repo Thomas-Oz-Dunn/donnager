@@ -7,16 +7,25 @@ use nalgebra::Vector3;
 use donnager::donnager::{
     constants as cst, 
     spacetime as xyzt, 
-    gravity as grav, 
     propulsion as prop, 
     dynamics as dynam};
 
 
 fn main() {
+    
+    // Earth
+    let EARTH: xyzt::Body = xyzt::Body {
+        name: String::from("Earth"),
+        grav_param: cst::EARTH::GRAV_PARAM,
+        eq_radius: cst::EARTH::RADIUS_EQUATOR,
+        rotation_rate: cst::EARTH::ROT_RATE,
+        eccentricity: cst::EARTH::ECC
+    };
+
     // Config
     let launch_site: xyzt::SurfacePoint = xyzt::SurfacePoint {
         name: "Cape Canaveral Launch Site".to_string(),
-        body: xyzt::EARTH.clone(),
+        body: EARTH.clone(),
         pos_lla: Vector3::new(28.396837, -80.605659, 0.0)
     };
 

@@ -10,7 +10,7 @@ use donnager::donnager::{constants as cst, spacetime as xyzt, gravity as grav};
 fn main() {
         
     /// Earth
-    let EARTH: Body = Body {
+    let EARTH: xyzt::Body = xyzt::Body {
         name: String::from("Earth"),
         grav_param: cst::EARTH::GRAV_PARAM,
         eq_radius: cst::EARTH::RADIUS_EQUATOR,
@@ -19,7 +19,7 @@ fn main() {
     };
 
     /// Mars
-    let MARS: Body = Body{
+    let MARS: xyzt::Body = xyzt::Body{
         name: "Mars".to_string(),
         grav_param: cst::MARS::GRAV_PARAM,
         eq_radius: cst::MARS::RADIUS_EQUATOR,
@@ -28,7 +28,7 @@ fn main() {
     };
 
     /// Sun
-    let SUN: Body = Body {
+    let SUN: xyzt::Body = xyzt::Body {
         name: "Sun".to_string(),
         grav_param: cst::SUN::GRAV_PARAM,
         eq_radius: cst::SUN::RADIUS_EQUATOR,
@@ -43,7 +43,7 @@ fn main() {
 
     // Earth-Sun orbit
     let earth_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
-        "Earth-Sun Orbit",
+        "Earth-Sun Orbit".to_string(),
         SUN.clone(),
         cst::EarthSunOrbit::SEMI_MAJOR,
         cst::EarthSunOrbit::ECC,
@@ -57,7 +57,7 @@ fn main() {
 
     // Mars-Sun orbit
     let mars_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
-        "Mars-Sun Orbit",
+        "Mars-Sun Orbit".to_string(),
         SUN.clone(),
         cst::MarsSunOrbit::SEMI_MAJOR,
         cst::MarsSunOrbit::ECC,
@@ -75,8 +75,8 @@ fn main() {
     let pos_leo: Vector3<f64> = Vector3::new(x_pos_leo, y_pos_leo, z_pos_leo);
     let vel_leo: Vector3<f64> = Vector3::new(x_vel_leo, y_vel_leo, z_vel_leo);
     let orbit_one= grav::kepler::Orbit::from_pos_vel(
-        "Earth Parking",
-        xyzt::EARTH.clone(),
+        "Earth Parking".to_string(),
+        EARTH.clone(),
         pos_leo, 
         vel_leo,
         epoch_date_time
@@ -87,8 +87,8 @@ fn main() {
     let pos_lmo: Vector3<f64> = Vector3::new(x_pos_lmo, y_pos_lmo, z_pos_lmo);
     let vel_lmo: Vector3<f64> = Vector3::new(x_vel_lmo, y_vel_lmo, z_vel_lmo);
     let orbit_two = grav::kepler::Orbit::from_pos_vel(
-        "Mars Ending",
-        xyzt::MARS.clone(),
+        "Mars Ending".to_string(),
+        MARS.clone(),
         pos_lmo, 
         vel_lmos,
         epoch_date_time

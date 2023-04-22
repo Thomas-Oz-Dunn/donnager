@@ -5,7 +5,7 @@ Gravitational Bodies
 use nalgebra::{Vector3, Matrix3};
 use chrono::{DateTime, TimeZone, Utc};
 use plotters::prelude::*;
-use std::f64::consts::PI;
+use std::{f64::consts::PI, vec};
 use std::ops::Range;
 
 use crate::donnager::{spacetime as xyzt, constants as cst};
@@ -31,10 +31,10 @@ pub fn calc_coplanar_maneuver(
     let frame: xyzt::ReferenceFrames = xyzt::ReferenceFrames::ECI;
     let t_start: f64 = epoch_datetime.timestamp() as f64;
 
-    let (_, vel_0) = orbit_0.calc_pos_vel(t_start, frame);
-    let (_, vel_f) = orbit_f.calc_pos_vel(t_start, frame);
+    let motion0 = orbit_0.calc_pos_vel(t_start, frame);
+    let motionf = orbit_f.calc_pos_vel(t_start, frame);
 
-    let delv = vel_f - vel_0;
+    let delv = motionf[1] - motion0[1];
     let man: Maneuver = Maneuver { delta_v: (delv), act_time: (t_start) };
 
     return man
@@ -59,28 +59,28 @@ pub fn calc_maneuvers(
     let radius_1: f64 = orbit_0.semi_major_axis;
     let radius_2: f64 = orbit_f.semi_major_axis;
     let t_start: f64 = epoch_datetime.timestamp() as f64;
-    let (pos_0, vel_0) = orbit_0.calc_pos_vel(t_start, frame);
-    let (del1, del2) = calc_hohmann_transfer(radius_1, radius_2, vel_0.norm());
+    let motion1 = orbit_0.calc_pos_vel(t_start, frame);
+    let (del1, del2) = calc_hohmann_transfer(radius_1, radius_2, motion1[1].norm());
 
     // Maneuver 1
-    let dv_1 = del1 * vel_0 / vel_0.norm();
+    let dv_1 = del1 * motion1[1] / motion1[1].norm();
     let man1: Maneuver = Maneuver { delta_v: (dv_1), act_time: (t_start) };
     
     let name = "Transfer orbit";
-    let vel = vel_0 + dv_1;
+    let vel = motion1[1] + dv_1;
     let trans_orbit: Orbit = Orbit::from_pos_vel(
         name.to_string(), 
         orbit_0.central_body, 
-        pos_0, 
+        motion1[0], 
         vel, 
         epoch_datetime);
 
     let period: f64 = trans_orbit.calc_period();
 
     // Maneuver 2
-    let time_2: f64 = t_start + period/2.;
-    let (_, vel2) = trans_orbit.calc_pos_vel(time_2, frame);
-    let dv_2 = del2 * vel2 / vel2.norm();
+    let time_2: f64 = t_start + period / 2.;
+    let motion2 = trans_orbit.calc_pos_vel(time_2, frame);
+    let dv_2 = del2 * motion2[1] / motion2[1].norm();
     let man2: Maneuver = Maneuver { delta_v: (dv_2), act_time: (time_2) };
 
     let maneuvers = vec![man1, man2];
@@ -302,7 +302,7 @@ impl Orbit {
         let semi_major_axis: f64 = calc_semi_major_axis(
             cst::EARTH::GRAV_PARAM, mean_motion);
 
-        /// Earth
+        // Earth
         let EARTH: xyzt::Body = xyzt::Body {
             name: String::from("Earth"),
             grav_param: cst::EARTH::GRAV_PARAM,
@@ -390,11 +390,12 @@ impl Orbit {
     /// 
     /// Outputs
     /// -------
+    /// motion: `[order, xyz]`
     pub fn calc_pos_vel(
         &self, 
         time: f64, 
         frame: xyzt::ReferenceFrames
-    ) -> (Vector3<f64>, Vector3<f64>) {
+    ) -> Vec<Vector3<f64>> {
  
         let true_anomaly_rad: f64 = self.calc_true_anomaly(time);
         let cos_true_anom: f64 = true_anomaly_rad.cos();
@@ -404,7 +405,6 @@ impl Orbit {
             1.0 - self.eccentricity.powi(2)) / 
             (1.0 + self.eccentricity * cos_true_anom);
         
-        // FIXME-TD: stack pos, vel, acc, jerl etc along `order` axis
         // Vectorize with [n_evals, 3dim, n_order]
         // Perifocal
         let x_pos: f64 = radius * cos_true_anom;
@@ -420,19 +420,19 @@ impl Orbit {
         
         match frame {
             xyzt::ReferenceFrames::PFCL => {
-                return (pos, vel);
+                return vec![pos, vel];
             },
             xyzt::ReferenceFrames::ECI => {
                 let rotam: Matrix3<f64> = self.calc_pfcl_inertial_rotam();
                 let eci_pos: Vector3<f64> = rotam * pos;
                 let eci_vel: Vector3<f64> = rotam * vel;
-                return (eci_pos, eci_vel);
+                return vec![eci_pos, eci_vel];
             },
             xyzt::ReferenceFrames::Heliocentric => {
                 let rotam: Matrix3<f64> = self.calc_pfcl_inertial_rotam();
                 let eci_pos: Vector3<f64> = rotam * pos;
                 let eci_vel: Vector3<f64> = rotam * vel;
-                return (eci_pos, eci_vel);
+                return vec![eci_pos, eci_vel];
             },
             xyzt::ReferenceFrames::ECEF => {
                 let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_inertial_rotam();
@@ -446,7 +446,7 @@ impl Orbit {
 
                 let ecef_pos: Vector3<f64> = eci_ecef_rotam * eci_pos;
                 let ecef_vel: Vector3<f64> = eci_ecef_rotam * eci_vel;
-                return (ecef_pos, ecef_vel);
+                return vec![ecef_pos, ecef_vel];
             },
             xyzt::ReferenceFrames::LLA => {
                 let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_inertial_rotam();
@@ -463,12 +463,16 @@ impl Orbit {
 
                 let lla_pos: Vector3<f64> = xyzt::ecef_to_lla(ecef_pos);
                 let lla_vel: Vector3<f64> = xyzt::ecef_to_lla(ecef_vel);
-                return (lla_pos, lla_vel);
+                return vec![lla_pos, lla_vel];
             }
         }
     }
 
     /// Calculate true anomaly in radians
+    /// 
+    /// Inputs
+    /// ------
+    /// time: `f64`
     pub fn calc_true_anomaly(&self, time: f64) -> f64 {
         let mean_anom: f64 = (
             self.mean_anomaly + self.mean_motion * time) * cst::DEG_TO_RAD;
@@ -538,15 +542,15 @@ impl Orbit {
     pub fn propogate_in_place(&mut self, dt: f64) {
         let new_time: f64 = self.epoch.timestamp() as f64 + dt;
         let frame = xyzt::ReferenceFrames::ECI;
-        let motion: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(new_time, frame);
+        let motion = self.calc_pos_vel(new_time, frame);
         let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
             new_time as i64, 0).unwrap();
 
         let new_orbit: Orbit = Orbit::from_pos_vel(
             self.name.clone(), 
             self.central_body.clone(), 
-            motion.0, 
-            motion.1, 
+            motion[0], 
+            motion[1], 
             new_epoch_datetime);
         *self = new_orbit;
 
@@ -567,7 +571,7 @@ impl Orbit {
         let mut pos_mut: Vec<Vector3<f64>> = Vec::new();
         times.values().for_each(|time| {
             let motion_frame = self.calc_pos_vel(time, frame);
-            pos_mut.push(motion_frame.0);
+            pos_mut.push(motion_frame[0]);
         });
 
         // Plot
@@ -819,13 +823,13 @@ impl Orbit {
         let mut time: f64 = self.epoch.timestamp() as f64;
         let frame = xyzt::ReferenceFrames::ECEF;
 
-        let mut motion_ecef: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(time, frame);
-        let pos_lla = xyzt::ecef_to_lla(motion_ecef.0);
+        let mut motion_ecef = self.calc_pos_vel(time, frame);
+        let pos_lla = xyzt::ecef_to_lla(motion_ecef[0]);
         kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
         time += 60.0;
         while time < self.epoch.timestamp() as f64 + 86400.0 {
             motion_ecef = self.calc_pos_vel(time, frame);
-            let pos_lla = xyzt::ecef_to_lla(motion_ecef.0);
+            let pos_lla = xyzt::ecef_to_lla(motion_ecef[0]);
             kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
             time += 60.0;
         }
@@ -844,9 +848,9 @@ impl Orbit {
     /// time: `f64`
     ///     Time for evaluation
     pub fn calc_ground_coverage_radius(&self, time: f64) -> f64 {
-        let motion_ecef: (Vector3<f64>, Vector3<f64>) = self.calc_pos_vel(
+        let motion_ecef = self.calc_pos_vel(
             time, xyzt::ReferenceFrames::ECEF);
-        let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(motion_ecef.0);
+        let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(motion_ecef[0]);
         let theta: f64 = (
             cst::EARTH::RADIUS_EQUATOR / (cst::EARTH::RADIUS_EQUATOR + pos_lla.z)).acos();
         let cov_radius: f64 = theta * cst::EARTH::RADIUS_EQUATOR;
@@ -878,8 +882,8 @@ pub fn calc_lagrange_points(
     let mass_ratio: f64= mass_2 / (mass_1 + mass_2);
 
     // Permissible if mass_2 is <<<< mass_1
-    let xl12 = (mass_2/(3.*mass_1)).powf(1./3.);
-    let xl3 = 7.*mass_2 / (12. * mass_1);
+    let xl12: f64 = (mass_2/(3.*mass_1)).powf(1./3.);
+    let xl3: f64 = 7.*mass_2 / (12. * mass_1);
 
     let l1: Vector3<f64> = Vector3::new(1. - xl12, 0.,0.);
     let l2: Vector3<f64> = Vector3::new(1. + xl12 ,0.,0.);

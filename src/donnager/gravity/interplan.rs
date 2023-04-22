@@ -2,12 +2,11 @@
 Interplanetary Planner
 */
 
-use nalgebra::{Vector3};
 use chrono::{DateTime, Utc};
 use plotters::prelude::*;
 use std::ops::Range;
 
-use crate::donnager::{constants as cst, gravity::kepler as kepler, spacetime::{self as xyzt, SUN}};
+use crate::donnager::{constants as cst, gravity::kepler as kepler, spacetime as xyzt};
 
 /// Calculate interplanetary mission escape velocity
 /// 
@@ -84,7 +83,7 @@ pub fn show_trajectory(
     
     // Plot each orbital ellipse in the plane
     for orbit in Orbits{
-        if orbit.central_body != SUN{
+        if orbit.central_body.name != "Sun"{
             // Calculate central body trajectory
             
         }
@@ -120,9 +119,9 @@ pub fn show_porkchop_plots(
     let frame = xyzt::ReferenceFrames::Heliocentric;
     
     for launch_time in start_date_time.timestamp()..stop_date_time.timestamp() {
-        let (pos1, _) = orbit_1.calc_pos_vel(launch_time as f64, frame);
-        let (pos2, _) = orbit_2.calc_pos_vel(launch_time as f64, frame);
-        let v_inf: f64 = calc_esc_vel(pos1.norm(), pos2.norm());
+        let motion1 = orbit_1.calc_pos_vel(launch_time as f64, frame);
+        let motion2 = orbit_2.calc_pos_vel(launch_time as f64, frame);
+        let v_inf: f64 = calc_esc_vel(motion1[0].norm(), motion2[0].norm());
 
     }
 
@@ -166,16 +165,16 @@ pub fn show_porkchop_plots(
 
     let longest_tof: chrono::Duration = 
         stop_date_time.date_naive() - start_date_time.date_naive();
-    let y_spec: Range<chrono::Duration> = chrono::Duration{secs: 0, nanos: 0}..longest_tof;  
+    // let y_spec: Range<chrono::Duration> = chrono::Duration{secs: 0, nanos: 0}..longest_tof;  
 
-    let mut chart = 
-            chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
-    chart
-        .configure_mesh()
-        .y_desc("Arrival Date")
-        .x_desc("Departure Date")
-        .draw()
-        .unwrap();
+    // let mut chart = 
+    //         chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
+    // chart
+    //     .configure_mesh()
+    //     .y_desc("Arrival Date")
+    //     .x_desc("Departure Date")
+    //     .draw()
+    //     .unwrap();
 
 
     // Plot Delta v contours

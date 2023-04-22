@@ -22,9 +22,9 @@ fn main() {
 
     let dt: f64 = 10.1;
     let new_orb = orbit.propogate(dt);
-    let p_v_ecef: (Vector3<f64>, Vector3<f64>) = new_orb.calc_pos_vel(0., xyzt::ReferenceFrames::ECEF);
+    let p_v_ecef = new_orb.calc_pos_vel(0., xyzt::ReferenceFrames::ECEF);
 
-    let p_lla: Vector3<f64> = xyzt::ecef_to_lla(p_v_ecef.0);
+    let p_lla: Vector3<f64> = xyzt::ecef_to_lla(p_v_ecef[0]);
     
     // TODO: compare against observed baselines
     println!("{} is at {} altitude above {} deg N and {} deg E at {}",
