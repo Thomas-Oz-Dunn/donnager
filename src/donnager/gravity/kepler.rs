@@ -303,7 +303,7 @@ impl Orbit {
             cst::EARTH::GRAV_PARAM, mean_motion);
 
         // Earth
-        let EARTH: xyzt::Body = xyzt::Body {
+        let earth: xyzt::Body = xyzt::Body {
             name: String::from("Earth"),
             grav_param: cst::EARTH::GRAV_PARAM,
             eq_radius: cst::EARTH::RADIUS_EQUATOR,
@@ -313,7 +313,7 @@ impl Orbit {
 
         Orbit {
             name: name.to_string(),
-            central_body: EARTH,
+            central_body: earth,
             semi_major_axis,
             raan,
             eccentricity: ecc,

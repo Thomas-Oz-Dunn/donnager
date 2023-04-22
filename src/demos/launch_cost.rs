@@ -14,7 +14,7 @@ use donnager::donnager::{
 fn main() {
     
     // Earth
-    let EARTH: xyzt::Body = xyzt::Body {
+    let earth: xyzt::Body = xyzt::Body {
         name: String::from("Earth"),
         grav_param: cst::EARTH::GRAV_PARAM,
         eq_radius: cst::EARTH::RADIUS_EQUATOR,
@@ -25,7 +25,7 @@ fn main() {
     // Config
     let launch_site: xyzt::SurfacePoint = xyzt::SurfacePoint {
         name: "Cape Canaveral Launch Site".to_string(),
-        body: EARTH.clone(),
+        body: earth.clone(),
         pos_lla: Vector3::new(28.396837, -80.605659, 0.0)
     };
 
