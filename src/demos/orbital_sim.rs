@@ -11,7 +11,7 @@ fn main() {
     let is_write_kml: bool = true;
 
     // Orbiting Body
-    let tle_str = "ISS
+    let tle_str: &str = "ISS
     1 25544U 98067A   23060.72453421  .00027779  00000-0  50068-3 0  9993
     2 25544  51.6419 140.8390 0005926  43.3718 100.9839 15.49547192385127";
     
@@ -21,7 +21,7 @@ fn main() {
     orbit.show(frame);
 
     let dt: f64 = 10.1;
-    let new_orb = orbit.propogate(dt);
+    let new_orb: grav::kepler::Orbit = orbit.propogate(dt);
     let p_v_ecef = new_orb.calc_pos_vel(0., xyzt::ReferenceFrames::ECEF);
 
     let p_lla: Vector3<f64> = xyzt::ecef_to_lla(p_v_ecef[0]);

@@ -9,7 +9,7 @@ use donnager::donnager::{constants as cst, spacetime as xyzt, gravity as grav};
 
 fn main() {
         
-    /// Earth
+    // Earth
     let EARTH: xyzt::Body = xyzt::Body {
         name: String::from("Earth"),
         grav_param: cst::EARTH::GRAV_PARAM,
@@ -18,7 +18,7 @@ fn main() {
         eccentricity: cst::EARTH::ECC
     };
 
-    /// Mars
+    // Mars
     let MARS: xyzt::Body = xyzt::Body{
         name: "Mars".to_string(),
         grav_param: cst::MARS::GRAV_PARAM,
@@ -27,7 +27,7 @@ fn main() {
         eccentricity: cst::MARS::ECC
     };
 
-    /// Sun
+    // Sun
     let SUN: xyzt::Body = xyzt::Body {
         name: "Sun".to_string(),
         grav_param: cst::SUN::GRAV_PARAM,
@@ -42,7 +42,7 @@ fn main() {
         year, month as u32, day as u32, 0, 0, 0);
 
     // Earth-Sun orbit
-    let earth_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
+    let earth_sun_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
         "Earth-Sun Orbit".to_string(),
         SUN.clone(),
         cst::EarthSunOrbit::SEMI_MAJOR,
@@ -56,7 +56,7 @@ fn main() {
     );
 
     // Mars-Sun orbit
-    let mars_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
+    let mars_sun_orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_keplerian(
         "Mars-Sun Orbit".to_string(),
         SUN.clone(),
         cst::MarsSunOrbit::SEMI_MAJOR,
@@ -72,6 +72,7 @@ fn main() {
     
     // Start in LEO
     // TODO-TD: Calculate nominal LEO Orbit
+    let earth_alt: f64 = 408000.0;  // LEO
     let pos_leo: Vector3<f64> = Vector3::new(x_pos_leo, y_pos_leo, z_pos_leo);
     let vel_leo: Vector3<f64> = Vector3::new(x_vel_leo, y_vel_leo, z_vel_leo);
     let orbit_one= grav::kepler::Orbit::from_pos_vel(
@@ -84,15 +85,19 @@ fn main() {
 
     // End in LMO
     // TODO-TD: Calculate nominal LMO Orbit
+    let mars_alt: f64 = 408000.0;  // LEO
     let pos_lmo: Vector3<f64> = Vector3::new(x_pos_lmo, y_pos_lmo, z_pos_lmo);
     let vel_lmo: Vector3<f64> = Vector3::new(x_vel_lmo, y_vel_lmo, z_vel_lmo);
     let orbit_two = grav::kepler::Orbit::from_pos_vel(
         "Mars Ending".to_string(),
         MARS.clone(),
         pos_lmo, 
-        vel_lmos,
+        vel_lmo,
         epoch_date_time
     );
+    
+    let delta_v: f64 = launch_site.calc_delta_v(altitude);
+    let dev = orbit_two.
     // select start datetime
     // search forward for optimal launch windows
     // Compare patched conic vs 3bp fidelity
