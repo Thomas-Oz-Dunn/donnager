@@ -22,7 +22,7 @@ pub fn calc_esc_vel(
     orb_radius_f: f64,
 ) -> f64 {
     let av_radius: f64 = (orb_radius_0 + orb_radius_f) / 2.;
-    return (cst::SUN::GRAV_PARAM *(2. / orb_radius_0 - 1. / av_radius)).sqrt();
+    return (cst::SUN::GRAV_PARAM * (2. / orb_radius_0 - 1. / av_radius)).sqrt();
 }
 
 

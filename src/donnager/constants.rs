@@ -161,6 +161,8 @@ pub const SPEED_OF_LIGHT: f64 = 2.99792458e8;
 /// https://en.wikipedia.org/wiki/Vacuum_permittivity
 pub const ELECTRIC_CONST: f64 = 8.8541878123e-12;
 
+pub const WIENS_DIS_CONST: f64 = 2.897771955;
+
 /// Planck's Constant J * Hz-1
 /// 
 /// Source:
