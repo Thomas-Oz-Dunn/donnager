@@ -25,7 +25,77 @@ pub fn calc_esc_vel(
     return (cst::SUN::GRAV_PARAM * (2. / orb_radius_0 - 1. / av_radius)).sqrt();
 }
 
+/// Get solar system bodies
+pub fn get_solar_system_bodies() -> Vec<xyzt::Body> {
+    // Earth
+    let earth: xyzt::Body = xyzt::Body {
+        name: String::from("Earth"),
+        grav_param: cst::EARTH::GRAV_PARAM,
+        eq_radius: cst::EARTH::RADIUS_EQUATOR,
+        rotation_rate: cst::EARTH::ROT_RATE,
+        eccentricity: cst::EARTH::ECC
+    };
 
+    // Mars
+    let mars: xyzt::Body = xyzt::Body{
+        name: "Mars".to_string(),
+        grav_param: cst::MARS::GRAV_PARAM,
+        eq_radius: cst::MARS::RADIUS_EQUATOR,
+        rotation_rate: cst::MARS::ROT_RATE,
+        eccentricity: cst::MARS::ECC
+    };
+    return vec![earth, mars]
+}
+
+
+/// Populate vector of solar system objects
+pub fn get_solar_system_orbits(
+    start_date_time: DateTime<Utc>
+) -> Vec<kepler::Orbit> {
+
+    // Sun
+    let sun: xyzt::Body = xyzt::Body {
+        name: "Sun".to_string(),
+        grav_param: cst::SUN::GRAV_PARAM,
+        eq_radius: cst::SUN::RADIUS_EQUATOR,
+        rotation_rate: 0.,
+        eccentricity: cst::SUN::ECC
+    };
+
+    let (year, month, day) = xyzt::julian_to_gregorian(
+        cst::J2000_DAY as i32);
+    let epoch_date_time = xyzt::ymd_hms_to_datetime(
+        year, month as u32, day as u32, 0, 0, 0);
+
+    // Earth-Sun orbit
+    let earth_sun_orbit: kepler::Orbit = kepler::Orbit::from_keplerian(
+        "Earth-Sun Orbit".to_string(),
+        sun.clone(),
+        cst::EarthSunOrbit::SEMI_MAJOR,
+        cst::EarthSunOrbit::ECC,
+        cst::EarthSunOrbit::INC,
+        cst::EarthSunOrbit::RAAN,
+        cst::EarthSunOrbit::ARG_PERIHELION,
+        cst::EarthSunOrbit::MEAN_ANOMALY,
+        cst::EarthSunOrbit::MEAN_MOTION,
+        epoch_date_time
+    );
+
+    // Mars-Sun orbit
+    let mars_sun_orbit: kepler::Orbit = kepler::Orbit::from_keplerian(
+        "Mars-Sun Orbit".to_string(),
+        sun.clone(),
+        cst::MarsSunOrbit::SEMI_MAJOR,
+        cst::MarsSunOrbit::ECC,
+        cst::MarsSunOrbit::INC,
+        cst::MarsSunOrbit::RAAN,
+        cst::MarsSunOrbit::ARG_PERIHELION,
+        cst::MarsSunOrbit::MEAN_ANOMALY,
+        cst::MarsSunOrbit::MEAN_MOTION,
+        epoch_date_time
+    );
+    return vec![earth_sun_orbit, mars_sun_orbit]
+}
 
 // /// Calculate next hohmann transfer launch window
 // /// 
