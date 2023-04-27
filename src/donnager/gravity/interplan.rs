@@ -169,8 +169,9 @@ pub fn calc_next_hohmann_launch_window(
     let true_anonmaly_0_2 = orbit_2.calc_true_anomaly(epoch_time);
 
     let diff = true_anonmaly_0_2 - true_anonmaly_0_1;
-    // Find diff =  +/- 180
-    let distance = (180. - diff) / synodic_period;
+    // Find when diff =  +/- 180
+    let error = (180. - diff) / synodic_period;
+
 
 
 }
