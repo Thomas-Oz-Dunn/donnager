@@ -12,51 +12,68 @@ fn main() {
     let start_date_time = xyzt::ymd_hms_to_datetime(2023, 1, 1, 12, 0, 0);
     let stop_date_time = xyzt::ymd_hms_to_datetime(2053, 1, 1, 12, 0, 0);
    
-    // TODO-TD: Calculate nominal LEO Orbit
-    let earth_alt: f64 = 408000.0;  // LEO
-    let pos_earth: Vector3<f64> = Vector3::new(x_pos_leo, y_pos_leo, z_pos_leo);
-    let vel_earth: Vector3<f64> = Vector3::new(x_vel_leo, y_vel_leo, z_vel_leo);
-
-    // TODO-TD: Calculate nominal LMO Orbit
-    let pos_mars: Vector3<f64> = Vector3::new(x_pos_lmo, y_pos_lmo, z_pos_lmo);
-    let vel_mars: Vector3<f64> = Vector3::new(x_vel_lmo, y_vel_lmo, z_vel_lmo);
-
+    let start_alt: f64 = 408000.0;  
+    let end_alt: f64 = 208000.0;  
 
     // Givens
     let planets = interplan::get_solar_system_bodies();
-    let planet_orbits = interplan::get_solar_system_orbits(start_date_time);
-    
+    let planet_orbits = interplan::get_solar_system_orbits();
+
+    let semi_major_axis_earth = start_alt + cst::EARTH::RADIUS_EQUATOR;
+    let semi_major_axis_mars = end_alt + cst::MARS::RADIUS_EQUATOR;
+
+    let launch_site: xyzt::SurfacePoint = xyzt::SurfacePoint {
+        name: "Cape Canaveral Launch Site".to_string(),
+        body: planets[0].clone(),
+        pos_lla: Vector3::new(28.396837, -80.605659, 0.0)
+    };
+
+    let delta_v: f64 = launch_site.calc_delta_v(start_alt);
+
     // Start in LEO
-    let orbit_one= grav::kepler::Orbit::from_pos_vel(
-        "Earth Parking".to_string(),
-        EARTH.clone(),
-        pos_earth, 
-        vel_earth,
-        epoch_date_time
-    );
+    let orbit_one = grav::kepler::Orbit::from_keplerian(
+        "Earth Parking".to_string(), 
+        planets[0].clone(), 
+        semi_major_axis_earth, 
+        0., 
+        0., 
+        0., 
+        0., 
+        0., 
+        grav::kepler::calc_mean_motion(
+            semi_major_axis_earth, planets[0].grav_param), 
+        start_date_time);
 
     // End in LMO
-    let orbit_two = grav::kepler::Orbit::from_pos_vel(
-        "Mars Ending".to_string(),
-        MARS.clone(),
-        pos_mars, 
-        vel_mars,
-        epoch_date_time
-    );
+    let orbit_two = grav::kepler::Orbit::from_keplerian(
+        "Mars Parking".to_string(), 
+        planets[1].clone(), 
+        semi_major_axis_mars, 
+        0., 
+        0., 
+        0., 
+        0., 
+        0., 
+        grav::kepler::calc_mean_motion(
+            semi_major_axis_mars, planets[1].grav_param), 
+            stop_date_time);
     
-    let delta_v: f64 = launch_site.calc_delta_v(altitude);
-    let dev = orbit_two.
+    
     // select start datetime
+
     // search forward for optimal launch windows
+
     // Compare patched conic vs 3bp fidelity
+
     // compare passive and active cyclers
+    
     // plot trajectory, fuel, time
 
     grav::interplan::show_porkchop_plots(
         start_date_time,
         stop_date_time,
-        orbit_1,
-        orbit_2
+        orbit_one,
+        orbit_two
     );
 
 }

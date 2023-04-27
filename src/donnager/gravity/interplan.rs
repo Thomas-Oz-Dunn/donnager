@@ -21,12 +21,14 @@ pub fn calc_esc_vel(
     orb_radius_0: f64,
     orb_radius_f: f64,
 ) -> f64 {
-    let av_radius: f64 = (orb_radius_0 + orb_radius_f) / 2.;
-    return (cst::SUN::GRAV_PARAM * (2. / orb_radius_0 - 1. / av_radius)).sqrt();
+    let mean_radius: f64 = (orb_radius_0 + orb_radius_f) / 2.;
+    return (cst::SUN::GRAV_PARAM * (2. / orb_radius_0 - 1. / mean_radius)).sqrt();
 }
 
 /// Get solar system bodies
 pub fn get_solar_system_bodies() -> Vec<xyzt::Body> {
+    // FIXME-TD: calculate all major solar system bodies MCEMJSUN
+
     // Earth
     let earth: xyzt::Body = xyzt::Body {
         name: String::from("Earth"),
@@ -49,9 +51,8 @@ pub fn get_solar_system_bodies() -> Vec<xyzt::Body> {
 
 
 /// Populate vector of solar system objects
-pub fn get_solar_system_orbits(
-    start_date_time: DateTime<Utc>
-) -> Vec<kepler::Orbit> {
+pub fn get_solar_system_orbits() -> Vec<kepler::Orbit> {
+    // FIXME-TD: calculate all major solar system bodies MCEMJSUN
 
     // Sun
     let sun: xyzt::Body = xyzt::Body {

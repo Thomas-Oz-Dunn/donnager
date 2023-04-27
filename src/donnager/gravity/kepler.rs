@@ -5,8 +5,7 @@ Gravitational Bodies
 use nalgebra::{Vector3, Matrix3};
 use chrono::{DateTime, TimeZone, Utc};
 use plotters::prelude::*;
-use std::{f64::consts::PI, vec};
-use std::ops::Range;
+use std::{f64::consts::PI, vec, ops::Range};
 
 use crate::donnager::{spacetime as xyzt, constants as cst};
 
@@ -15,6 +14,15 @@ pub struct Maneuver{
     pub act_time: f64
 }
 
+/// Calculate coplanar maneuver
+/// 
+/// Inputs
+/// ------
+/// orbit_0
+/// 
+/// orbit_f
+/// 
+/// 
 pub fn calc_coplanar_maneuver(
     orbit_0: Orbit,
     orbit_f: Orbit,
@@ -41,6 +49,15 @@ pub fn calc_coplanar_maneuver(
 }
 
 
+/// Calculate maneuvers
+/// 
+/// Inputs
+/// ------
+/// orbit_0
+/// 
+/// orbit_f
+/// 
+/// epoch_datetime
 pub fn calc_maneuvers(
     orbit_0: Orbit,
     orbit_f: Orbit,
@@ -95,8 +112,10 @@ pub fn calc_maneuvers(
 /// Variables
 /// ---------
 /// name : `String`
+///     Name of orbiting body
 /// 
 /// central_body : `xyzt::Body`
+///     Central gravitational body
 /// 
 /// semi_major_axis : `f64`
 /// 
@@ -113,6 +132,7 @@ pub fn calc_maneuvers(
 /// mean_motion : `f64`
 /// 
 /// epoch : `DateTime<Utc>`
+///     Reference epoch DateTime
 /// 
 /// Methods
 /// -------
