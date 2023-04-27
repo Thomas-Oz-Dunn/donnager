@@ -39,8 +39,8 @@ pub fn calc_coplanar_maneuver(
     let frame: xyzt::ReferenceFrames = xyzt::ReferenceFrames::ECI;
     let t_start: f64 = epoch_datetime.timestamp() as f64;
 
-    let motion0 = orbit_0.calc_pos_vel(t_start, frame);
-    let motionf = orbit_f.calc_pos_vel(t_start, frame);
+    let motion0 = orbit_0.calc_motion(t_start, frame);
+    let motionf = orbit_f.calc_motion(t_start, frame);
 
     let delv = motionf[1] - motion0[1];
     let man: Maneuver = Maneuver { delta_v: (delv), act_time: (t_start) };
@@ -76,7 +76,7 @@ pub fn calc_maneuvers(
     let radius_1: f64 = orbit_0.semi_major_axis;
     let radius_2: f64 = orbit_f.semi_major_axis;
     let t_start: f64 = epoch_datetime.timestamp() as f64;
-    let motion1 = orbit_0.calc_pos_vel(t_start, frame);
+    let motion1 = orbit_0.calc_motion(t_start, frame);
     let (del1, del2) = calc_hohmann_transfer(radius_1, radius_2, motion1[1].norm());
 
     // Maneuver 1
@@ -96,7 +96,7 @@ pub fn calc_maneuvers(
 
     // Maneuver 2
     let time_2: f64 = t_start + period / 2.;
-    let motion2 = trans_orbit.calc_pos_vel(time_2, frame);
+    let motion2 = trans_orbit.calc_motion(time_2, frame);
     let dv_2 = del2 * motion2[1] / motion2[1].norm();
     let man2: Maneuver = Maneuver { delta_v: (dv_2), act_time: (time_2) };
 
@@ -411,7 +411,7 @@ impl Orbit {
     /// Outputs
     /// -------
     /// motion: `[order, xyz]`
-    pub fn calc_pos_vel(
+    pub fn calc_motion(
         &self, 
         time: f64, 
         frame: xyzt::ReferenceFrames
@@ -562,7 +562,7 @@ impl Orbit {
     pub fn propogate_in_place(&mut self, dt: f64) {
         let new_time: f64 = self.epoch.timestamp() as f64 + dt;
         let frame = xyzt::ReferenceFrames::ECI;
-        let motion = self.calc_pos_vel(new_time, frame);
+        let motion = self.calc_motion(new_time, frame);
         let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
             new_time as i64, 0).unwrap();
 
@@ -590,7 +590,7 @@ impl Orbit {
         
         let mut pos_mut: Vec<Vector3<f64>> = Vec::new();
         times.values().for_each(|time| {
-            let motion_frame = self.calc_pos_vel(time, frame);
+            let motion_frame = self.calc_motion(time, frame);
             pos_mut.push(motion_frame[0]);
         });
 
@@ -843,12 +843,12 @@ impl Orbit {
         let mut time: f64 = self.epoch.timestamp() as f64;
         let frame = xyzt::ReferenceFrames::ECEF;
 
-        let mut motion_ecef = self.calc_pos_vel(time, frame);
+        let mut motion_ecef = self.calc_motion(time, frame);
         let pos_lla = xyzt::ecef_to_lla(motion_ecef[0]);
         kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
         time += 60.0;
         while time < self.epoch.timestamp() as f64 + 86400.0 {
-            motion_ecef = self.calc_pos_vel(time, frame);
+            motion_ecef = self.calc_motion(time, frame);
             let pos_lla = xyzt::ecef_to_lla(motion_ecef[0]);
             kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
             time += 60.0;
@@ -868,7 +868,7 @@ impl Orbit {
     /// time: `f64`
     ///     Time for evaluation
     pub fn calc_ground_coverage_radius(&self, time: f64) -> f64 {
-        let motion_ecef = self.calc_pos_vel(
+        let motion_ecef = self.calc_motion(
             time, xyzt::ReferenceFrames::ECEF);
         let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(motion_ecef[0]);
         let theta: f64 = (

@@ -22,7 +22,7 @@ fn main() {
 
     let dt: f64 = 10.1;
     let new_orb: grav::kepler::Orbit = orbit.propogate(dt);
-    let motion_ecef = new_orb.calc_pos_vel(0., xyzt::ReferenceFrames::ECEF);
+    let motion_ecef = new_orb.calc_motion(0., xyzt::ReferenceFrames::ECEF);
 
     let p_lla: Vector3<f64> = xyzt::ecef_to_lla(motion_ecef[0]);
     

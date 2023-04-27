@@ -15,12 +15,14 @@ fn main() {
     let start_alt: f64 = 408000.0;  
     let end_alt: f64 = 208000.0;  
 
-    // Givens
-    let planets = interplan::get_solar_system_bodies();
-    let planet_orbits = interplan::get_solar_system_orbits();
+    let bodies = interplan::get_solar_system_bodies(
+        vec!["earth".to_string(), "mars".to_string()]);
 
-    let semi_major_axis_earth = start_alt + cst::EARTH::RADIUS_EQUATOR;
-    let semi_major_axis_mars = end_alt + cst::MARS::RADIUS_EQUATOR;
+    // Givens
+    let planet_sun_orbits = interplan::get_solar_system_orbits(bodies);
+
+    let semi_major_axis_earth: f64 = start_alt + cst::EARTH::RADIUS_EQUATOR;
+    let semi_major_axis_mars: f64 = end_alt + cst::MARS::RADIUS_EQUATOR;
 
     let launch_site: xyzt::SurfacePoint = xyzt::SurfacePoint {
         name: "Cape Canaveral Launch Site".to_string(),
