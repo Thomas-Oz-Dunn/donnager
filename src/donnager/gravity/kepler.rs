@@ -460,7 +460,7 @@ impl Orbit {
                 let eci_ecef_rotam: Matrix3<f64> = 
                     xyzt::calc_inertial_rotational_rotam(
                         new_epoch_datetime, 
-                        self.central_body);
+                        self.central_body.clone());
 
                 let ecef_pos: Vector3<f64> = eci_ecef_rotam * eci_pos;
                 let ecef_vel: Vector3<f64> = eci_ecef_rotam * eci_vel;
@@ -477,7 +477,7 @@ impl Orbit {
                 let eci_ecef_rotam: Matrix3<f64> = 
                     xyzt::calc_inertial_rotational_rotam(
                         new_epoch_datetime, 
-                        self.central_body);
+                        self.central_body.clone());
 
                 let ecef_pos: Vector3<f64> = eci_ecef_rotam * eci_pos;
                 let ecef_vel: Vector3<f64> = eci_ecef_rotam * eci_vel;

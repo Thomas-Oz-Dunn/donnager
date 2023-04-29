@@ -77,44 +77,44 @@ impl SUN {
     pub const ECC: f64 = 1.799991e-5;
 }
 
-pub struct MERCURY;
-impl MERCURY{
-    pub const MASS: f64 = ;
-    pub const RADIUS_EQUATOR: f64 = ;
-    pub const GRAV_PARAM: f64 = MERCURY::MASS * GRAV_CONST;
-    pub const ECC: f64 = ;
-}
+// pub struct MERCURY;
+// impl MERCURY{
+//     pub const MASS: f64 = ;
+//     pub const RADIUS_EQUATOR: f64 = ;
+//     pub const GRAV_PARAM: f64 = MERCURY::MASS * GRAV_CONST;
+//     pub const ECC: f64 = ;
+// }
 
 
-pub struct MercurySunOrbit;
-impl MercurySunOrbit{
-    pub const SEMI_MAJOR: f64 = ; // km
-    pub const ECC: f64 = ;
-    pub const ARG_PERIHELION: f64 = ;
-    pub const INC: f64 = ;
-    pub const RAAN: f64 = ;
-    pub const MEAN_MOTION: f64 = ; // radians per day
-    pub const MEAN_ANOMALY: f64 = ; // radians
-}
+// pub struct MercurySunOrbit;
+// impl MercurySunOrbit{
+//     pub const SEMI_MAJOR: f64 = ; // km
+//     pub const ECC: f64 = ;
+//     pub const ARG_PERIHELION: f64 = ;
+//     pub const INC: f64 = ;
+//     pub const RAAN: f64 = ;
+//     pub const MEAN_MOTION: f64 = ; // radians per day
+//     pub const MEAN_ANOMALY: f64 = ; // radians
+// }
 
-pub struct VENUS;
-impl VENUS{
-    pub const MASS: f64 = ;
-    pub const RADIUS_EQUATOR: f64 = ;
-    pub const GRAV_PARAM: f64 = VENUS::MASS * GRAV_CONST;
-    pub const ECC: f64 = ;
-}
+// pub struct VENUS;
+// impl VENUS{
+//     pub const MASS: f64 = ;
+//     pub const RADIUS_EQUATOR: f64 = ;
+//     pub const GRAV_PARAM: f64 = VENUS::MASS * GRAV_CONST;
+//     pub const ECC: f64 = ;
+// }
 
-pub struct VenusSunOrbit;
-impl VenusSunOrbit{
-    pub const SEMI_MAJOR: f64 = ; // km
-    pub const ECC: f64 = ;
-    pub const ARG_PERIHELION: f64 = ;
-    pub const INC: f64 = ;
-    pub const RAAN: f64 = ;
-    pub const MEAN_MOTION: f64 = ; // radians per day
-    pub const MEAN_ANOMALY: f64 = ; // radians
-}
+// pub struct VenusSunOrbit;
+// impl VenusSunOrbit{
+//     pub const SEMI_MAJOR: f64 = ; // km
+//     pub const ECC: f64 = ;
+//     pub const ARG_PERIHELION: f64 = ;
+//     pub const INC: f64 = ;
+//     pub const RAAN: f64 = ;
+//     pub const MEAN_MOTION: f64 = ; // radians per day
+//     pub const MEAN_ANOMALY: f64 = ; // radians
+// }
 pub struct EARTH;
 impl EARTH {
     /// Mass of the Earth in kilograms

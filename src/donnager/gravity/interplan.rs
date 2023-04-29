@@ -23,51 +23,55 @@ pub fn calc_esc_vel(
 ) -> f64 {
     let mean_radius: f64 = (orb_radius_0 + orb_radius_f) / 2.;
     return (cst::SUN::GRAV_PARAM * (2. / orb_radius_0 - 1. / mean_radius)).sqrt();
-}
+// }
 
-/// Get solar system bodies
-pub fn get_solar_system_bodies(
-    planet_idxs: Vec<String>
-) -> Vec<xyzt::Body> {
-    let mut bodies: Vec<xyzt::Body>;
+// /// Get solar system bodies
+// pub fn get_solar_system_bodies(
+//     planet_idxs: Vec<String>
+// ) -> Vec<xyzt::Body> {
+//     let mut bodies: Vec<xyzt::Body>;
 
-    // Mercury
+//     // Mercury
 
-    // Venus
+//     // Venus
 
-    if planet_idxs.contains(&"earth".to_string()) {
-        // Earth
-        let earth: xyzt::Body = xyzt::Body {
-            name: String::from("Earth"),
-            grav_param: cst::EARTH::GRAV_PARAM,
-            eq_radius: cst::EARTH::RADIUS_EQUATOR,
-            rotation_rate: cst::EARTH::ROT_RATE,
-            sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
-            eccentricity: cst::EARTH::ECC
-        };
-        bodies.append(& mut vec![earth])
-    }
+//     if planet_idxs.contains(&"earth".to_string()) {
+//         // Earth
+//         let earth: xyzt::Body = xyzt::Body {
+//             name: String::from("Earth"),
+//             grav_param: cst::EARTH::GRAV_PARAM,
+//             eq_radius: cst::EARTH::RADIUS_EQUATOR,
+//             rotation_rate: cst::EARTH::ROT_RATE,
+//             sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
+//             eccentricity: cst::EARTH::ECC
+//         };
+//         bodies.append(& mut vec![earth.clone()])
+//     }
 
-    // Mars
-    let mars: xyzt::Body = xyzt::Body{
-        name: "Mars".to_string(),
-        grav_param: cst::MARS::GRAV_PARAM,
-        eq_radius: cst::MARS::RADIUS_EQUATOR,
-        rotation_rate: cst::MARS::ROT_RATE,
-        sidereal_day_hours: cst::MARS::SIDEREAL_DAY,
-        eccentricity: cst::MARS::ECC
-    };
+//     // Mars
+//     if planet_idxs.contains(&"mars".to_string()) {
 
-    // Jupiter
+//         let mars: xyzt::Body = xyzt::Body{
+//             name: "Mars".to_string(),
+//             grav_param: cst::MARS::GRAV_PARAM,
+//             eq_radius: cst::MARS::RADIUS_EQUATOR,
+//             rotation_rate: cst::MARS::ROT_RATE,
+//             sidereal_day_hours: cst::MARS::SIDEREAL_DAY,
+//             eccentricity: cst::MARS::ECC
+//         };
+    
+//         bodies.append(& mut vec![mars])
+//     }
+//     // Jupiter
 
-    // Saturn
+//     // Saturn
 
-    // Uranus
+//     // Uranus
 
-    // Neptune
-    let bodies = bodies;
-    return bodies
-}
+//     // Neptune
+//     let bodies = bodies;
+//     return bodies
+// }
 
 
 /// Populate vector of solar system objects
@@ -138,78 +142,78 @@ pub fn get_solar_system_orbits(
     return orbits
 }
 
-/// Calculate next hohmann transfer launch window
-/// 
-/// Inputs
-/// ------
-/// start_datetime: `DateTime<Utc>`
-///     Start datetime for search
-/// 
-/// orbit_1: `Orbit`
-///     Orbit of starting planet
-/// 
-/// orbit_2: `Orbit`
-///     Orbit of ending planet
-/// 
-/// Outputs
-/// -------
-/// `Vec<DateTime<Utc>>`
-///     Vector of launch windows
-pub fn calc_next_hohmann_launch_window(
-    start_datetime: DateTime<Utc>,
-    orbit_1: kepler::Orbit,
-    orbit_2: kepler::Orbit
-) -> Vec<DateTime<Utc>>{
+// /// Calculate next hohmann transfer launch window
+// /// 
+// /// Inputs
+// /// ------
+// /// start_datetime: `DateTime<Utc>`
+// ///     Start datetime for search
+// /// 
+// /// orbit_1: `Orbit`
+// ///     Orbit of starting planet
+// /// 
+// /// orbit_2: `Orbit`
+// ///     Orbit of ending planet
+// /// 
+// /// Outputs
+// /// -------
+// /// `Vec<DateTime<Utc>>`
+// ///     Vector of launch windows
+// pub fn calc_next_hohmann_launch_window(
+//     start_datetime: DateTime<Utc>,
+//     orbit_1: kepler::Orbit,
+//     orbit_2: kepler::Orbit
+// ) -> Vec<DateTime<Utc>>{
 
-    let period_1 = orbit_1.calc_period();
-    let period_2 = orbit_2.calc_period();
-    let synodic_period = period_1 / period_2;
+//     let period_1 = orbit_1.calc_period();
+//     let period_2 = orbit_2.calc_period();
+//     let synodic_period = period_1 / period_2;
 
-    let epoch_time = start_datetime.timestamp() as f64;
-    let true_anonmaly_0_1 = orbit_1.calc_true_anomaly(epoch_time);
+//     let epoch_time = start_datetime.timestamp() as f64;
+//     let true_anonmaly_0_1 = orbit_1.calc_true_anomaly(epoch_time);
 
-    let epoch_time = start_datetime.timestamp() as f64;
-    let true_anonmaly_0_2 = orbit_2.calc_true_anomaly(epoch_time);
+//     let epoch_time = start_datetime.timestamp() as f64;
+//     let true_anonmaly_0_2 = orbit_2.calc_true_anomaly(epoch_time);
 
-    let diff = true_anonmaly_0_2 - true_anonmaly_0_1;
-    // Find when diff =  +/- 180
-    let error = (180. - diff) / synodic_period;
-
-
-
-}
+//     let diff = true_anonmaly_0_2 - true_anonmaly_0_1;
+//     // Find when diff =  +/- 180
+//     let error = (180. - diff) / synodic_period;
 
 
-pub fn show_trajectory(
-    Orbits: Vec<kepler::Orbit>,
-    Maneuvers: Vec<kepler::Maneuver>
-){
-    // Create drawing canvas of solar system bodies
-    let pathname: String = format!("SolarSystemTrajectory.png");
 
-    let drawing_area = 
-        BitMapBackend::new(&pathname, (500, 500))
-            .into_drawing_area();
+// }
 
-    let mut chart_builder = ChartBuilder::on(&drawing_area);
+
+// pub fn show_trajectory(
+//     Orbits: Vec<kepler::Orbit>,
+//     Maneuvers: Vec<kepler::Maneuver>
+// ){
+//     // Create drawing canvas of solar system bodies
+//     let pathname: String = format!("SolarSystemTrajectory.png");
+
+//     let drawing_area = 
+//         BitMapBackend::new(&pathname, (500, 500))
+//             .into_drawing_area();
+
+//     let mut chart_builder = ChartBuilder::on(&drawing_area);
     
-    // Plot each orbital ellipse in the plane
-    for orbit in Orbits{
-        if orbit.central_body.name != "Sun"{
-            // Calculate central body trajectory
-            let planet_orbit = get_solar_system_orbits(
-                vec![orbit.central_body.name.to_string()])[0];
-            let motion_0 = planet_orbit.calc_motion(time, frame);
-        } else {
-            // Plot trajectory directly
+//     // Plot each orbital ellipse in the plane
+//     for orbit in Orbits{
+//         if orbit.central_body.name != "Sun"{
+//             // Calculate central body trajectory
+//             let planet_orbit = get_solar_system_orbits(
+//                 vec![orbit.central_body.name.to_string()])[0];
+//             let motion_0 = planet_orbit.calc_motion(time, frame);
+//         } else {
+//             // Plot trajectory directly
 
-        }
-    }
+//         }
+//     }
 
-    // Plot each maneuver location, magnitude, and direction
+//     // Plot each maneuver location, magnitude, and direction
 
 
-}
+// }
 
 /// Show orbital transfer porkchop plots
 /// 
@@ -296,22 +300,22 @@ pub fn show_porkchop_plots(
 
 
 
-    // Lines of -1 year slope
-    for intercept in integer_tof_years:
-        chart.draw_series(
-            PointSeries::of_element(
-                .iter().map(|p| (p.y, p.x)),
-                1,
-                &BLUE,
-                &|c, s, st| {
-                    Circle::new((c.0, c.1), s, st.filled())}
-        )
-    ).unwrap()
-    .label("Const ToF")
-    .legend(
-        |(x, y)| 
-        PathElement::new(vec![(x, y), (x + 20, y)], 
-        &BLUE));
+    // // Lines of -1 year slope
+    // for intercept in integer_tof_years:
+    //     chart.draw_series(
+    //         PointSeries::of_element(
+    //             .iter().map(|p| (p.y, p.x)),
+    //             1,
+    //             &BLUE,
+    //             &|c, s, st| {
+    //                 Circle::new((c.0, c.1), s, st.filled())}
+    //     )
+    // ).unwrap()
+    // .label("Const ToF")
+    // .legend(
+    //     |(x, y)| 
+    //     PathElement::new(vec![(x, y), (x + 20, y)], 
+    //     &BLUE));
     
 
 }
