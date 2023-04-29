@@ -23,7 +23,7 @@ pub fn calc_esc_vel(
 ) -> f64 {
     let mean_radius: f64 = (orb_radius_0 + orb_radius_f) / 2.;
     return (cst::SUN::GRAV_PARAM * (2. / orb_radius_0 - 1. / mean_radius)).sqrt();
-// }
+}
 
 // /// Get solar system bodies
 // pub fn get_solar_system_bodies(
@@ -74,73 +74,73 @@ pub fn calc_esc_vel(
 // }
 
 
-/// Populate vector of solar system objects
-pub fn get_solar_system_orbits(
-    bodies: Vec<String>
-) -> Vec<kepler::Orbit> {
-    let mut orbits: Vec<kepler::Orbit>;
+// /// Populate vector of solar system objects
+// pub fn get_solar_system_orbits(
+//     bodies: Vec<String>
+// ) -> Vec<kepler::Orbit> {
+//     let mut orbits: Vec<kepler::Orbit>;
 
-    // Sun
-    let sun: xyzt::Body = xyzt::Body {
-        name: "Sun".to_string(),
-        grav_param: cst::SUN::GRAV_PARAM,
-        eq_radius: cst::SUN::RADIUS_EQUATOR,
-        rotation_rate: 0.,
-        sidereal_day_hours: 0.,
-        eccentricity: cst::SUN::ECC
-    };
+//     // Sun
+//     let sun: xyzt::Body = xyzt::Body {
+//         name: "Sun".to_string(),
+//         grav_param: cst::SUN::GRAV_PARAM,
+//         eq_radius: cst::SUN::RADIUS_EQUATOR,
+//         rotation_rate: 0.,
+//         sidereal_day_hours: 0.,
+//         eccentricity: cst::SUN::ECC
+//     };
 
-    let (year, month, day) = xyzt::julian_to_gregorian(
-        cst::J2000_DAY as i32);
-    let epoch_date_time = xyzt::ymd_hms_to_datetime(
-        year, month as u32, day as u32, 0, 0, 0);
+//     let (year, month, day) = xyzt::julian_to_gregorian(
+//         cst::J2000_DAY as i32);
+//     let epoch_date_time = xyzt::ymd_hms_to_datetime(
+//         year, month as u32, day as u32, 0, 0, 0);
 
-    // Mercury
+//     // Mercury
 
-    // Venus
+//     // Venus
 
-    if bodies.contains(&"earth".to_string()) {
-        // Earth-Sun orbit
-        let earth_sun_orbit: kepler::Orbit = kepler::Orbit::from_keplerian(
-            "Earth-Sun Orbit".to_string(),
-            sun.clone(),
-            cst::EarthSunOrbit::SEMI_MAJOR,
-            cst::EarthSunOrbit::ECC,
-            cst::EarthSunOrbit::INC,
-            cst::EarthSunOrbit::RAAN,
-            cst::EarthSunOrbit::ARG_PERIHELION,
-            cst::EarthSunOrbit::MEAN_ANOMALY,
-            cst::EarthSunOrbit::MEAN_MOTION,
-            epoch_date_time);
-        orbits.append(&mut vec![earth_sun_orbit]);
-    }
+//     if bodies.contains(&"earth".to_string()) {
+//         // Earth-Sun orbit
+//         let earth_sun_orbit: kepler::Orbit = kepler::Orbit::from_keplerian(
+//             "Earth-Sun Orbit".to_string(),
+//             sun.clone(),
+//             cst::EarthSunOrbit::SEMI_MAJOR,
+//             cst::EarthSunOrbit::ECC,
+//             cst::EarthSunOrbit::INC,
+//             cst::EarthSunOrbit::RAAN,
+//             cst::EarthSunOrbit::ARG_PERIHELION,
+//             cst::EarthSunOrbit::MEAN_ANOMALY,
+//             cst::EarthSunOrbit::MEAN_MOTION,
+//             epoch_date_time);
+//         orbits.append(&mut vec![earth_sun_orbit]);
+//     }
 
-    // Mars-Sun orbit
-    let mars_sun_orbit: kepler::Orbit = kepler::Orbit::from_keplerian(
-        "Mars-Sun Orbit".to_string(),
-        sun.clone(),
-        cst::MarsSunOrbit::SEMI_MAJOR,
-        cst::MarsSunOrbit::ECC,
-        cst::MarsSunOrbit::INC,
-        cst::MarsSunOrbit::RAAN,
-        cst::MarsSunOrbit::ARG_PERIHELION,
-        cst::MarsSunOrbit::MEAN_ANOMALY,
-        cst::MarsSunOrbit::MEAN_MOTION,
-        epoch_date_time
-    );
+//     // Mars-Sun orbit
+//     let mars_sun_orbit: kepler::Orbit = kepler::Orbit::from_keplerian(
+//         "Mars-Sun Orbit".to_string(),
+//         sun.clone(),
+//         cst::MarsSunOrbit::SEMI_MAJOR,
+//         cst::MarsSunOrbit::ECC,
+//         cst::MarsSunOrbit::INC,
+//         cst::MarsSunOrbit::RAAN,
+//         cst::MarsSunOrbit::ARG_PERIHELION,
+//         cst::MarsSunOrbit::MEAN_ANOMALY,
+//         cst::MarsSunOrbit::MEAN_MOTION,
+//         epoch_date_time
+//     );
 
     
-    // Jupiter
+//     // Jupiter
 
-    // Saturn
+//     // Saturn
 
-    // Uranus
+//     // Uranus
 
-    // Neptune
+//     // Neptune
 
-    let orbits = orbits;
-    return orbits
-}
+//     let orbits = orbits;
+//     return orbits
+// }
 
 // /// Calculate next hohmann transfer launch window
 // /// 
@@ -282,16 +282,16 @@ pub fn show_porkchop_plots(
 
     let longest_tof: chrono::Duration = 
         stop_date_time.date_naive() - start_date_time.date_naive();
-    let y_spec: Range<chrono::Duration> = chrono::Duration{secs: 0, nanos: 0}..longest_tof;  
+    // let y_spec: Range<chrono::Duration> = chrono::Duration{secs: 0, nanos: 0}..longest_tof;  
 
-    let mut chart = 
-            chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
-    chart
-        .configure_mesh()
-        .y_desc("Arrival Date")
-        .x_desc("Departure Date")
-        .draw()
-        .unwrap();
+    // let mut chart = 
+    //         chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
+    // chart
+    //     .configure_mesh()
+    //     .y_desc("Arrival Date")
+    //     .x_desc("Departure Date")
+    //     .draw()
+    //     .unwrap();
 
 
     // Plot Delta v contours
@@ -334,5 +334,6 @@ mod interplan_tests {
         let esc_vel: f64 = calc_esc_vel(orb_radius_0, orb_radius_f);
         assert_eq!(esc_vel, 0.5);
     }
+
 
 }

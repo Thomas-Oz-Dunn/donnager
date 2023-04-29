@@ -19,6 +19,7 @@ fn main() {
         grav_param: cst::EARTH::GRAV_PARAM,
         eq_radius: cst::EARTH::RADIUS_EQUATOR,
         rotation_rate: cst::EARTH::ROT_RATE,
+        sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
         eccentricity: cst::EARTH::ECC
     };
 
