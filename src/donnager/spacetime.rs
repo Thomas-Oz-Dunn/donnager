@@ -202,10 +202,14 @@ impl SurfacePoint{
     /// radius : `Vector3<f64>`
     ///     Radial vector in meters
     pub fn calc_surface_radius(&self) -> Vector3<f64> {
-        let prime_vertical: f64 = calc_earth_prime_vertical(self.pos_lla[0]);
+        let prime_vertical: f64 = calc_prime_vertical(
+            self.pos_lla[0], 
+            self.body.eq_radius,
+            self.body.eccentricity);
         let dir: Vector3<f64> = planetodetic_to_cartesian_rotational(
             self.pos_lla,
-            self.body.eccentricity);
+            self.body.eq_radius,
+        self.body.eccentricity);
         let radius: Vector3<f64> = (prime_vertical + self.pos_lla[2]) * dir;
         return radius
     }
@@ -615,9 +619,13 @@ pub fn ecef_to_lla(ecef: Vector3<f64>) -> Vector3<f64> {
 ///     Cartesian coords
 pub fn planetodetic_to_cartesian_rotational(
     lla: Vector3<f64>,
+    equatorial_radius: f64,
     eccentricity: f64
 ) -> Vector3<f64> {
-    let radius: f64 = calc_earth_prime_vertical(lla[0]);
+    let radius: f64 = calc_prime_vertical(
+        lla[0], 
+        equatorial_radius,
+        eccentricity);
     let x: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].cos();
     let y: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].sin();
     let z: f64 = ((1.0 - eccentricity.powi(2)) * radius + lla[2]) * lla[0].sin();
@@ -631,10 +639,14 @@ pub fn planetodetic_to_cartesian_rotational(
 /// ------
 /// lat_deg: `f64`
 ///     Lattitude in degrees
-pub fn calc_earth_prime_vertical(lat_deg: f64) -> f64 {
+pub fn calc_prime_vertical(
+    lat_deg: f64, 
+    equatorial_radius: f64,
+    eccentricity: f64
+) -> f64 {
     let lat_radians: f64 = PI * lat_deg / 180.0;
     let radius: f64 = 
-        cst::EARTH::RADIUS_EQUATOR / (1.0 - (cst::EARTH::ECC * lat_radians.sin()).powi(2)).sqrt();
+        equatorial_radius / (1.0 - (eccentricity * lat_radians.sin()).powi(2)).sqrt();
     return radius
 }
 
@@ -652,15 +664,17 @@ pub fn calc_earth_prime_vertical(lat_deg: f64) -> f64 {
 /// -------
 /// enu: `Vector3<f64>`
 ///     East, North, Up
-pub fn ecef_to_enu(
+pub fn fixed_frame_to_enu(
     observer_lla: Vector3<f64>, 
-    tgt_ecef: Vector3<f64>,
+    p_tgt_fixed: Vector3<f64>,
+    equatorial_radius: f64,
     eccentricity: f64
 ) -> Vector3<f64> {
     let observer_ecef: Vector3<f64> = planetodetic_to_cartesian_rotational(
         observer_lla,
+        equatorial_radius,
         eccentricity);
-    let vec_ecef: Vector3<f64> = tgt_ecef - observer_ecef;
+    let vec_ecef: Vector3<f64> = p_tgt_fixed - observer_ecef;
     let ecef_enu: Matrix3<f64> = Matrix3::new(
         -observer_lla[1].sin(), observer_lla[1].cos(), 0.0,
         -observer_lla[1].cos()*observer_lla[0].sin(), -observer_lla[1].sin()*observer_lla[0].sin(), observer_lla[0].cos(),
@@ -685,6 +699,7 @@ pub fn ecef_to_enu(
 pub fn enu_to_ecef(
     pos_lla: Vector3<f64>, 
     enu: Vector3<f64>,
+    equatorial_radius: f64,
     eccentricity: f64
 ) -> Vector3<f64> {
     let enu_ecef: Matrix3<f64> = Matrix3::new(
@@ -695,6 +710,7 @@ pub fn enu_to_ecef(
     let vec_ecef: Vector3<f64> = enu_ecef * enu;
     let pos_ecef: Vector3<f64> = planetodetic_to_cartesian_rotational(
         pos_lla,
+        equatorial_radius,
         eccentricity);
     let ecef: Vector3<f64> = vec_ecef - pos_ecef;
     return ecef
@@ -768,7 +784,10 @@ mod spacetime_tests {
             44.54968779193849, 
             -117.07402908139512, 
             958238.4011472173);
-        let pos_ecef = planetodetic_to_cartesian_rotational(pos_lla, cst::EARTH::ECC);
+        let pos_ecef = planetodetic_to_cartesian_rotational(
+            pos_lla, 
+            cst::EARTH::RADIUS_EQUATOR, 
+            cst::EARTH::ECC);
         assert_eq!(pos_ecef, Vector3::new(
             -2383.0,
             -4662.0,
