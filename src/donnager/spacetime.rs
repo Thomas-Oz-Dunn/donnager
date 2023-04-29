@@ -9,22 +9,34 @@ use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, Datelike, Timelike, 
 use crate::donnager::constants as cst;
 
 /// Gravitational Body
+/// 
+/// Properties
+/// ----------
+/// name: `String`
+///     Name of body
 #[derive(Clone, Debug, PartialEq)]
 pub struct Body{
     pub name: String,
     pub grav_param: f64,
     pub eq_radius: f64,
     pub rotation_rate: f64,
+    pub sidereal_day_hours: f64,
     pub eccentricity: f64
 }
 
+
+
+/// Reference Frames
+/// 
+/// Valid Frames
+/// ------------
+/// InertialCartesian (ECI)
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ReferenceFrames {
-    ECI,
-    ECEF,
-    PFCL,
-    LLA,
-    Heliocentric
+    InertialCartesian, 
+    RotationalCartesian,
+    Perifocal,
+    Planetodetic
 }
 
 /// Gravitational Body
@@ -138,13 +150,21 @@ impl Particle {
     /// 
     /// eccentricity : `f64`
     ///     Body oblateness
-    pub fn to_body(&self, name: String, eq_radius: f64, rotation_rate: f64, eccentricity: f64) -> Body {
+    pub fn to_body(
+        &self, 
+        name: String, 
+        eq_radius: f64, 
+        rotation_rate: f64, 
+        sidereal_day_hours: f64,
+        eccentricity: f64
+    ) -> Body {
         let grav_param: f64 = self.mass * cst::GRAV_CONST;
         let body: Body = Body {
             name,
             grav_param,
             eq_radius,
             rotation_rate,
+            sidereal_day_hours,
             eccentricity
         };
         body
@@ -182,8 +202,10 @@ impl SurfacePoint{
     /// radius : `Vector3<f64>`
     ///     Radial vector in meters
     pub fn calc_surface_radius(&self) -> Vector3<f64> {
-        let prime_vertical: f64 = calc_prime_vertical(self.pos_lla[0]);
-        let dir: Vector3<f64> = lla_to_ecef(self.pos_lla);
+        let prime_vertical: f64 = calc_earth_prime_vertical(self.pos_lla[0]);
+        let dir: Vector3<f64> = planetodetic_to_cartesian_rotational(
+            self.pos_lla,
+            self.body.eccentricity);
         let radius: Vector3<f64> = (prime_vertical + self.pos_lla[2]) * dir;
         return radius
     }
@@ -213,7 +235,10 @@ impl SurfacePoint{
 /// Inputs
 /// ------
 /// date_time
-pub fn calc_eci_ecef_rotam(date_time: DateTime<Utc>) -> Matrix3<f64> {
+pub fn calc_inertial_rotational_rotam(
+    date_time: DateTime<Utc>,
+    central_body: Body
+) -> Matrix3<f64> {
     let year = date_time.year();
     let month = date_time.month() as i32;
     let day = date_time.day() as i32;
@@ -227,7 +252,7 @@ pub fn calc_eci_ecef_rotam(date_time: DateTime<Utc>) -> Matrix3<f64> {
     let sidereal_time: f64 = (hours + (minutes + seconds / 60.) / 60.) / 24.;
 
     let rot_rate_rad_day: f64 = 
-        cst::EARTH::ROT_RATE * 3600. * cst::EARTH::SIDEREAL_DAY; 
+        central_body.rotation_rate * 3600. * central_body.sidereal_day_hours; 
     let theta: f64 = 
         rot_rate_rad_day * (julian_day + sidereal_time - cst::J2000_DAY);
 
@@ -251,7 +276,7 @@ pub fn calc_eci_ecef_rotam(date_time: DateTime<Utc>) -> Matrix3<f64> {
 /// 
 /// julian_day : `i32`
 ///     julian_date
-pub fn calc_day_length(
+pub fn calc_earth_day_length(
     lat_deg: f64,
     long_deg: f64,
     julian_day: i32
@@ -588,11 +613,14 @@ pub fn ecef_to_lla(ecef: Vector3<f64>) -> Vector3<f64> {
 /// -------
 /// xyz: `Vector3<f64>`
 ///     Cartesian coords
-pub fn lla_to_ecef(lla: Vector3<f64>) -> Vector3<f64> {
-    let radius: f64 = calc_prime_vertical(lla[0]);
+pub fn planetodetic_to_cartesian_rotational(
+    lla: Vector3<f64>,
+    eccentricity: f64
+) -> Vector3<f64> {
+    let radius: f64 = calc_earth_prime_vertical(lla[0]);
     let x: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].cos();
     let y: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].sin();
-    let z: f64 = ((1.0 - cst::EARTH::ECC.powi(2)) * radius + lla[2]) * lla[0].sin();
+    let z: f64 = ((1.0 - eccentricity.powi(2)) * radius + lla[2]) * lla[0].sin();
     let xyz: Vector3<f64> = Vector3::new(x, y, z); 
     return xyz
 }
@@ -603,7 +631,7 @@ pub fn lla_to_ecef(lla: Vector3<f64>) -> Vector3<f64> {
 /// ------
 /// lat_deg: `f64`
 ///     Lattitude in degrees
-pub fn calc_prime_vertical(lat_deg: f64) -> f64 {
+pub fn calc_earth_prime_vertical(lat_deg: f64) -> f64 {
     let lat_radians: f64 = PI * lat_deg / 180.0;
     let radius: f64 = 
         cst::EARTH::RADIUS_EQUATOR / (1.0 - (cst::EARTH::ECC * lat_radians.sin()).powi(2)).sqrt();
@@ -618,22 +646,25 @@ pub fn calc_prime_vertical(lat_deg: f64) -> f64 {
 ///     Lattitude, Longitude, Altitude
 /// 
 /// ecef_2: `Vector3<f64>`
-///     ECEF
+///     ECEF object
 /// 
 /// Outputs
 /// -------
 /// enu: `Vector3<f64>`
 ///     East, North, Up
 pub fn ecef_to_enu(
-    pos_lla: Vector3<f64>, 
-    ecef_2: Vector3<f64>
+    observer_lla: Vector3<f64>, 
+    tgt_ecef: Vector3<f64>,
+    eccentricity: f64
 ) -> Vector3<f64> {
-    let pos_ecef: Vector3<f64> = lla_to_ecef(pos_lla);
-    let vec_ecef: Vector3<f64> = ecef_2 - pos_ecef;
+    let observer_ecef: Vector3<f64> = planetodetic_to_cartesian_rotational(
+        observer_lla,
+        eccentricity);
+    let vec_ecef: Vector3<f64> = tgt_ecef - observer_ecef;
     let ecef_enu: Matrix3<f64> = Matrix3::new(
-        -pos_lla[1].sin(), pos_lla[1].cos(), 0.0,
-        -pos_lla[1].cos()*pos_lla[0].sin(), -pos_lla[1].sin()*pos_lla[0].sin(), pos_lla[0].cos(),
-        pos_lla[1].cos()*pos_lla[0].cos(), pos_lla[1].sin()*pos_lla[0].cos(), pos_lla[0].sin());
+        -observer_lla[1].sin(), observer_lla[1].cos(), 0.0,
+        -observer_lla[1].cos()*observer_lla[0].sin(), -observer_lla[1].sin()*observer_lla[0].sin(), observer_lla[0].cos(),
+        observer_lla[1].cos()*observer_lla[0].cos(), observer_lla[1].sin()*observer_lla[0].cos(), observer_lla[0].sin());
     let enu: Vector3<f64> = ecef_enu * vec_ecef;
     return enu
 }
@@ -653,7 +684,8 @@ pub fn ecef_to_enu(
 ///     ECE
 pub fn enu_to_ecef(
     pos_lla: Vector3<f64>, 
-    enu: Vector3<f64>
+    enu: Vector3<f64>,
+    eccentricity: f64
 ) -> Vector3<f64> {
     let enu_ecef: Matrix3<f64> = Matrix3::new(
         -pos_lla[1].sin(), -pos_lla[1].cos()*pos_lla[0].sin(), pos_lla[1].cos()*pos_lla[0].cos(),
@@ -661,7 +693,9 @@ pub fn enu_to_ecef(
         0.0, pos_lla[0].cos(), pos_lla[0].sin()
     );
     let vec_ecef: Vector3<f64> = enu_ecef * enu;
-    let pos_ecef: Vector3<f64> = lla_to_ecef(pos_lla);
+    let pos_ecef: Vector3<f64> = planetodetic_to_cartesian_rotational(
+        pos_lla,
+        eccentricity);
     let ecef: Vector3<f64> = vec_ecef - pos_ecef;
     return ecef
 }
@@ -692,7 +726,7 @@ mod spacetime_tests {
     }
 
     #[test]
-    fn test_day_length(){
+    fn test_earth_day_length(){
         let year: i32 = 2023;
         let month: i32 = 2;
         let day: i32 = 5;
@@ -700,7 +734,7 @@ mod spacetime_tests {
         let lat_deg: f64 = 42.2929; 
 
         let julian_day: i32 = date_to_julian_day_num(year, month, day);
-        let day_light_hrs: f64 = calc_day_length(lat_deg, long_deg, julian_day);
+        let day_light_hrs: f64 = calc_earth_day_length(lat_deg, long_deg, julian_day);
         assert_eq!(day_light_hrs, 8.54933135165009);
 
     }
@@ -734,7 +768,7 @@ mod spacetime_tests {
             44.54968779193849, 
             -117.07402908139512, 
             958238.4011472173);
-        let pos_ecef = lla_to_ecef(pos_lla);
+        let pos_ecef = planetodetic_to_cartesian_rotational(pos_lla, cst::EARTH::ECC);
         assert_eq!(pos_ecef, Vector3::new(
             -2383.0,
             -4662.0,

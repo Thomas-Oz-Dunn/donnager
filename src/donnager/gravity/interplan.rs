@@ -42,6 +42,7 @@ pub fn get_solar_system_bodies(
             grav_param: cst::EARTH::GRAV_PARAM,
             eq_radius: cst::EARTH::RADIUS_EQUATOR,
             rotation_rate: cst::EARTH::ROT_RATE,
+            sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
             eccentricity: cst::EARTH::ECC
         };
         bodies.append(& mut vec![earth])
@@ -53,6 +54,7 @@ pub fn get_solar_system_bodies(
         grav_param: cst::MARS::GRAV_PARAM,
         eq_radius: cst::MARS::RADIUS_EQUATOR,
         rotation_rate: cst::MARS::ROT_RATE,
+        sidereal_day_hours: cst::MARS::SIDEREAL_DAY,
         eccentricity: cst::MARS::ECC
     };
 
@@ -80,6 +82,7 @@ pub fn get_solar_system_orbits(
         grav_param: cst::SUN::GRAV_PARAM,
         eq_radius: cst::SUN::RADIUS_EQUATOR,
         rotation_rate: 0.,
+        sidereal_day_hours: 0.,
         eccentricity: cst::SUN::ECC
     };
 
@@ -226,7 +229,7 @@ pub fn show_porkchop_plots(
     orbit_1: kepler::Orbit,
     orbit_2: kepler::Orbit
 ){
-    let frame = xyzt::ReferenceFrames::Heliocentric;
+    let frame = xyzt::ReferenceFrames::InertialCartesian;
     
     for launch_time in start_date_time.timestamp()..stop_date_time.timestamp() {
         let motion1 = orbit_1.calc_motion(launch_time as f64, frame);
