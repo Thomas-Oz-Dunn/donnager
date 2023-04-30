@@ -69,8 +69,7 @@ pub fn calc_spectral_radiance(
 pub fn calc_peak_wavelength(
     absolute_temp: f64
 ) -> f64 {
-    let wiens_dis_const = 2.897771955;
-    let wavelength = wiens_dis_const / absolute_temp;
+    let wavelength: f64 = cst::WIENS_DIS_CONST / absolute_temp;
     return wavelength
 }
 
@@ -120,8 +119,8 @@ pub fn calc_em_radiative_force(
     obj_reflecitivity: f64,
     normal_area: f64
 ) -> Vector3<f64> {
-    let pressure = em_flux / cst::SPEED_OF_LIGHT;
-    let mag = pressure * obj_reflecitivity * normal_area;
+    let pressure: f64 = em_flux / cst::SPEED_OF_LIGHT;
+    let mag: f64 = pressure * obj_reflecitivity * normal_area;
     let force = mag * src_obj_vec/ src_obj_vec.norm();
     return force
 }
@@ -170,21 +169,21 @@ mod electromag_tests{
 
     #[test]
     fn test_radiance(){
-        let absolute_temp = 234.34;
-        let frequency = cst::SPEED_OF_LIGHT / calc_peak_wavelength(absolute_temp);
-        let radiance = calc_spectral_radiance(frequency, absolute_temp);
+        let absolute_temp: f64 = 234.34;
+        let frequency: f64 = cst::SPEED_OF_LIGHT / calc_peak_wavelength(absolute_temp);
+        let radiance: f64 = calc_spectral_radiance(frequency, absolute_temp);
         assert_eq!(radiance, 4.221293395184273e-17)
     
     }
 
     #[test]
     fn test_power(){
-        let efficiency = 0.1;
-        let solar_flux_mag = cst::SUN::MEAN_SOLAR_FLUX;
+        let efficiency: f64 = 0.1;
+        let solar_flux_mag: f64 = cst::SUN::MEAN_SOLAR_FLUX;
         let em_flux_vec: Vector3<f64> = Vector3::new(0., 0., 1.) * solar_flux_mag;
         let panel_area_vec: Vector3<f64> = 
             Vector3::new(0., 0., 1.);
-        let max_power = calc_max_solar_power_gen(
+        let max_power: f64 = calc_max_solar_power_gen(
             em_flux_vec,
             panel_area_vec,
             efficiency

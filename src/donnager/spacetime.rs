@@ -4,26 +4,39 @@ Space time related functions
 
 use nalgebra::{Vector3, Matrix3};
 use std::f64::consts::PI;
-use chrono::{DateTime, Utc, Datelike, Timelike};
+use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, Datelike, Timelike, Utc};
 
 use crate::donnager::constants as cst;
 
 /// Gravitational Body
+/// 
+/// Properties
+/// ----------
+/// name: `String`
+///     Name of body
 #[derive(Clone, Debug, PartialEq)]
 pub struct Body{
     pub name: String,
     pub grav_param: f64,
     pub eq_radius: f64,
     pub rotation_rate: f64,
+    pub sidereal_day_hours: f64,
     pub eccentricity: f64
 }
 
+
+
+/// Reference Frames
+/// 
+/// Valid Frames
+/// ------------
+/// InertialCartesian (ECI)
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ReferenceFrames {
-    ECI,
-    ECEF,
-    PFCL,
-    LLA
+    InertialCartesian, 
+    RotationalCartesian,
+    Perifocal,
+    Planetodetic
 }
 
 /// Gravitational Body
@@ -76,26 +89,28 @@ impl Body {
     /// val: `f64`
     ///     Required tangential velocity magnitude
     pub fn calc_orbital_velocity_mag(&self, radius: f64) -> f64 {
-        let vel: f64 = (2.0 * self.grav_param / radius).sqrt();
+        let vel: f64 = (self.grav_param / radius).sqrt();
         return vel
     }
 
-    /// Calculate period of orbit at semi major axis
+
+    /// Calculate required escape velocity at radial distance
     /// 
     /// Inputs
     /// ------
-    /// semi_major_axis: `f64`
-    ///     Semi major axis of orbital ellipse
-    /// 
+    /// radius: `f64`
+    ///     Radius in km from Body center
+    ///     
     /// Outputs
     /// -------
-    /// period: `f64`
-    ///    Period of orbit in seconds
-    pub fn calc_period(&self, semi_major_axis: f64) -> f64 {
-        let period: f64 = 2.0 * PI * (semi_major_axis.powi(3)/self.grav_param).sqrt();
-        return period
+    /// val: `f64`
+    ///     Required tangential velocity magnitude
+    pub fn calc_escape_velocity_mag(&self, radius: f64) -> f64 {
+        let vel: f64 = (2. as f64).sqrt() * self.calc_orbital_velocity_mag(radius);
+        return vel
     }
-    
+
+
     /// Calculate radius for stationary orbit above body surface
     /// 
     /// Outputs
@@ -135,13 +150,21 @@ impl Particle {
     /// 
     /// eccentricity : `f64`
     ///     Body oblateness
-    pub fn to_body(&self, name: String, eq_radius: f64, rotation_rate: f64, eccentricity: f64) -> Body {
+    pub fn to_body(
+        &self, 
+        name: String, 
+        eq_radius: f64, 
+        rotation_rate: f64, 
+        sidereal_day_hours: f64,
+        eccentricity: f64
+    ) -> Body {
         let grav_param: f64 = self.mass * cst::GRAV_CONST;
         let body: Body = Body {
             name,
             grav_param,
             eq_radius,
             rotation_rate,
+            sidereal_day_hours,
             eccentricity
         };
         body
@@ -179,8 +202,14 @@ impl SurfacePoint{
     /// radius : `Vector3<f64>`
     ///     Radial vector in meters
     pub fn calc_surface_radius(&self) -> Vector3<f64> {
-        let prime_vertical: f64 = calc_prime_vertical(self.pos_lla[0]);
-        let dir: Vector3<f64> = lla_to_ecef(self.pos_lla);
+        let prime_vertical: f64 = calc_prime_vertical(
+            self.pos_lla[0], 
+            self.body.eq_radius,
+            self.body.eccentricity);
+        let dir: Vector3<f64> = planetodetic_to_cartesian_rotational(
+            self.pos_lla,
+            self.body.eq_radius,
+        self.body.eccentricity);
         let radius: Vector3<f64> = (prime_vertical + self.pos_lla[2]) * dir;
         return radius
     }
@@ -210,7 +239,10 @@ impl SurfacePoint{
 /// Inputs
 /// ------
 /// date_time
-pub fn calc_eci_ecef_rotam(date_time: DateTime<Utc>) -> Matrix3<f64> {
+pub fn calc_inertial_rotational_rotam(
+    date_time: DateTime<Utc>,
+    central_body: Body
+) -> Matrix3<f64> {
     let year = date_time.year();
     let month = date_time.month() as i32;
     let day = date_time.day() as i32;
@@ -224,7 +256,7 @@ pub fn calc_eci_ecef_rotam(date_time: DateTime<Utc>) -> Matrix3<f64> {
     let sidereal_time: f64 = (hours + (minutes + seconds / 60.) / 60.) / 24.;
 
     let rot_rate_rad_day: f64 = 
-        cst::EARTH::ROT_RATE * 3600. * cst::EARTH::SIDEREAL_DAY; 
+        central_body.rotation_rate * 3600. * central_body.sidereal_day_hours; 
     let theta: f64 = 
         rot_rate_rad_day * (julian_day + sidereal_time - cst::J2000_DAY);
 
@@ -235,9 +267,6 @@ pub fn calc_eci_ecef_rotam(date_time: DateTime<Utc>) -> Matrix3<f64> {
 
     return rotam
 }
-
-
-
 
 /// Calculate hours of sunlight at lattitude
 /// 
@@ -251,7 +280,7 @@ pub fn calc_eci_ecef_rotam(date_time: DateTime<Utc>) -> Matrix3<f64> {
 /// 
 /// julian_day : `i32`
 ///     julian_date
-pub fn calc_day_length(
+pub fn calc_earth_day_length(
     lat_deg: f64,
     long_deg: f64,
     julian_day: i32
@@ -261,7 +290,7 @@ pub fn calc_day_length(
     let j_star: f64 = (j2000_days as f64) - long_deg / 360.;
     let m: f64 = (357.5291 + 0.98560028 * j_star) % 360.;
     let eq_cen: f64 = 1.9148*(m.sin()) + 0.02*((2.*m).sin()) + 0.0003*((3.*m).sin());
-    let lambda: f64 = (m + eq_cen + 180. + cst::EARTH_ARG_PERIHELION) % 360.;
+    let lambda: f64 = (m + eq_cen + 180. + cst::EarthSunOrbit::ARG_PERIHELION) % 360.;
     let sun_dec_rad: f64 = (lambda.sin() * (cst::EARTH::AXIAL_TILT).sin()).asin();
     let tan_lat: f64 = (lat_deg * cst::DEG_TO_RAD).tan();
 
@@ -425,6 +454,48 @@ pub fn julian_to_gregorian(
 
 }
 
+/// Year Month Day Hour Minute Second to DateTime
+/// 
+/// Inputs
+/// ------
+/// year: `i32`
+///     Gregorian year of common era.
+/// 
+/// month: `u32`
+///     Month of year.
+/// 
+/// day: `u32`
+///     Day of month.
+/// 
+/// hour: `u32`
+///     Hour of day.
+/// 
+/// min: `u32`
+///     Minute of hour.
+/// 
+/// sec: `u32`
+///     Second of minute.
+/// 
+/// Outputs
+/// -------
+/// date_time: `DateTime<Utc>`
+///     DateTime object in UTC.
+pub fn ymd_hms_to_datetime(
+    year: i32,
+    month: u32,
+    day: u32,
+    hour: u32,
+    min: u32,
+    sec: u32
+)-> DateTime<Utc> {
+    let date: NaiveDate = NaiveDate::from_ymd_opt(year, month, day).unwrap();
+    let time: NaiveTime = NaiveTime::from_hms_opt(hour, min, sec).unwrap();
+
+    let dt: NaiveDateTime = NaiveDateTime::new(date, time);
+    let date_time: DateTime::<Utc> = DateTime::<Utc>::from_utc(dt, Utc); 
+    return date_time
+}
+
 /// Calculate schwarzchild radius of a given mass
 /// 
 /// Inputs
@@ -435,7 +506,7 @@ pub fn julian_to_gregorian(
 /// Outputs
 /// -------
 /// radius: `f64`
-///     Schwarzchild radius in km
+///     Schwarzchild radius in m
 pub fn calc_schwarzchild_radius(
     mass: f64
 ) -> f64 {
@@ -546,11 +617,18 @@ pub fn ecef_to_lla(ecef: Vector3<f64>) -> Vector3<f64> {
 /// -------
 /// xyz: `Vector3<f64>`
 ///     Cartesian coords
-pub fn lla_to_ecef(lla: Vector3<f64>) -> Vector3<f64> {
-    let radius: f64 = calc_prime_vertical(lla[0]);
+pub fn planetodetic_to_cartesian_rotational(
+    lla: Vector3<f64>,
+    equatorial_radius: f64,
+    eccentricity: f64
+) -> Vector3<f64> {
+    let radius: f64 = calc_prime_vertical(
+        lla[0], 
+        equatorial_radius,
+        eccentricity);
     let x: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].cos();
     let y: f64 = (radius + lla[2]) * lla[0].cos() * lla[1].sin();
-    let z: f64 = ((1.0 - cst::EARTH::ECC.powi(2)) * radius + lla[2]) * lla[0].sin();
+    let z: f64 = ((1.0 - eccentricity.powi(2)) * radius + lla[2]) * lla[0].sin();
     let xyz: Vector3<f64> = Vector3::new(x, y, z); 
     return xyz
 }
@@ -561,10 +639,14 @@ pub fn lla_to_ecef(lla: Vector3<f64>) -> Vector3<f64> {
 /// ------
 /// lat_deg: `f64`
 ///     Lattitude in degrees
-pub fn calc_prime_vertical(lat_deg: f64) -> f64 {
+pub fn calc_prime_vertical(
+    lat_deg: f64, 
+    equatorial_radius: f64,
+    eccentricity: f64
+) -> f64 {
     let lat_radians: f64 = PI * lat_deg / 180.0;
     let radius: f64 = 
-        cst::EARTH_ORBIT_SEMI_MAJOR / (1.0 - (cst::EARTH::ECC * lat_radians.sin()).powi(2)).sqrt();
+        equatorial_radius / (1.0 - (eccentricity * lat_radians.sin()).powi(2)).sqrt();
     return radius
 }
 
@@ -576,22 +658,27 @@ pub fn calc_prime_vertical(lat_deg: f64) -> f64 {
 ///     Lattitude, Longitude, Altitude
 /// 
 /// ecef_2: `Vector3<f64>`
-///     ECEF
+///     ECEF object
 /// 
 /// Outputs
 /// -------
 /// enu: `Vector3<f64>`
 ///     East, North, Up
-pub fn ecef_to_enu(
-    pos_lla: Vector3<f64>, 
-    ecef_2: Vector3<f64>
+pub fn fixed_frame_to_enu(
+    observer_lla: Vector3<f64>, 
+    p_tgt_fixed: Vector3<f64>,
+    equatorial_radius: f64,
+    eccentricity: f64
 ) -> Vector3<f64> {
-    let pos_ecef: Vector3<f64> = lla_to_ecef(pos_lla);
-    let vec_ecef: Vector3<f64> = ecef_2 - pos_ecef;
+    let observer_ecef: Vector3<f64> = planetodetic_to_cartesian_rotational(
+        observer_lla,
+        equatorial_radius,
+        eccentricity);
+    let vec_ecef: Vector3<f64> = p_tgt_fixed - observer_ecef;
     let ecef_enu: Matrix3<f64> = Matrix3::new(
-        -pos_lla[1].sin(), pos_lla[1].cos(), 0.0,
-        -pos_lla[1].cos()*pos_lla[0].sin(), -pos_lla[1].sin()*pos_lla[0].sin(), pos_lla[0].cos(),
-        pos_lla[1].cos()*pos_lla[0].cos(), pos_lla[1].sin()*pos_lla[0].cos(), pos_lla[0].sin());
+        -observer_lla[1].sin(), observer_lla[1].cos(), 0.0,
+        -observer_lla[1].cos()*observer_lla[0].sin(), -observer_lla[1].sin()*observer_lla[0].sin(), observer_lla[0].cos(),
+        observer_lla[1].cos()*observer_lla[0].cos(), observer_lla[1].sin()*observer_lla[0].cos(), observer_lla[0].sin());
     let enu: Vector3<f64> = ecef_enu * vec_ecef;
     return enu
 }
@@ -611,7 +698,9 @@ pub fn ecef_to_enu(
 ///     ECE
 pub fn enu_to_ecef(
     pos_lla: Vector3<f64>, 
-    enu: Vector3<f64>
+    enu: Vector3<f64>,
+    equatorial_radius: f64,
+    eccentricity: f64
 ) -> Vector3<f64> {
     let enu_ecef: Matrix3<f64> = Matrix3::new(
         -pos_lla[1].sin(), -pos_lla[1].cos()*pos_lla[0].sin(), pos_lla[1].cos()*pos_lla[0].cos(),
@@ -619,7 +708,10 @@ pub fn enu_to_ecef(
         0.0, pos_lla[0].cos(), pos_lla[0].sin()
     );
     let vec_ecef: Vector3<f64> = enu_ecef * enu;
-    let pos_ecef: Vector3<f64> = lla_to_ecef(pos_lla);
+    let pos_ecef: Vector3<f64> = planetodetic_to_cartesian_rotational(
+        pos_lla,
+        equatorial_radius,
+        eccentricity);
     let ecef: Vector3<f64> = vec_ecef - pos_ecef;
     return ecef
 }
@@ -650,7 +742,7 @@ mod spacetime_tests {
     }
 
     #[test]
-    fn test_day_length(){
+    fn test_earth_day_length(){
         let year: i32 = 2023;
         let month: i32 = 2;
         let day: i32 = 5;
@@ -658,13 +750,47 @@ mod spacetime_tests {
         let lat_deg: f64 = 42.2929; 
 
         let julian_day: i32 = date_to_julian_day_num(year, month, day);
-        let day_light_hrs: f64 = calc_day_length(lat_deg, long_deg, julian_day);
+        let day_light_hrs: f64 = calc_earth_day_length(lat_deg, long_deg, julian_day);
         assert_eq!(day_light_hrs, 8.54933135165009);
 
     }
 
 
     #[test]
+    fn test_schwarzchild_radius(){
+        let mass: f64 = 1.0;
+        let radius: f64 = calc_schwarzchild_radius(mass);
+        assert_eq!(radius, 1.48523238761875e-27);
+    }
+
+
+    #[test]
     fn test_ecef_to_lla(){
+        let pos_ecef = Vector3::new(
+            -2383.0,
+            -4662.0,
+            5124.0
+        );
+        let pos_lla = ecef_to_lla(pos_ecef);
+        assert_eq!(pos_lla, Vector3::new(
+            44.54968779193849, 
+            -117.07402908139512, 
+            958238.4011472173));
+    }
+
+    #[test]
+    fn test_lla_to_ecef(){
+        let pos_lla = Vector3::new(
+            44.54968779193849, 
+            -117.07402908139512, 
+            958238.4011472173);
+        let pos_ecef = planetodetic_to_cartesian_rotational(
+            pos_lla, 
+            cst::EARTH::RADIUS_EQUATOR, 
+            cst::EARTH::ECC);
+        assert_eq!(pos_ecef, Vector3::new(
+            -4157947.6438792264, 
+            4593265.390986962, 
+            3925488.3377592554));
     }
 }

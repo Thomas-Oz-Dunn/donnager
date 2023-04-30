@@ -4,22 +4,26 @@ Fuel calculations for launch
 
 use nalgebra::Vector3;
 
-use donnager::donnager::constants as cst;
-use donnager::donnager::spacetime as xyzt;
-use donnager::donnager::propulsion as prop;
-use donnager::donnager::dynamics as dynam;
+use donnager::donnager::{
+    constants as cst, 
+    spacetime as xyzt, 
+    propulsion as prop, 
+    dynamics as dynam};
 
 
 fn main() {
-    // Config
+    
+    // Earth
     let earth: xyzt::Body = xyzt::Body {
-        name: "Earth".to_string(),
+        name: String::from("Earth"),
         grav_param: cst::EARTH::GRAV_PARAM,
         eq_radius: cst::EARTH::RADIUS_EQUATOR,
         rotation_rate: cst::EARTH::ROT_RATE,
+        sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
         eccentricity: cst::EARTH::ECC
     };
-    
+
+    // Config
     let launch_site: xyzt::SurfacePoint = xyzt::SurfacePoint {
         name: "Cape Canaveral Launch Site".to_string(),
         body: earth.clone(),
