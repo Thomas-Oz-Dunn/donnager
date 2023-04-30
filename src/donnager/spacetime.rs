@@ -760,7 +760,7 @@ mod spacetime_tests {
     fn test_schwarzchild_radius(){
         let mass: f64 = 1.0;
         let radius: f64 = calc_schwarzchild_radius(mass);
-        assert_eq!(radius, 2.9515931089239486);
+        assert_eq!(radius, 1.48523238761875e-27);
     }
 
 
@@ -789,8 +789,8 @@ mod spacetime_tests {
             cst::EARTH::RADIUS_EQUATOR, 
             cst::EARTH::ECC);
         assert_eq!(pos_ecef, Vector3::new(
-            -2383.0,
-            -4662.0,
-            5124.0));
+            -4157947.6438792264, 
+            4593265.390986962, 
+            3925488.3377592554));
     }
 }
