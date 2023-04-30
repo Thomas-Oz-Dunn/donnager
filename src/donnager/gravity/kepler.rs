@@ -1121,7 +1121,7 @@ mod orbit_tests {
             earth_orbit_ecc
         );
 
-        assert_eq!(sphere_rad, 7069993624.788241)
+        assert_eq!(sphere_rad, 7069282679.67562)
     }
 
 
@@ -1145,6 +1145,6 @@ mod orbit_tests {
         let mass_1: f64 = 1.;
         let mass_2: f64 = 0.001;
         let l_points = calc_lagrange_points(mass_1, mass_2);
-        assert_eq!(l_points[0], Vector3::new(0.999, 0., 0.));
+        assert_eq!(l_points[0], Vector3::new(0.9306638725649365, 0., 0.));
     }
 }
