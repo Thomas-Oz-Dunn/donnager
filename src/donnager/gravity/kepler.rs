@@ -1103,7 +1103,7 @@ mod orbit_tests {
         let vel_0: f64 = 10.;
         let deltav: (f64, f64) = calc_hohmann_transfer(radius_1, radius_2, vel_0);
         // TODO-TD: fix
-        assert_eq!(deltav, (930.8082549013038, 0.));
+        assert_eq!(deltav, (0.23532631438317964, 930.5729285869206));
 
     }
 

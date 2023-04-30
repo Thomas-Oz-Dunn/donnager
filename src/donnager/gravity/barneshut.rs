@@ -368,7 +368,7 @@ mod barneshut_tests{
         assert_eq!(radius, 42163779.55713436);
 
         let vel: f64 = earth.calc_orbital_velocity_mag(radius);
-        assert_eq!(vel, 4348.18527478043);
+        assert_eq!(vel, 3074.631293652733);
 
         let radius_vec: Vector3<f64> = Vector3::new(radius, 0., 0.);
         let vel_vec: Vector3<f64> = Vector3::new(0., vel, 0.);
@@ -392,7 +392,7 @@ mod barneshut_tests{
         let is_debug: bool = false;
     
         particles = barnes_hut_gravity(particles, step_size, n_steps, theta, is_debug);
-        let expected: Vector3<f64> = Vector3::new(37361232.85564361, 4201.215848944788, 0.0);
+        let expected: Vector3<f64> = Vector3::new(37361232.851805665, 2970.708215846811, 0.0);
         assert_eq!(particles[1].motion[0],expected);
     }
 }

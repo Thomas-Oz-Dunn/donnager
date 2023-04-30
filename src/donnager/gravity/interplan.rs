@@ -18,11 +18,12 @@ use crate::donnager::{constants as cst, gravity::kepler as kepler, spacetime as 
 /// orb_radius_f: `f64`
 ///     Ending planet heliocentric radius
 pub fn calc_esc_vel(
+    grav_param: f64,
     orb_radius_0: f64,
     orb_radius_f: f64,
 ) -> f64 {
     let mean_radius: f64 = (orb_radius_0 + orb_radius_f) / 2.;
-    return (cst::SUN::GRAV_PARAM * (2. / orb_radius_0 - 1. / mean_radius)).sqrt();
+    return (grav_param * (2. / orb_radius_0 - 1. / mean_radius)).sqrt();
 }
 
 // /// Get solar system bodies
@@ -238,7 +239,10 @@ pub fn show_porkchop_plots(
     for launch_time in start_date_time.timestamp()..stop_date_time.timestamp() {
         let motion1 = orbit_1.calc_motion(launch_time as f64, frame);
         let motion2 = orbit_2.calc_motion(launch_time as f64, frame);
-        let v_inf: f64 = calc_esc_vel(motion1[0].norm(), motion2[0].norm());
+        let v_inf: f64 = calc_esc_vel(
+            cst::SUN::GRAV_PARAM,
+            motion1[0].norm(), 
+            motion2[0].norm());
 
     }
 
@@ -329,10 +333,11 @@ mod interplan_tests {
     #[test]
     fn test_calc_esc_vel()
     {
-        let orb_radius_0: f64 = 1.;
-        let orb_radius_f: f64 = 2.;
-        let esc_vel: f64 = calc_esc_vel(orb_radius_0, orb_radius_f);
-        assert_eq!(esc_vel, 0.5);
+        let grav_param: f64 = cst::SUN::GRAV_PARAM;
+        let orb_radius_0: f64 = 1000000.;
+        let orb_radius_f: f64 = 2000000.;
+        let esc_vel: f64 = calc_esc_vel(grav_param, orb_radius_0, orb_radius_f);
+        assert_eq!(esc_vel, 13302555.410020536);
     }
 
 
