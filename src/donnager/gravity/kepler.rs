@@ -264,7 +264,7 @@ impl Orbit {
         let md: (u32, u32) = xyzt::calc_month_day(day_of_year, year);
         
         let percent_of_day: f64 = 
-        (".".to_owned() + &epoch_day_full[1].to_string())
+        (".".to_owned() + epoch_day_full[1])
             .parse::<f64>()
             .unwrap();
 
@@ -298,7 +298,7 @@ impl Orbit {
             .unwrap();
 
         let ecc: f64 =
-        (".".to_owned() + & line2[4].to_string())
+            (".".to_owned() + line2[4])
             .parse::<f64>()
             .unwrap();
 

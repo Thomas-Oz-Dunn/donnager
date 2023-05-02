@@ -3,7 +3,6 @@ Constants
 */
 
 // TODO-TD: Provide sources for every constant
-
 use std::f64::consts::PI;
 
 /// Degrees to radians 
@@ -58,6 +57,7 @@ pub const GRAV_CONST: f64 = 6.6743015e-11; // m^3 * kg^-1 * s^-2
 /// Source:
 /// https://en.wikipedia.org/wiki/J2000
 pub const J2000_DAY: f64 = 2451545.0;
+
 
 /// Physical Constants of the Sun
 /// 

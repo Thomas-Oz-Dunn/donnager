@@ -1,14 +1,14 @@
 /*
 Interplanetary Planner
 */
-
+use polars::prelude::*;
 use chrono::{DateTime, Utc};
 use plotters::prelude::*;
 use std::ops::Range;
 
 use crate::donnager::{constants as cst, gravity::kepler as kepler, spacetime as xyzt};
 
-/// Calculate interplanetary mission escape velocity
+/// Calculate interplanestary mission escape velocity
 /// 
 /// Inputs
 /// ------
@@ -26,53 +26,58 @@ pub fn calc_esc_vel(
     return (grav_param * (2. / orb_radius_0 - 1. / mean_radius)).sqrt();
 }
 
-// /// Get solar system bodies
-// pub fn get_solar_system_bodies(
-//     planet_idxs: Vec<String>
-// ) -> Vec<xyzt::Body> {
-//     let mut bodies: Vec<xyzt::Body>;
+/// Get solar system bodies
+pub fn get_solar_system_bodies(
+    planet_idxs: Vec<String>
+) -> Vec<xyzt::Body> {
+    let mut bodies: Vec<xyzt::Body>;
+    let solarsystem = df! (
+        "number" => &[1, 2, 3, 4, 5, 7, 8, 9],
+        "names" => &["Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"],
+        "groups" => &["Inner", "Inner", "Inner", "Inner", "Outer", "Outer", "Outer", "Outer"],
+    ).unwrap();
 
-//     // Mercury
+    // Mercury
 
-//     // Venus
+    // Venus
 
-//     if planet_idxs.contains(&"earth".to_string()) {
-//         // Earth
-//         let earth: xyzt::Body = xyzt::Body {
-//             name: String::from("Earth"),
-//             grav_param: cst::EARTH::GRAV_PARAM,
-//             eq_radius: cst::EARTH::RADIUS_EQUATOR,
-//             rotation_rate: cst::EARTH::ROT_RATE,
-//             sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
-//             eccentricity: cst::EARTH::ECC
-//         };
-//         bodies.append(& mut vec![earth.clone()])
-//     }
+    if planet_idxs.contains(&"earth".to_string()) {
+        // Earth
+        let earth: xyzt::Body = xyzt::Body {
+            name: String::from("Earth"),
+            grav_param: cst::EARTH::GRAV_PARAM,
+            eq_radius: cst::EARTH::RADIUS_EQUATOR,
+            rotation_rate: cst::EARTH::ROT_RATE,
+            sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
+            eccentricity: cst::EARTH::ECC
+        };
+        bodies.append(& mut vec![earth.clone()])
+    }
 
-//     // Mars
-//     if planet_idxs.contains(&"mars".to_string()) {
+    // Mars
+    if planet_idxs.contains(&"mars".to_string()) {
 
-//         let mars: xyzt::Body = xyzt::Body{
-//             name: "Mars".to_string(),
-//             grav_param: cst::MARS::GRAV_PARAM,
-//             eq_radius: cst::MARS::RADIUS_EQUATOR,
-//             rotation_rate: cst::MARS::ROT_RATE,
-//             sidereal_day_hours: cst::MARS::SIDEREAL_DAY,
-//             eccentricity: cst::MARS::ECC
-//         };
+        let mars: xyzt::Body = xyzt::Body{
+            name: "Mars".to_string(),
+            grav_param: cst::MARS::GRAV_PARAM,
+            eq_radius: cst::MARS::RADIUS_EQUATOR,
+            rotation_rate: cst::MARS::ROT_RATE,
+            sidereal_day_hours: cst::MARS::SIDEREAL_DAY,
+            eccentricity: cst::MARS::ECC
+        };
     
-//         bodies.append(& mut vec![mars])
-//     }
-//     // Jupiter
+        bodies.append(& mut vec![mars])
+    }
+    // Jupiter
 
-//     // Saturn
+    // Saturn
 
-//     // Uranus
+    // Uranus
 
-//     // Neptune
-//     let bodies = bodies;
-//     return bodies
-// }
+    // Neptune
+    let bodies = bodies;
+    return bodies
+}
 
 
 // /// Populate vector of solar system objects
