@@ -41,34 +41,34 @@ pub fn get_solar_system_bodies(
 
     // Venus
 
-    if planet_idxs.contains(&"earth".to_string()) {
-        // Earth
-        let earth: xyzt::Body = xyzt::Body {
-            name: String::from("Earth"),
-            grav_param: cst::EARTH::GRAV_PARAM,
-            eq_radius: cst::EARTH::RADIUS_EQUATOR,
-            rotation_rate: cst::EARTH::ROT_RATE,
-            sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
-            eccentricity: cst::EARTH::ECC
-        };
-        bodies.append(& mut vec![earth.clone()])
-    }
+    // if planet_idxs.contains(&"earth".to_string()) {
+    //     // Earth
+    //     let earth: xyzt::Body = xyzt::Body {
+    //         name: String::from("Earth"),
+    //         grav_param: cst::EARTH::GRAV_PARAM,
+    //         eq_radius: cst::EARTH::RADIUS_EQUATOR,
+    //         rotation_rate: cst::EARTH::ROT_RATE,
+    //         sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
+    //         eccentricity: cst::EARTH::ECC
+    //     };
+    //     bodies.append(& mut vec![earth.clone()])
+    // }
 
-    // Mars
-    if planet_idxs.contains(&"mars".to_string()) {
+    // // Mars
+    // if planet_idxs.contains(&"mars".to_string()) {
 
-        let mars: xyzt::Body = xyzt::Body{
-            name: "Mars".to_string(),
-            grav_param: cst::MARS::GRAV_PARAM,
-            eq_radius: cst::MARS::RADIUS_EQUATOR,
-            rotation_rate: cst::MARS::ROT_RATE,
-            sidereal_day_hours: cst::MARS::SIDEREAL_DAY,
-            eccentricity: cst::MARS::ECC
-        };
+    //     let mars: xyzt::Body = xyzt::Body{
+    //         name: "Mars".to_string(),
+    //         grav_param: cst::MARS::GRAV_PARAM,
+    //         eq_radius: cst::MARS::RADIUS_EQUATOR,
+    //         rotation_rate: cst::MARS::ROT_RATE,
+    //         sidereal_day_hours: cst::MARS::SIDEREAL_DAY,
+    //         eccentricity: cst::MARS::ECC
+    //     };
     
-        bodies.append(& mut vec![mars])
-    }
-    // Jupiter
+    //     bodies.append(& mut vec![mars])
+    // }
+    // // Jupiter
 
     // Saturn
 
