@@ -30,11 +30,60 @@ pub fn calc_esc_vel(
 pub fn get_solar_system_bodies(
     planet_idxs: Vec<String>
 ) -> Vec<xyzt::Body> {
+
+    
+    // Sun
+    let sun: xyzt::Body = xyzt::Body {
+        name: "Sun".to_string(),
+        grav_param: cst::SUN::GRAV_PARAM,
+        eq_radius: cst::SUN::RADIUS_EQUATOR,
+        rotation_rate: 0.,
+        sidereal_day_hours: 0.,
+        eccentricity: cst::SUN::ECC
+    };
+
+    let (year, month, day) = xyzt::julian_to_gregorian(
+        cst::J2000_DAY as i32);
+    let epoch_date_time = xyzt::ymd_hms_to_datetime(
+        year, month as u32, day as u32, 0, 0, 0);
+
+    // Mercury
+
+    // Venus
+
+    // Earth-Sun orbit
+    let earth_sun_orbit: kepler::Orbit = kepler::Orbit::from_keplerian(
+        "Earth-Sun Orbit".to_string(),
+        sun.clone(),
+        cst::EarthSunOrbit::SEMI_MAJOR,
+        cst::EarthSunOrbit::ECC,
+        cst::EarthSunOrbit::INC,
+        cst::EarthSunOrbit::RAAN,
+        cst::EarthSunOrbit::ARG_PERIHELION,
+        cst::EarthSunOrbit::MEAN_ANOMALY,
+        cst::EarthSunOrbit::MEAN_MOTION,
+        epoch_date_time);
+
+    // Mars-Sun orbit
+    let mars_sun_orbit: kepler::Orbit = kepler::Orbit::from_keplerian(
+        "Mars-Sun Orbit".to_string(),
+        sun.clone(),
+        cst::MarsSunOrbit::SEMI_MAJOR,
+        cst::MarsSunOrbit::ECC,
+        cst::MarsSunOrbit::INC,
+        cst::MarsSunOrbit::RAAN,
+        cst::MarsSunOrbit::ARG_PERIHELION,
+        cst::MarsSunOrbit::MEAN_ANOMALY,
+        cst::MarsSunOrbit::MEAN_MOTION,
+        epoch_date_time
+    );
+    
     let mut bodies: Vec<xyzt::Body>;
     let solarsystem = df! (
         "number" => &[1, 2, 3, 4, 5, 7, 8, 9],
         "names" => &["Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"],
         "groups" => &["Inner", "Inner", "Inner", "Inner", "Outer", "Outer", "Outer", "Outer"],
+        "orbit" => &[None, None, Some(earth_sun_orbit), Some(mars_sun_orbit), None, None, None, None]
     ).unwrap();
 
     // Mercury
