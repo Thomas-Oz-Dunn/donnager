@@ -77,13 +77,13 @@ impl SUN {
     pub const ECC: f64 = 1.799991e-5;
 }
 
-// pub struct MERCURY;
-// impl MERCURY{
-//     pub const MASS: f64 = ;
-//     pub const RADIUS_EQUATOR: f64 = ;
-//     pub const GRAV_PARAM: f64 = MERCURY::MASS * GRAV_CONST;
-//     pub const ECC: f64 = ;
-// }
+pub struct MERCURY;
+impl MERCURY{
+    pub const MASS: f64 = 3.302e23;
+    pub const RADIUS_EQUATOR: f64 = 2439.7;
+    pub const GRAV_PARAM: f64 = MERCURY::MASS * GRAV_CONST;
+    pub const ECC: f64 = 7.004;
+}
 
 
 // pub struct MercurySunOrbit;
@@ -97,13 +97,13 @@ impl SUN {
 //     pub const MEAN_ANOMALY: f64 = ; // radians
 // }
 
-// pub struct VENUS;
-// impl VENUS{
-//     pub const MASS: f64 = ;
-//     pub const RADIUS_EQUATOR: f64 = ;
-//     pub const GRAV_PARAM: f64 = VENUS::MASS * GRAV_CONST;
-//     pub const ECC: f64 = ;
-// }
+pub struct VENUS;
+impl VENUS{
+    pub const MASS: f64 = 4.869e24;
+    pub const RADIUS_EQUATOR: f64 = 6051.8;
+    pub const GRAV_PARAM: f64 = VENUS::MASS * GRAV_CONST;
+    pub const ECC: f64 = 3.39471;
+}
 
 // pub struct VenusSunOrbit;
 // impl VenusSunOrbit{

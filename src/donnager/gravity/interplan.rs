@@ -27,103 +27,24 @@ pub fn calc_esc_vel(
 }
 
 /// Get solar system bodies
-pub fn get_solar_system_bodies(
+pub fn get_ephemeris(
     planet_idxs: Vec<String>
 ) -> Vec<xyzt::Body> {
-
     
-    // Sun
-    let sun: xyzt::Body = xyzt::Body {
-        name: "Sun".to_string(),
-        grav_param: cst::SUN::GRAV_PARAM,
-        eq_radius: cst::SUN::RADIUS_EQUATOR,
-        rotation_rate: 0.,
-        sidereal_day_hours: 0.,
-        eccentricity: cst::SUN::ECC
-    };
-
     let (year, month, day) = xyzt::julian_to_gregorian(
         cst::J2000_DAY as i32);
     let epoch_date_time = xyzt::ymd_hms_to_datetime(
         year, month as u32, day as u32, 0, 0, 0);
 
-    // Mercury
-
-    // Venus
-
-    // Earth-Sun orbit
-    let earth_sun_orbit: kepler::Orbit = kepler::Orbit::from_keplerian(
-        "Earth-Sun Orbit".to_string(),
-        sun.clone(),
-        cst::EarthSunOrbit::SEMI_MAJOR,
-        cst::EarthSunOrbit::ECC,
-        cst::EarthSunOrbit::INC,
-        cst::EarthSunOrbit::RAAN,
-        cst::EarthSunOrbit::ARG_PERIHELION,
-        cst::EarthSunOrbit::MEAN_ANOMALY,
-        cst::EarthSunOrbit::MEAN_MOTION,
-        epoch_date_time);
-
-    // Mars-Sun orbit
-    let mars_sun_orbit: kepler::Orbit = kepler::Orbit::from_keplerian(
-        "Mars-Sun Orbit".to_string(),
-        sun.clone(),
-        cst::MarsSunOrbit::SEMI_MAJOR,
-        cst::MarsSunOrbit::ECC,
-        cst::MarsSunOrbit::INC,
-        cst::MarsSunOrbit::RAAN,
-        cst::MarsSunOrbit::ARG_PERIHELION,
-        cst::MarsSunOrbit::MEAN_ANOMALY,
-        cst::MarsSunOrbit::MEAN_MOTION,
-        epoch_date_time
-    );
-    
     let mut bodies: Vec<xyzt::Body>;
-    let solarsystem = df! (
+    let ephemeris = df! (
         "number" => &[1, 2, 3, 4, 5, 7, 8, 9],
         "names" => &["Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"],
         "groups" => &["Inner", "Inner", "Inner", "Inner", "Outer", "Outer", "Outer", "Outer"],
-        "orbit" => &[None, None, Some(earth_sun_orbit), Some(mars_sun_orbit), None, None, None, None]
+        "mass" => &[cst::MERCURY::MASS, cst::VENUS::MASS, cst::EARTH::MASS, cst::MARS::MASS, None, None, None, None],
+
     ).unwrap();
 
-    // Mercury
-
-    // Venus
-
-    // if planet_idxs.contains(&"earth".to_string()) {
-    //     // Earth
-    //     let earth: xyzt::Body = xyzt::Body {
-    //         name: String::from("Earth"),
-    //         grav_param: cst::EARTH::GRAV_PARAM,
-    //         eq_radius: cst::EARTH::RADIUS_EQUATOR,
-    //         rotation_rate: cst::EARTH::ROT_RATE,
-    //         sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
-    //         eccentricity: cst::EARTH::ECC
-    //     };
-    //     bodies.append(& mut vec![earth.clone()])
-    // }
-
-    // // Mars
-    // if planet_idxs.contains(&"mars".to_string()) {
-
-    //     let mars: xyzt::Body = xyzt::Body{
-    //         name: "Mars".to_string(),
-    //         grav_param: cst::MARS::GRAV_PARAM,
-    //         eq_radius: cst::MARS::RADIUS_EQUATOR,
-    //         rotation_rate: cst::MARS::ROT_RATE,
-    //         sidereal_day_hours: cst::MARS::SIDEREAL_DAY,
-    //         eccentricity: cst::MARS::ECC
-    //     };
-    
-    //     bodies.append(& mut vec![mars])
-    // }
-    // // Jupiter
-
-    // Saturn
-
-    // Uranus
-
-    // Neptune
     let bodies = bodies;
     return bodies
 }
