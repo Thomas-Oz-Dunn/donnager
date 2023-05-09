@@ -186,6 +186,10 @@ impl MarsSunOrbit{
 }
 
 // Jupiter
+pub struct JUPITER;
+impl JUPITER{
+    pub const MASS: f64;
+}
 
 // Saturn
 
