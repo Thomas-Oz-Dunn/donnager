@@ -188,7 +188,12 @@ impl MarsSunOrbit{
 // Jupiter
 pub struct JUPITER;
 impl JUPITER{
-    pub const MASS: f64;
+    pub const MASS: f64 = 1.899e27;
+    pub const RADIUS_EQUATOR: f64 = 71492; // m
+    pub const GRAV_PARAM: f64 = MARS::MASS * GRAV_CONST; // m^3 * s^-2
+    pub const ECC: f64 = 0.04838624;
+    pub const SIDEREAL_DAY: f64 = 0.4135; // hours
+    // pub const ROT_RATE: f64 = ; // radians per second
 }
 
 // Saturn
