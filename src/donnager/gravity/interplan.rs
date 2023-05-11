@@ -1,12 +1,15 @@
 /*
-Interplanetary Planner
+Interplanetary Mission Planner
 */
 use polars::prelude::*;
 use chrono::{DateTime, Utc};
 use plotters::prelude::*;
 use std::ops::Range;
 
-use crate::donnager::{constants as cst, gravity::kepler as kepler, spacetime as xyzt};
+use crate::donnager::{
+    constants as cst, 
+    gravity::kepler as kepler, 
+    spacetime as xyzt};
 
 /// Calculate interplanestary mission escape velocity
 /// 
@@ -26,97 +29,60 @@ pub fn calc_esc_vel(
     return (grav_param * (2. / orb_radius_0 - 1. / mean_radius)).sqrt();
 }
 
-/// Get solar system bodies
-pub fn get_ephemeris(
-    planet_idxs: Vec<String>
-) -> Vec<xyzt::Body> {
-    
-    let (year, month, day) = xyzt::julian_to_gregorian(
-        cst::J2000_DAY as i32);
-    let epoch_date_time = xyzt::ymd_hms_to_datetime(
-        year, month as u32, day as u32, 0, 0, 0);
+/// Get ephemeris dataframe
+pub fn get_ephemeris() -> DataFrame {
 
-    let mut bodies: Vec<xyzt::Body>;
     let ephemeris = df! (
-        "number" => &[1, 2, 3, 4, 5, 7, 8, 9],
+        "number" => &[1, 2, 3, 4, 5, 6, 7, 8],
         "names" => &["Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"],
         "groups" => &["Inner", "Inner", "Inner", "Inner", "Outer", "Outer", "Outer", "Outer"],
-        "mass" => &[cst::MERCURY::MASS, cst::VENUS::MASS, cst::EARTH::MASS, cst::MARS::MASS, None, None, None, None],
+        "type" => &["Rocky", "Rocky", "Rocky", "Rocky", "Gas Giant", "Gas Giant", "Ice Giant", "Ice Giant"],
+        "mass" => &[
+            cst::MERCURY::MASS, 
+            cst::VENUS::MASS, 
+            cst::EARTH::MASS, 
+            cst::MARS::MASS, 
+            cst::JUPITER::MASS, 
+            cst::SATURN::MASS, 
+            cst::URANUS::MASS, 
+            cst::NEPTUNE::MASS],
+
+        "orbit_semi_major" => &[
+            cst::MercurySunOrbit::SEMI_MAJOR, 
+            cst::VenusSunOrbit::SEMI_MAJOR, 
+            cst::EarthSunOrbit::SEMI_MAJOR, 
+            cst::MarsSunOrbit::SEMI_MAJOR, 
+            None, 
+            None, 
+            None, 
+            None],
+
+        "orbit_ecc" => &[
+            cst::MercurySunOrbit::ECC, 
+            cst::VenusSunOrbit::ECC, 
+            cst::EarthSunOrbit::ECC, 
+            cst::MarsSunOrbit::ECC, 
+            None, 
+            None, 
+            None, 
+            None],
+        
+        "argument_perigelion" => &[
+            cst::MercurySunOrbit::ARG_PERIHELION, 
+            cst::VenusSunOrbit::ARG_PERIHELION, 
+            cst::EarthSunOrbit::ARG_PERIHELION, 
+            cst::MarsSunOrbit::ARG_PERIHELION, 
+            None, 
+            None, 
+            None, 
+            None],
 
     ).unwrap();
 
-    let bodies = bodies;
-    return bodies
+    return ephemeris
 }
 
 
-// /// Populate vector of solar system objects
-// pub fn get_solar_system_orbits(
-//     bodies: Vec<String>
-// ) -> Vec<kepler::Orbit> {
-//     let mut orbits: Vec<kepler::Orbit>;
-
-//     // Sun
-//     let sun: xyzt::Body = xyzt::Body {
-//         name: "Sun".to_string(),
-//         grav_param: cst::SUN::GRAV_PARAM,
-//         eq_radius: cst::SUN::RADIUS_EQUATOR,
-//         rotation_rate: 0.,
-//         sidereal_day_hours: 0.,
-//         eccentricity: cst::SUN::ECC
-//     };
-
-//     let (year, month, day) = xyzt::julian_to_gregorian(
-//         cst::J2000_DAY as i32);
-//     let epoch_date_time = xyzt::ymd_hms_to_datetime(
-//         year, month as u32, day as u32, 0, 0, 0);
-
-//     // Mercury
-
-//     // Venus
-
-//     if bodies.contains(&"earth".to_string()) {
-//         // Earth-Sun orbit
-//         let earth_sun_orbit: kepler::Orbit = kepler::Orbit::from_keplerian(
-//             "Earth-Sun Orbit".to_string(),
-//             sun.clone(),
-//             cst::EarthSunOrbit::SEMI_MAJOR,
-//             cst::EarthSunOrbit::ECC,
-//             cst::EarthSunOrbit::INC,
-//             cst::EarthSunOrbit::RAAN,
-//             cst::EarthSunOrbit::ARG_PERIHELION,
-//             cst::EarthSunOrbit::MEAN_ANOMALY,
-//             cst::EarthSunOrbit::MEAN_MOTION,
-//             epoch_date_time);
-//         orbits.append(&mut vec![earth_sun_orbit]);
-//     }
-
-//     // Mars-Sun orbit
-//     let mars_sun_orbit: kepler::Orbit = kepler::Orbit::from_keplerian(
-//         "Mars-Sun Orbit".to_string(),
-//         sun.clone(),
-//         cst::MarsSunOrbit::SEMI_MAJOR,
-//         cst::MarsSunOrbit::ECC,
-//         cst::MarsSunOrbit::INC,
-//         cst::MarsSunOrbit::RAAN,
-//         cst::MarsSunOrbit::ARG_PERIHELION,
-//         cst::MarsSunOrbit::MEAN_ANOMALY,
-//         cst::MarsSunOrbit::MEAN_MOTION,
-//         epoch_date_time
-//     );
-
-    
-//     // Jupiter
-
-//     // Saturn
-
-//     // Uranus
-
-//     // Neptune
-
-//     let orbits = orbits;
-//     return orbits
-// }
 
 // /// Calculate next hohmann transfer launch window
 // /// 

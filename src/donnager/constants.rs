@@ -185,7 +185,6 @@ impl MarsSunOrbit{
     pub const MEAN_ANOMALY: f64 = 0.0; // radians
 }
 
-// Jupiter
 pub struct JUPITER;
 impl JUPITER{
     pub const MASS: f64 = 1.899e27;
@@ -196,14 +195,20 @@ impl JUPITER{
     // pub const ROT_RATE: f64 = ; // radians per second
 }
 
-// Saturn
 pub struct SATURN;
 impl SATURN{
-    pub const MASS: f64 = 5.688e26;
+    pub const MASS: f64 = 5.685e26;
 }
-// Uranus
 
-// Neptune
+pub struct URANUS;
+impl URANUS{
+    pub const MASS: f64 = 8.682e25;
+}
+
+pub struct NEPTUNE;
+impl NEPTUNE{
+    pub const MASS: f64 = 1.024e26;
+}
 
 
 /// Speed of light in a vacuum `m * s^-1`
@@ -212,6 +217,10 @@ impl SATURN{
 /// 
 /// https://en.wikipedia.org/wiki/Speed_of_light
 pub const SPEED_OF_LIGHT: f64 = 2.99792458e8;
+
+pub const SOLAR_MASS_KG: f64 = 1.98892e30;
+
+pub const DISTANCE_UNIT: f64 = 1.495978707e8; // meters
 
 /// Electrical Constant F * m^-1
 /// 
