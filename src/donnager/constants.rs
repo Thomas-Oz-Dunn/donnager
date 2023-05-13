@@ -105,16 +105,11 @@ impl VENUS{
     pub const ECC: f64 = 3.39471;
 }
 
-// pub struct VenusSunOrbit;
-// impl VenusSunOrbit{
-//     pub const SEMI_MAJOR: f64 = ; // km
-//     pub const ECC: f64 = ;
-//     pub const ARG_PERIHELION: f64 = ;
-//     pub const INC: f64 = ;
-//     pub const RAAN: f64 = ;
-//     pub const MEAN_MOTION: f64 = ; // radians per day
-//     pub const MEAN_ANOMALY: f64 = ; // radians
-// }
+pub struct VenusSunOrbit;
+impl VenusSunOrbit{
+    // pub const SEMI_MAJOR: f64 = ; // km
+}
+
 pub struct EARTH;
 impl EARTH {
     /// Mass of the Earth in kilograms

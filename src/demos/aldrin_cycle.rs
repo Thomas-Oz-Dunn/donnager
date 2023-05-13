@@ -4,7 +4,7 @@ Aldrin Cycler between Earth and Mars
 
 use nalgebra::Vector3;
 
-use donnager::donnager::{constants as cst, spacetime as xyzt, gravity::{self as grav, interplan}};
+use donnager::donnager::{constants as cst, spacetime as xyzt, gravity as grav};
 
 
 fn main() {

@@ -1,5 +1,6 @@
 /*
 Gravitational Bodies
+kraus
 */
 
 use nalgebra::{Vector3, Matrix3};
@@ -1143,8 +1144,27 @@ mod orbit_tests {
     fn test_calc_lagrange_points()
     {
         let mass_1: f64 = 1.;
-        let mass_2: f64 = 0.001;
-        let l_points = calc_lagrange_points(mass_1, mass_2);
-        assert_eq!(l_points[0], Vector3::new(0.9306638725649365, 0., 0.));
+        let mass_2: f64 = 0.01;
+        let l_points: Vec<Vector3<f64>> = calc_lagrange_points(mass_1, mass_2);
+
+        assert_eq!(l_points[0], Vector3::new(0.8506198417814278, 0., 0.));
+        assert_eq!(l_points[1], Vector3::new(1.149380158218572, 0., 0.));
+        assert_eq!(l_points[2], Vector3::new(-0.005833333333333334, 0., 0.));
+        assert_eq!(l_points[3], Vector3::new(-0.4900990099009901, -0.8660254037844386, 0.));
+        assert_eq!(l_points[4], Vector3::new(-0.4900990099009901, 0.8660254037844386, 0.));
+    }
+
+    #[test]
+    fn check_solar_sytem_params()
+    {
+        let grav_param: f64 = cst::SUN::GRAV_PARAM;
+        let periods: [f64; 8] = [0.241, 0.615, 1., 1.881, 11.86, 29.46, 84.01, 164.79];
+        
+        let semi_majors: [f64; 8] = periods.map(|period| {
+            calc_semi_major_axis(grav_param, 1.0 / (period * 365.25 * 86400.))
+            }
+        );
+        assert_eq!(semi_majors, [0.,0.,0.,0.,0.,0.,0.,0.]);
+        
     }
 }
