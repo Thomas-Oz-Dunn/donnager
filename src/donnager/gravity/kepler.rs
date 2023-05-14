@@ -1158,13 +1158,30 @@ mod orbit_tests {
     fn check_solar_sytem_params()
     {
         let grav_param: f64 = cst::SUN::GRAV_PARAM;
-        let periods: [f64; 8] = [0.241, 0.615, 1., 1.881, 11.86, 29.46, 84.01, 164.79];
+        let periods: [f64; 8] = [
+            0.241,      // Mercury
+            0.615,      // Venus
+            1.,         // Earth
+            1.881,      // Mars
+            11.86,      // Jupiter
+            29.46,      // Saturn
+            84.01,      // Uranus
+            164.79];    // Neptune
         
         let semi_majors: [f64; 8] = periods.map(|period| {
             calc_semi_major_axis(grav_param, 1.0 / (period * 365.25 * 86400.))
             }
         );
-        assert_eq!(semi_majors, [0.,0.,0.,0.,0.,0.,0.,0.]);
+        assert_eq!(semi_majors, [
+            1.9726853165415475e11,  // Mercury Orbit Semi Major Axis
+            3.683804104432092e11,   // Venus
+            5.09385349788403e11,    // Earth
+            7.761976328545394e11,   // Mars
+            2.6491277965803633e12,  // Jupiter
+            4.858866259527982e12,   // Saturn
+            9.770882110650564e12,   // Uranus
+            1.5310887052726793e13   // Neptune
+        ]);
         
     }
 }
