@@ -361,7 +361,7 @@ mod barneshut_tests{
             eq_radius: cst::EARTH::RADIUS_EQUATOR,
             rotation_rate: cst::EARTH::ROT_RATE,
             sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
-            eccentricity: cst::EARTH::ECC
+            eccentricity: cst::EARTH::SURFACE_ECC
         };
 
         let radius: f64 = earth.calc_stationary_orbit();

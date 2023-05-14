@@ -290,7 +290,7 @@ pub fn calc_earth_day_length(
     let j_star: f64 = (j2000_days as f64) - long_deg / 360.;
     let m: f64 = (357.5291 + 0.98560028 * j_star) % 360.;
     let eq_cen: f64 = 1.9148*(m.sin()) + 0.02*((2.*m).sin()) + 0.0003*((3.*m).sin());
-    let lambda: f64 = (m + eq_cen + 180. + cst::EarthSunOrbit::ARG_PERIHELION) % 360.;
+    let lambda: f64 = (m + eq_cen + 180. + cst::EARTH::ARG_PERIHELION) % 360.;
     let sun_dec_rad: f64 = (lambda.sin() * (cst::EARTH::AXIAL_TILT).sin()).asin();
     let tan_lat: f64 = (lat_deg * cst::DEG_TO_RAD).tan();
 
@@ -787,7 +787,7 @@ mod spacetime_tests {
         let pos_ecef = planetodetic_to_cartesian_rotational(
             pos_lla, 
             cst::EARTH::RADIUS_EQUATOR, 
-            cst::EARTH::ECC);
+            cst::EARTH::SURFACE_ECC);
         assert_eq!(pos_ecef, Vector3::new(
             -4157947.6438792264, 
             4593265.390986962, 

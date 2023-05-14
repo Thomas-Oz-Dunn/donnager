@@ -330,7 +330,7 @@ impl Orbit {
             eq_radius: cst::EARTH::RADIUS_EQUATOR,
             rotation_rate: cst::EARTH::ROT_RATE,
             sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
-            eccentricity: cst::EARTH::ECC
+            eccentricity: cst::EARTH::SURFACE_ECC
         };
 
         Orbit {
@@ -1112,8 +1112,8 @@ mod orbit_tests {
     fn test_hill_sphere(){
         let earth_mass: f64 = cst::EARTH::MASS;
         let sun_mass: f64 = cst::SUN::MASS;
-        let earth_orbit_semi_major: f64 = cst::EarthSunOrbit::SEMI_MAJOR;
-        let earth_orbit_ecc: f64 = cst::EarthSunOrbit::ECC;
+        let earth_orbit_semi_major: f64 = cst::EARTH::SEMI_MAJOR;
+        let earth_orbit_ecc: f64 = cst::EARTH::ORBIT_ECC;
 
         let sphere_rad: f64 = calc_hill_sphere(
             sun_mass, 
