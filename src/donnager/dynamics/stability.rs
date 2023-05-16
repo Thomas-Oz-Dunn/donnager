@@ -20,5 +20,5 @@ pub fn calc_lyanpunov_stability(
         [[-mass_inv * stiff_matrix],[-mass_matrix * (damp_matrix + gyro_matrix)]]
     );
     // Eigenvalue decomposition
-    
+    let eig = a_mat.complex_eigenvalues();
 }

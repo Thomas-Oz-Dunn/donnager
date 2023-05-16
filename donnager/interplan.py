@@ -3,7 +3,7 @@ import bokeh as bokeh
 
 def show_trajectory():
     """
-    Show Interplanetary Misison Trajectory
+    Show Interplanetary Mission Trajectory
     """
     pass
 
