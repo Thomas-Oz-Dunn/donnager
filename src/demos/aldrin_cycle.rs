@@ -2,15 +2,14 @@
 Aldrin Cycler between Earth and Mars
 */
 
-use nalgebra::Vector3;
 
-use donnager::donnager::{constants as cst, spacetime as xyzt, gravity as grav};
+use donnager::donnager::{constants as cst, spacetime as xyzt};
 
 
 fn main() {
     // Configurable 
-    let start_date_time = xyzt::ymd_hms_to_datetime(2023, 1, 1, 12, 0, 0);
-    let stop_date_time = xyzt::ymd_hms_to_datetime(2053, 1, 1, 12, 0, 0);
+    // let start_date_time = xyzt::ymd_hms_to_datetime(2023, 1, 1, 12, 0, 0);
+    // let stop_date_time = xyzt::ymd_hms_to_datetime(2053, 1, 1, 12, 0, 0);
    
     let start_alt: f64 = 408000.0;  
     let end_alt: f64 = 208000.0;  
