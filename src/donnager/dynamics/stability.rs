@@ -14,10 +14,20 @@ pub fn calc_2d_lyanpunov_stability(
     damp_matrix: Matrix2<f64>,
     gyro_matrix: Matrix2<f64>,
     stiff_matrix: Matrix2<f64>
-) -> Vec<f64> {
+) -> Vector4<nalgebra::Complex<f64>> {
     let mass_inv = mass_matrix.try_inverse().unwrap(); 
     let iden = Matrix2::<f64>::identity(); 
     let zer = Matrix2::<f64>::zeros(); 
+    let left_bot = -mass_inv * stiff_matrix; 
+    let right_bot = -mass_inv * (damp_matrix + gyro_matrix); 
+
+    let a_mat = Matrix4::new(
+        iden.m11, iden.m12, zer.m11, zer.m12,
+        iden.m21, iden.m22, zer.m21, zer.m22,
+        left_bot.m11, left_bot.m12, right_bot.m11, right_bot.m12,
+        left_bot.m21, left_bot.m22, right_bot.m21, right_bot.m22
+    );
+
     // Eigenvalue decomposition
     let eig = a_mat.complex_eigenvalues();
     return eig;
@@ -37,13 +47,13 @@ mod stability_tests {
 
         let mass_matrix = Matrix2::<f64>::identity();
         let damp_matrix = Matrix2::<f64>::zeros();
-        let gyro_matrix = Matrix2::<f64>::new(0, -2, 2, 0);
+        let gyro_matrix = Matrix2::<f64>::new(0., -2., 2., 0.);
         let stiff_matrix = Matrix2::<f64>::new(
             -3./4., -3.* (3f64.powf(0.5))/2. * (mass_ratio - 0.5),
             3.* (3f64.powf(0.5))/2. * (mass_ratio - 0.5), -9./4.
         );
 
-        let roots = calc_lyanpunov_stability(
+        let roots = calc_2d_lyanpunov_stability(
             mass_matrix,
             damp_matrix,
             gyro_matrix,
