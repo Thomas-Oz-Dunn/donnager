@@ -5,6 +5,8 @@ Constants
 // TODO-TD: Provide sources for every constant
 use std::f64::consts::PI;
 
+pub const CYCLES_TO_DEGREES: f64 = 360.;
+
 /// Degrees to radians 
 /// 
 /// Source:
@@ -126,6 +128,7 @@ impl EARTH {
     /// Earth centered gravitational parameter
     pub const GRAV_PARAM: f64 = EARTH::MASS * GRAV_CONST; // m^3 * s^-2
     pub const SURFACE_ECC: f64 = 0.08182;
+    pub const SOLAR_DAY: f64 = 24.;
     pub const SIDEREAL_DAY: f64 = 23.9344696; // hours
     pub const ROT_RATE: f64 = 7.2921150e-5; // radians per second;
     pub const DAYS_PER_YEAR: f64 = 365.25;

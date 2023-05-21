@@ -15,21 +15,21 @@ pub fn calc_2d_lyanpunov_stability(
     gyro_matrix: Matrix2<f64>,
     stiff_matrix: Matrix2<f64>
 ) -> Vector4<nalgebra::Complex<f64>> {
-    let mass_inv = mass_matrix.try_inverse().unwrap(); 
-    let iden = Matrix2::<f64>::identity(); 
-    let zer = Matrix2::<f64>::zeros(); 
-    let left_bot = -mass_inv * stiff_matrix; 
-    let right_bot = -mass_inv * (damp_matrix + gyro_matrix); 
+    let mass_inv: Matrix2<f64> = mass_matrix.try_inverse().unwrap(); 
+    let iden: Matrix2<f64> = Matrix2::<f64>::identity(); 
+    let zer: Matrix2<f64> = Matrix2::<f64>::zeros(); 
+    let left_bot: Matrix2<f64> = -mass_inv * stiff_matrix; 
+    let right_bot: Matrix2<f64> = -mass_inv * (damp_matrix + gyro_matrix); 
 
-    let a_mat = Matrix4::new(
+    let a_mat: Matrix4<f64> = Matrix4::new(
         iden.m11, iden.m12, zer.m11, zer.m12,
         iden.m21, iden.m22, zer.m21, zer.m22,
         left_bot.m11, left_bot.m12, right_bot.m11, right_bot.m12,
         left_bot.m21, left_bot.m22, right_bot.m21, right_bot.m22
     );
 
-    // Eigenvalue decomposition
-    let eig = a_mat.complex_eigenvalues();
+    // Complex eigenvalue decomposition
+    let eig: Vector4<nalgebra::Complex<f64>> = a_mat.complex_eigenvalues();
     return eig;
 }
 

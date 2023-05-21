@@ -281,22 +281,25 @@ pub fn calc_inertial_rotational_rotam(
 /// julian_day : `i32`
 ///     julian_date
 pub fn calc_earth_day_length(
-    lat_deg: f64,
-    long_deg: f64,
+    lattitude_deg: f64,
+    longitude_deg: f64,
     julian_day: i32
 ) -> f64 {
-    let j2000_days: i32 = julian_day - 2451545;
+    let j2000_days: f64 = (julian_day as f64) - cst::J2000_DAY;
     
-    let j_star: f64 = (j2000_days as f64) - long_deg / 360.;
-    let m: f64 = (357.5291 + 0.98560028 * j_star) % 360.;
-    let eq_cen: f64 = 1.9148*(m.sin()) + 0.02*((2.*m).sin()) + 0.0003*((3.*m).sin());
-    let lambda: f64 = (m + eq_cen + 180. + cst::EARTH::ARG_PERIHELION) % 360.;
-    let sun_dec_rad: f64 = (lambda.sin() * (cst::EARTH::AXIAL_TILT).sin()).asin();
-    let tan_lat: f64 = (lat_deg * cst::DEG_TO_RAD).tan();
+    let j_star: f64 = j2000_days - longitude_deg / cst::CYCLES_TO_DEGREES;
+    let m: f64 = (357.5291 + 0.98560028 * j_star) % cst::CYCLES_TO_DEGREES;
+    let equat_center: f64 = 1.9148*(m.sin()) + 0.02*((2.*m).sin()) + 0.0003*((3.*m).sin());
+    let earth_tilt_adjust: f64 = (
+        m + equat_center + cst::CYCLES_TO_DEGREES / 2. + cst::EARTH::ARG_PERIHELION) % cst::CYCLES_TO_DEGREES;
+    let sun_declination_rad: f64 = (
+        earth_tilt_adjust.sin() * (cst::EARTH::AXIAL_TILT).sin()).asin();
+    let tan_lattitude: f64 = (lattitude_deg * cst::DEG_TO_RAD).tan();
 
-    let hour_angle_rad: f64 = (-(sun_dec_rad).tan() * tan_lat).acos();
-    let hours: f64 = hour_angle_rad / 15.0 * cst::RAD_TO_DEG;
-    return hours
+    let hour_angle_rad: f64 = (-(sun_declination_rad).tan() * tan_lattitude).acos();
+    let hours_per_radian: f64 = cst::EARTH::SOLAR_DAY / cst::CYCLES_TO_DEGREES * cst::RAD_TO_DEG;
+    let daylight_hours: f64 = hour_angle_rad * hours_per_radian;
+    return daylight_hours
 }
 
 /// Convert day of year, year to month, day
