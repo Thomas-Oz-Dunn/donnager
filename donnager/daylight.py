@@ -7,6 +7,10 @@ import donnager as dgr
 if __name__ == '__main__':
     days = range(365)
     lats = np.linspace(-90, 90, 300)
+
+    mesh_days, mesh_lats = np.meshgrid(days, lats, indexing='xy')
+    longs = np.zeros_like(lats)
+
     # meshgrid
     hours = dgr.calc_earth_day_length(
         days,
@@ -14,7 +18,7 @@ if __name__ == '__main__':
         longs
     )
     plt.imshow(
-
+        hours
     )
     plt.xlabel('Day of year')
     plt.ylabel('Lattitude (deg)')
