@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-import bokeh as bokeh
 
 from matplotlib import pyplot as plt
 import numpy as np
@@ -49,6 +48,8 @@ def _targetting(
     """
     Increment in departure and arrival velocities.
     
+    Inputs
+    ------
     """
     # Get position and velocities for departure and arrival
     rr_dpt_body, vv_dpt_body = _get_state(departure_body, t_launch)
@@ -57,11 +58,16 @@ def _targetting(
     # Transform into Orbit objects
     attractor = departure_body.parent
     orb_dpt = Orbit.from_vectors(
-        attractor, rr_dpt_body, vv_dpt_body, epoch=t_launch
-    )
+        attractor, 
+        rr_dpt_body, 
+        vv_dpt_body, 
+        epoch=t_launch)
+
     orb_arr = Orbit.from_vectors(
-        attractor, rr_arr_body, vv_arr_body, epoch=t_arrival
-    )
+        attractor, 
+        rr_arr_body, 
+        vv_arr_body, 
+        epoch=t_arrival)
 
     # Define time of flight
     tof = orb_arr.epoch - orb_dpt.epoch
@@ -82,18 +88,15 @@ def _targetting(
         c3_arrival = dv_arr**2
 
         return (
-            dv_dpt.to_value(u.km / u.s),
-            dv_arr.to_value(u.km / u.s),
-            c3_launch.to_value(u.km**2 / u.s**2),
-            c3_arrival.to_value(u.km**2 / u.s**2),
-            tof.jd,
-        )
+            dv_dpt,
+            dv_arr,
+            c3_launch,
+            c3_arrival,
+            tof.julian_day)
 
     except AssertionError:
         return None, None, None, None, None
 
-
-# numpy.vectorize is amazing
 targetting_vec = np.vectorize(
     _targetting,
     otypes=[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
@@ -102,20 +105,21 @@ targetting_vec = np.vectorize(
 
 
 class PorkchopPlotter:
-    """Class Implementation for Porkchop Plot.
+    """
+    Class Implementation for Porkchop Plot.
 
     Parameters
     ----------
-    departure_body: poliastro.bodies.Body
+    departure_body: 
         Body from which departure is done
 
-    target_body: poliastro.bodies.Body
+    target_body: 
         Body for targetting
 
-    launch_span: astropy.time.Time
+    launch_span: 
         Time span for launch
 
-    arrival_span: astropy.time.Time
+    arrival_span: 
         Time span for arrival
 
     ax: matplotlib.axes.Axes
@@ -129,7 +133,7 @@ class PorkchopPlotter:
 
     max_c3: float
         Sets the maximum C3 value for porkchop
-        
+
     max_vhp: float
         Sets the maximum arrival velocity for porkchop
 
@@ -144,8 +148,8 @@ class PorkchopPlotter:
         ax=None,
         tfl=True,
         vhp=True,
-        max_c3=45.0 * u.km**2 / u.s**2,
-        max_vhp=5 * u.km / u.s,
+        max_c3=45.0,
+        max_vhp=5
     ):
         self.departure_body = departure_body
         self.target_body = target_body
@@ -158,56 +162,45 @@ class PorkchopPlotter:
         self.max_vhp = max_vhp
 
     def porkchop(self):
-        """Plots porkchop between two bodies.
+        """
+        Plots porkchop between two bodies.
 
         Returns
         -------
         dv_launch: numpy.ndarray
             Launch delta v
+
         dv_arrival: numpy.ndarray
             Arrival delta v
+
         c3_launch: numpy.ndarray
             Characteristic launch energy
+
         c3_arrrival: numpy.ndarray
             Characteristic arrival energy
+
         tof: numpy.ndarray
             Time of flight for each transfer
 
-        Examples
-        --------
-        >>> from poliastro.plotting.porkchop import PorkchopPlotter
-        >>> from poliastro.bodies import Earth, Mars
-        >>> from poliastro.util import time_range
-        >>> launch_span = time_range("2005-04-30", end="2005-10-07")
-        >>> arrival_span = time_range("2005-11-16", end="2006-12-21")
-        >>> porkchop_plot = PorkchopPlotter(Earth, Mars, launch_span, arrival_span)
-        >>> dv_launch, dev_dpt, c3dpt, c3arr, tof = porkchop_plot.porkchop()
-
         """
-        dv_launch, dv_arrival, c3_launch, c3_arrival, tof = targetting_vec(
+        _, dv_arrival, c3_launch, _, tof = targetting_vec(
             self.departure_body,
             self.target_body,
             self.launch_span[np.newaxis, :],
-            self.arrival_span[:, np.newaxis],
-        )
-
-        # Start drawing porkchop
+            self.arrival_span[:, np.newaxis])
 
         if self.ax is None:
             fig, self.ax = plt.subplots(figsize=(15, 15))
         else:
             fig = self.ax.figure
 
-        c3_levels = np.linspace(
-            0, self.max_c3.to_value(u.km**2 / u.s**2), 30
-        )
+        c3_levels = np.linspace(0, self.max_c3, 30)
 
         c = self.ax.contourf(
             [D.to_datetime() for D in self.launch_span],
             [A.to_datetime() for A in self.arrival_span],
             c3_launch.astype("float64"),
-            c3_levels.astype("float64"),
-        )
+            c3_levels.astype("float64"))
 
         line = self.ax.contour(
             [D.to_datetime() for D in self.launch_span],
@@ -215,8 +208,7 @@ class PorkchopPlotter:
             c3_launch.astype("float64"),
             c3_levels.astype("float64"),
             colors="black",
-            linestyles="solid",
-        )
+            linestyles="solid")
 
         cbar = fig.colorbar(c)
         cbar.set_label("km2 / s2")
@@ -262,22 +254,20 @@ class PorkchopPlotter:
             self.ax.set_title(
                 f"{self.departure_body.name} - Target Body for year {self.launch_span[0].datetime.year}, C3 Launch",
                 fontsize=14,
-                fontweight="bold",
-            )
+                fontweight="bold")
         else:
             self.ax.set_title(
                 f"{self.departure_body.name} - {self.target_body.name} for year {self.launch_span[0].datetime.year}, C3 Launch",
                 fontsize=14,
-                fontweight="bold",
-            )
+                fontweight="bold")
 
-        self.ax.set_xlabel("Launch date", fontsize=10, fontweight="bold")
-        self.ax.set_ylabel("Arrival date", fontsize=10, fontweight="bold")
-
-        return (
-            dv_launch * u.km / u.s,
-            dv_arrival * u.km / u.s,
-            c3_launch * u.km**2 / u.s**2,
-            c3_arrival * u.km**2 / u.s**2,
-            tof * u.d,
-        )
+        self.ax.set_xlabel(
+            "Launch date", 
+            fontsize=10, 
+            fontweight="bold")
+        
+        self.ax.set_ylabel(
+            "Arrival date", 
+            fontsize=10, 
+            fontweight="bold")
+    
