@@ -57,13 +57,13 @@ def _targetting(
 
     # Transform into Orbit objects
     attractor = departure_body.parent
-    orb_dpt = Orbit.from_vectors(
+    orb_dpt = Orbit.from_pos_vel(
         attractor, 
         rr_dpt_body, 
         vv_dpt_body, 
         epoch=t_launch)
 
-    orb_arr = Orbit.from_vectors(
+    orb_arr = Orbit.from_pos_vel(
         attractor, 
         rr_arr_body, 
         vv_arr_body, 
@@ -72,7 +72,7 @@ def _targetting(
     # Define time of flight
     tof = orb_arr.epoch - orb_dpt.epoch
 
-    if tof.to_value(u.s) <= 0:
+    if tof <= 0:
         return None, None, None, None, None
 
     try:
