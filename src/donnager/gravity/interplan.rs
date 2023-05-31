@@ -169,7 +169,7 @@ pub fn get_ephemeris() -> DataFrame {
 /// 
 /// orbit_2: `Orbit`
 ///     Orbit of ending planet
-pub fn show_porkchop_plots(
+pub fn calc_porkchop_plots(
     start_date_time: DateTime<Utc>,
     stop_date_time: DateTime<Utc>,
     orbit_1: kepler::Orbit,
@@ -185,83 +185,19 @@ pub fn show_porkchop_plots(
             motion1[0].norm(), 
             motion2[0].norm());
 
-    }
-
-    //  calculate deltavs for two impulse maneuvers (min, max)
-    //  calculate total time of flight for each
-
-    let pathname: String = format!(
-        "{}_to_{}_time_vs_fuel_{:?}.png",  
-        orbit_1.central_body.name, 
-        orbit_2.central_body.name,
-        start_date_time);
-
-    let plottitle: String = format!(
-        "{} to {}", 
-        orbit_1.central_body.name, 
-        orbit_2.central_body.name);
-
-    let drawing_area = 
-        BitMapBackend::new(&pathname, (500, 500))
-            .into_drawing_area();
-
-    let mut chart_builder = ChartBuilder::on(&drawing_area);
-
-    drawing_area
-        .fill(&WHITE)
-        .unwrap();
-
-    chart_builder
-        .margin(5)
-        .set_left_and_bottom_label_area_size(35)
-        .caption(
-            plottitle, (
-                "Times New Roman", 
-                20, 
-                FontStyle::Bold, 
-                &BLACK)
-                .into_text_style(&drawing_area));
-
-    let x_spec: Range<chrono::NaiveDate> = 
-        (start_date_time.date_naive())..(stop_date_time.date_naive());  
-
-    let longest_tof: chrono::Duration = 
-        stop_date_time.date_naive() - start_date_time.date_naive();
-    // let y_spec: Range<chrono::Duration> = chrono::Duration{secs: 0, nanos: 0}..longest_tof;  
-
-    // let mut chart = 
-    //         chart_builder.build_cartesian_2d(x_spec, y_spec).unwrap();
-    // chart
-    //     .configure_mesh()
-    //     .y_desc("Arrival Date")
-    //     .x_desc("Departure Date")
-    //     .draw()
-    //     .unwrap();
-
-
-    // Plot Delta v contours
+        }
+    let lambert = lambert(orb_dpt, orb_arr);
+            
+    // Get norm delta velocities
+    let dv_dpt = nalgebra.norm(man_lambert.impulses[0][1]);
+    let dv_arr = nalgebra.norm(man_lambert.impulses[1][1]);
+            
+    // Compute all the output variables
+    let c3_launch = dv_dpt**2;
+    let c3_arrival = dv_arr**2;
 
     
 
-
-
-    // // Lines of -1 year slope
-    // for intercept in integer_tof_years:
-    //     chart.draw_series(
-    //         PointSeries::of_element(
-    //             .iter().map(|p| (p.y, p.x)),
-    //             1,
-    //             &BLUE,
-    //             &|c, s, st| {
-    //                 Circle::new((c.0, c.1), s, st.filled())}
-    //     )
-    // ).unwrap()
-    // .label("Const ToF")
-    // .legend(
-    //     |(x, y)| 
-    //     PathElement::new(vec![(x, y), (x + 20, y)], 
-    //     &BLUE));
-    
 
 }
 

@@ -4,106 +4,6 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 
-def _get_state(body, time):
-    """
-    Computes the position of a body for a given time.
-    
-    Parameters
-    ----------
-    body:
-
-    time:
-
-    """
-    solar_system_bodies = [
-        Sun,
-        Mercury,
-        Venus,
-        Earth,
-        Moon,
-        Mars,
-        Jupiter,
-        Saturn,
-        Uranus,
-        Neptune,
-        Pluto,
-    ]
-
-    if body in solar_system_bodies:
-        rr, vv = coord.get_body_barycentric_posvel(body.name, time)
-    else:
-        rr, vv = body.propagate(time).rv()
-        rr = coord.CartesianRepresentation(rr)
-        vv = coord.CartesianRepresentation(vv)
-
-    return rr.xyz, vv.xyz
-
-
-def _targetting(
-    departure_body, 
-    target_body, 
-    t_launch, 
-    t_arrival
-):
-    """
-    Increment in departure and arrival velocities.
-    
-    Inputs
-    ------
-    """
-    # Get position and velocities for departure and arrival
-    rr_dpt_body, vv_dpt_body = _get_state(departure_body, t_launch)
-    rr_arr_body, vv_arr_body = _get_state(target_body, t_arrival)
-
-    # Transform into Orbit objects
-    attractor = departure_body.parent
-    orb_dpt = Orbit.from_pos_vel(
-        attractor, 
-        rr_dpt_body, 
-        vv_dpt_body, 
-        epoch=t_launch)
-
-    orb_arr = Orbit.from_pos_vel(
-        attractor, 
-        rr_arr_body, 
-        vv_arr_body, 
-        epoch=t_arrival)
-
-    # Define time of flight
-    tof = orb_arr.epoch - orb_dpt.epoch
-
-    if tof <= 0:
-        return None, None, None, None, None
-
-    try:
-        # Lambert is now a Maneuver object
-        man_lambert = Maneuver.lambert(orb_dpt, orb_arr)
-
-        # Get norm delta velocities
-        dv_dpt = np.linalg.norm(man_lambert.impulses[0][1])
-        dv_arr = np.linalg.norm(man_lambert.impulses[1][1])
-
-        # Compute all the output variables
-        c3_launch = dv_dpt**2
-        c3_arrival = dv_arr**2
-
-        return (
-            dv_dpt,
-            dv_arr,
-            c3_launch,
-            c3_arrival,
-            tof.julian_day)
-
-    except AssertionError:
-        return None, None, None, None, None
-
-targetting_vec = np.vectorize(
-    _targetting,
-    otypes=[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray],
-    excluded=[0, 1],
-)
-
-
 class PorkchopPlotter:
     """
     Class Implementation for Porkchop Plot.
@@ -183,7 +83,7 @@ class PorkchopPlotter:
             Time of flight for each transfer
 
         """
-        _, dv_arrival, c3_launch, _, tof = targetting_vec(
+        _, dv_arrival, c3_launch, _, tof = donnager.interplan.targetting_vec(
             self.departure_body,
             self.target_body,
             self.launch_span[np.newaxis, :],
@@ -197,16 +97,16 @@ class PorkchopPlotter:
         c3_levels = np.linspace(0, self.max_c3, 30)
 
         c = self.ax.contourf(
-            [D.to_datetime() for D in self.launch_span],
-            [A.to_datetime() for A in self.arrival_span],
-            c3_launch.astype("float64"),
-            c3_levels.astype("float64"))
+            [depart.to_datetime() for depart in self.launch_span],
+            [arrive.to_datetime() for arrive in self.arrival_span],
+            c3_launch,
+            c3_levels)
 
         line = self.ax.contour(
             [D.to_datetime() for D in self.launch_span],
             [A.to_datetime() for A in self.arrival_span],
-            c3_launch.astype("float64"),
-            c3_levels.astype("float64"),
+            c3_launch,
+            c3_levels,
             colors="black",
             linestyles="solid")
 
