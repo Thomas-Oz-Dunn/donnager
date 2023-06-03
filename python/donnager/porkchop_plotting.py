@@ -67,7 +67,7 @@ class PorkchopPlotter:
         """
         Plots porkchop between two bodies.
         """
-        _, dv_arrival, c3_launch, _, tof = donnager.interplan.targetting_vec(
+        dv_launch, dv_arrival = donnager.interplan.calc_porkchop(
             self.departure_body,
             self.target_body,
             self.launch_span[np.newaxis, :],
@@ -83,13 +83,13 @@ class PorkchopPlotter:
         c = self.ax.contourf(
             [depart.to_datetime() for depart in self.launch_span],
             [arrive.to_datetime() for arrive in self.arrival_span],
-            c3_launch,
+            dv_launch**2,
             c3_levels)
 
         line = self.ax.contour(
             [depart.to_datetime() for depart in self.launch_span],
             [arrive.to_datetime() for arrive in self.arrival_span],
-            c3_launch,
+            dv_launch**2,
             c3_levels,
             colors="black",
             linestyles="solid")
@@ -108,16 +108,14 @@ class PorkchopPlotter:
                 time_levels,
                 colors="red",
                 linestyles="dashed",
-                linewidths=3.5,
-            )
+                linewidths=3.5)
 
             self.ax.clabel(
                 tfl_contour, 
                 inline=1, 
                 fmt="%1.1f", 
                 colors="r", 
-                fontsize=14
-            )
+                fontsize=14)
 
         if self.is_plot_arrive_v:
             vhp_levels = np.linspace(0, self.max_vhp, 5)
@@ -128,16 +126,14 @@ class PorkchopPlotter:
                 dv_arrival,
                 vhp_levels,
                 colors="navy",
-                linewidths=2.0
-            )
+                linewidths=2.0)
 
             self.ax.clabel(
                 vhp_contour, 
                 inline=1, 
                 fmt="%1.1f", 
                 colors="navy", 
-                fontsize=12
-            )
+                fontsize=12)
 
         self.ax.grid()
         fig.autofmt_xdate()

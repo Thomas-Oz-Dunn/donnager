@@ -114,22 +114,16 @@ pub fn calc_porkchop_plots(
 
     let lambert = lambert(orb_dpt, orb_arr);
             
-    // Get norm delta velocities
     let dv_dpt = nalgebra.norm(man_lambert.impulses[0][1]);
     let dv_arr = nalgebra.norm(man_lambert.impulses[1][1]);
-            
-    // Compute all the output variables
-    let c3_launch = dv_dpt**2;
-    let c3_arrival = dv_arr**2;
 
-    return [dv_dpt, dv_arr, c3_launch, c3_arrival]
+    return [dv_dpt, dv_arrs]
 }
 
 
 pub fn lambert_solve(
     orbit_1: kepler::Orbit,
     orbit_2: kepler::Orbit
-
 ) {
     let k = orbit_i.Body.GRAV_PARAM;
     let r_i = orbit_i.radial_distance;
@@ -142,41 +136,46 @@ pub fn lambert_solve(
     let r_f_norm = nalgebra::norm(r_f);
     let semi_perim = (r1_norm + r2_norm + c_norm) * 0.5;
 
-    let i_r1 = r_i / r_i_norm;
-    let i_r2 = r_f / r_f_norm;
+    let i_r_i = r_i / r_i_norm;
+    let i_r_f = r_f / r_f_norm;
 
     let i_h = nalgebra::cross(i_r1, i_r2);
     let i_h = i_h / nalgebra::norm(i_h);
-    
-    if i_h[2] < 0.0{
-        let ll = -nalgebra.sqrt(1 - min(1.0, c_norm / semi_perim));
-        let i_t_i = cross(i_r_i, i_h);
-        let i_t_f = cross(i_r_f, i_h);
+
+    if is_prograde{
+        let prograde_sign = -1;
+    } else {
+        let prograde_sign = 1;
+    }
+
+    if i_h[2] < 0.0 {
+        let ll = -prograde_sign*nalgebra.sqrt(1 - min(1.0, c_norm / semi_perim));
+        let i_t_i = prograde_sign*cross(i_r_i, i_h);
+        let i_t_f = prograde_sign*cross(i_r_f, i_h);
     }
     else{
-        let ll = nalgebra.sqrt(1 - min(1.0, c_norm / semi_perim));
-        let i_t_i = cross(i_h, i_r_i);
-        let i_t_f = cross(i_h, i_r_f);
+        let ll = prograde_sign*nalgebra.sqrt(1 - min(1.0, c_norm / semi_perim));
+        let i_t_i = prograde_sign*cross(i_h, i_r_i);
+        let i_t_f = prograde_sign*cross(i_h, i_r_f);
     }
 
-    ll, i_t1, i_t2 = (ll, i_t1, i_t2) if prograde else (-ll, -i_t1, -i_t2)
-
-    T = np.sqrt(2 * k / s**3) * tof
+    let time = np.sqrt(2 * k / semi_perim**3) * tof;
 
     x, y = _find_xy(ll, T, M, numiter, lowpath, rtol)
 
-    gamma = np.sqrt(k * s / 2)
-    rho = (r1_norm - r2_norm) / c_norm
-    sigma = np.sqrt(1 - rho**2)
+    let gam = np.sqrt(k * semi_perim / 2);
+    let rho = (r_i_norm - r_f_norm) / c_norm;
+    let sigma = np.sqrt(1 - rho**2);
 
-    V_r1, V_r2, V_t1, V_t2 = _reconstruct(
-        x, y, r1_norm, r2_norm, ll, gamma, rho, sigma
-    )
+    let v_r_i = gamma * ((ll * y - x) - rho * (ll * y + x)) / r1;
+    let v_r_f = -gamma * ((ll * y - x) + rho * (ll * y + x)) / r2;
+    let v_t_i = gamma * sigma * (y + ll * x) / r1;
+    let v_t_f = gamma * sigma * (y + ll * x) / r2;
 
-    v1 = V_r1 * (r1 / r1_norm) + V_t1 * i_t1
-    v2 = V_r2 * (r2 / r2_norm) + V_t2 * i_t2
+    let v_i = v_r_i * (r_i / r_i_norm) + v_t_i * i_t1;
+    let v_f = v_r_f * (r_f / r_f_norm) + v_t_f * i_t2;
 
-    return 
+    return (v_i, v_f)
 }
 
 #[cfg(test)]
