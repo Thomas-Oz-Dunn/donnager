@@ -83,81 +83,7 @@ pub fn get_ephemeris() -> DataFrame {
 }
 
 
-
-// /// Calculate next hohmann transfer launch window
-// /// 
-// /// Inputs
-// /// ------
-// /// start_datetime: `DateTime<Utc>`
-// ///     Start datetime for search
-// /// 
-// /// orbit_1: `Orbit`
-// ///     Orbit of starting planet
-// /// 
-// /// orbit_2: `Orbit`
-// ///     Orbit of ending planet
-// /// 
-// /// Outputs
-// /// -------
-// /// `Vec<DateTime<Utc>>`
-// ///     Vector of launch windows
-// pub fn calc_next_hohmann_launch_window(
-//     start_datetime: DateTime<Utc>,
-//     orbit_1: kepler::Orbit,
-//     orbit_2: kepler::Orbit
-// ) -> Vec<DateTime<Utc>>{
-
-//     let period_1 = orbit_1.calc_period();
-//     let period_2 = orbit_2.calc_period();
-//     let synodic_period = period_1 / period_2;
-
-//     let epoch_time = start_datetime.timestamp() as f64;
-//     let true_anonmaly_0_1 = orbit_1.calc_true_anomaly(epoch_time);
-
-//     let epoch_time = start_datetime.timestamp() as f64;
-//     let true_anonmaly_0_2 = orbit_2.calc_true_anomaly(epoch_time);
-
-//     let diff = true_anonmaly_0_2 - true_anonmaly_0_1;
-//     // Find when diff =  +/- 180
-//     let error = (180. - diff) / synodic_period;
-
-
-
-// }
-
-
-// pub fn show_trajectory(
-//     Orbits: Vec<kepler::Orbit>,
-//     Maneuvers: Vec<kepler::Maneuver>
-// ){
-//     // Create drawing canvas of solar system bodies
-//     let pathname: String = format!("SolarSystemTrajectory.png");
-
-//     let drawing_area = 
-//         BitMapBackend::new(&pathname, (500, 500))
-//             .into_drawing_area();
-
-//     let mut chart_builder = ChartBuilder::on(&drawing_area);
-    
-//     // Plot each orbital ellipse in the plane
-//     for orbit in Orbits{
-//         if orbit.central_body.name != "Sun"{
-//             // Calculate central body trajectory
-//             let planet_orbit = get_solar_system_orbits(
-//                 vec![orbit.central_body.name.to_string()])[0];
-//             let motion_0 = planet_orbit.calc_motion(time, frame);
-//         } else {
-//             // Plot trajectory directly
-
-//         }
-//     }
-
-//     // Plot each maneuver location, magnitude, and direction
-
-
-// }
-
-/// Show orbital transfer porkchop plots
+/// Calculate orbital transfer porkchop plots
 /// 
 /// Inputs
 /// ------
@@ -174,7 +100,7 @@ pub fn calc_porkchop_plots(
     stop_date_time: DateTime<Utc>,
     orbit_1: kepler::Orbit,
     orbit_2: kepler::Orbit
-){
+) -> Vector<f64> {
     let frame = xyzt::ReferenceFrames::InertialCartesian;
     
     for launch_time in start_date_time.timestamp()..stop_date_time.timestamp() {
@@ -184,8 +110,8 @@ pub fn calc_porkchop_plots(
             cst::SUN::GRAV_PARAM,
             motion1[0].norm(), 
             motion2[0].norm());
-
         }
+
     let lambert = lambert(orb_dpt, orb_arr);
             
     // Get norm delta velocities
@@ -196,11 +122,62 @@ pub fn calc_porkchop_plots(
     let c3_launch = dv_dpt**2;
     let c3_arrival = dv_arr**2;
 
-    
-
-
+    return [dv_dpt, dv_arr, c3_launch, c3_arrival]
 }
 
+
+pub fn lambert_solve(
+    orbit_1: kepler::Orbit,
+    orbit_2: kepler::Orbit
+
+) {
+    let k = orbit_i.Body.GRAV_PARAM;
+    let r_i = orbit_i.radial_distance;
+    let r_f = orbit_f.r;
+    let tof = orbit_f.epoch - orbit_i.epoch;
+    let chord = r_f - r_i;
+
+    let c_norm = nalgebra::norm(chord);
+    let r_i_norm = nalgebra::norm(r_i);
+    let r_f_norm = nalgebra::norm(r_f);
+    let semi_perim = (r1_norm + r2_norm + c_norm) * 0.5;
+
+    let i_r1 = r_i / r_i_norm;
+    let i_r2 = r_f / r_f_norm;
+
+    let i_h = nalgebra::cross(i_r1, i_r2);
+    let i_h = i_h / nalgebra::norm(i_h);
+    
+    if i_h[2] < 0.0{
+        let ll = -nalgebra.sqrt(1 - min(1.0, c_norm / semi_perim));
+        let i_t_i = cross(i_r_i, i_h);
+        let i_t_f = cross(i_r_f, i_h);
+    }
+    else{
+        let ll = nalgebra.sqrt(1 - min(1.0, c_norm / semi_perim));
+        let i_t_i = cross(i_h, i_r_i);
+        let i_t_f = cross(i_h, i_r_f);
+    }
+
+    ll, i_t1, i_t2 = (ll, i_t1, i_t2) if prograde else (-ll, -i_t1, -i_t2)
+
+    T = np.sqrt(2 * k / s**3) * tof
+
+    x, y = _find_xy(ll, T, M, numiter, lowpath, rtol)
+
+    gamma = np.sqrt(k * s / 2)
+    rho = (r1_norm - r2_norm) / c_norm
+    sigma = np.sqrt(1 - rho**2)
+
+    V_r1, V_r2, V_t1, V_t2 = _reconstruct(
+        x, y, r1_norm, r2_norm, ll, gamma, rho, sigma
+    )
+
+    v1 = V_r1 * (r1 / r1_norm) + V_t1 * i_t1
+    v2 = V_r2 * (r2 / r2_norm) + V_t2 * i_t2
+
+    return 
+}
 
 #[cfg(test)]
 mod interplan_tests {
