@@ -159,9 +159,70 @@ pub fn lambert_solve(
         let i_t_f = prograde_sign*cross(i_h, i_r_f);
     }
 
-    let time = np.sqrt(2 * k / semi_perim**3) * tof;
 
-    x, y = _find_xy(ll, T, M, numiter, lowpath, rtol)
+    // FIXME-TD: Translate into Rust -V
+    // let time = np.sqrt(2 * k / semi_perim**3) * tof;
+
+    // M_max = np.floor(T / pi);
+    // T_00 = np.arccos(ll) + ll * np.sqrt(1 - ll**2)  # T_xM
+
+    // # Refine maximum number of revolutions if necessary
+    // if T < T_00 + M_max * pi and M_max > 0:
+    //     _, T_min = _compute_T_min(ll, M_max, numiter, rtol)
+    //     if T < T_min:
+    //         M_max -= 1
+
+    // # Check if a feasible solution exist for the given number of revolutions
+    // # This departs from the original paper in that we do not compute all solutions
+    // if M > M_max:
+    //     raise ValueError("No feasible solution, try lower M")
+
+    // # Initial guess
+    // x_0 = _initial_guess(T, ll, M, lowpath)
+
+    // # Start Householder iterations from x_0 and find x, y
+    // x = _householder(x_0, T, ll, M, rtol, numiter)
+    // for ii in range(maxiter):
+    //     y = np.sqrt(1 - ll**2 * (1 - x_0**2)) 
+    //     if M == 0 and np.sqrt(0.6) < x < np.sqrt(1.4):
+    //         eta = y - ll * x_0
+    //         S_1 = (1 - ll - x_0 * eta) * 0.5
+    //         Q = 4 / 3 * hyp2f1b(S_1)
+    //         T_ = (eta**3 * Q + 4 * ll * eta) * 0.5
+    //     else:
+    //         if -1 <= x < 1:
+    //             psi = np.arccos(x * y + ll * (1 - x**2))
+    //         elif x > 1:
+    //             psi = np.arcsinh((y - x * ll) * np.sqrt(x**2 - 1))
+    //         else:
+    //             psi = 0.0
+
+    //         psi = _compute_psi(x_0, y, ll)
+    //         T_ = np.divide(
+    //             np.divide(psi + M * pi, np.sqrt(np.abs(1 - x_0**2))) - x_0 + ll * y,
+    //             (1 - x_0**2),
+    //         )
+
+    //     fval =  T_ - T0
+        
+    //     T = fval + T0
+    //     fder = (3 * T * x_0 - 2 + 2 * ll**3 * x_0 / y) / (1 - x_0**2) 
+    //     fder2 = (3 * T + 5 * x_0 * dT + 2 * (1 - ll**2) * ll**3 / y**3) / (1 - x**2)
+    //     fder3 = (
+    //         7 * x_0 * ddT + 8 * dT - 6 * (1 - ll**2) * ll**5 * x / y**5
+    //     ) / (1 - x_0**2)
+
+    //     # Householder step (quartic)
+    //     p = x_0 - fval * (
+    //         (fder**2 - fval * fder2 / 2) / (fder * (fder**2 - fval * fder2) + fder3 * fval**2 / 6)
+    //     )
+
+    //     if abs(x - x_0) < tol:
+    //         return x
+    //     x = p
+
+    // y = np.sqrt(1 - ll**2 * (1 - x**2))
+
 
     let gam = np.sqrt(k * semi_perim / 2);
     let rho = (r_i_norm - r_f_norm) / c_norm;
