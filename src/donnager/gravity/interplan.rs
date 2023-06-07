@@ -122,9 +122,18 @@ pub fn calc_porkchop_plots(
 
 
 pub fn lambert_solve(
-    orbit_1: kepler::Orbit,
-    orbit_2: kepler::Orbit
+    orbit_i: kepler::Orbit,
+    orbit_f: kepler::Orbit
 ) {
+    // Izzo based lambert solver
+    
+    // Parameters
+    // ----------
+    // orbit_i: `kepler::Orbit`
+    //     Initial orbit
+    
+    // orbit_f: `kepler::Orbit`
+    //     Initial orbit
     let k = orbit_i.Body.GRAV_PARAM;
     let r_i = orbit_i.radial_distance;
     let r_f = orbit_f.r;
@@ -158,10 +167,9 @@ pub fn lambert_solve(
         let i_t_i = prograde_sign*cross(i_h, i_r_i);
         let i_t_f = prograde_sign*cross(i_h, i_r_f);
     }
-
+    let time = (2 * k / semi_perim**3).powf(1/2) * tof;
 
     // FIXME-TD: Translate into Rust -V
-    // let time = np.sqrt(2 * k / semi_perim**3) * tof;
 
     // M_max = np.floor(T / pi);
     // T_00 = np.arccos(ll) + ll * np.sqrt(1 - ll**2)  # T_xM
