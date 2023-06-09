@@ -416,10 +416,10 @@ impl Orbit {
     ///     Position and Velocity in reference frame
     pub fn calc_motion(
         &self, 
-        time: f64, 
+        time_since_epoch: f64, 
         frame: xyzt::ReferenceFrames
     ) -> Vec<Vector3<f64>> {
-        let true_anomaly_rad: f64 = self.calc_true_anomaly(time);
+        let true_anomaly_rad: f64 = self.calc_true_anomaly(time_since_epoch);
         let cos_true_anomaly: f64 = true_anomaly_rad.cos();
         let sin_true_anomaly: f64 = true_anomaly_rad.sin();
         let radius: f64 = self.calc_radius(cos_true_anomaly);
@@ -452,13 +452,16 @@ impl Orbit {
                 let eci_pos: Vector3<f64> = pfcl_eci_rotam * pos;
                 let eci_vel: Vector3<f64> = pfcl_eci_rotam * vel;
 
-                let new_time: f64 = self.epoch.timestamp() as f64 + time;
+                let new_time: f64 = self.epoch.timestamp() as f64 + time_since_epoch;
                 let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
                     new_time as i64, 0).unwrap();
+                let rot_rate: f64 = self.central_body.rotation_rate;
+                let sidereal_day: f64 = self.central_body.sidereal_day_hours;
+
                 let eci_ecef_rotam: Matrix3<f64> = 
                     xyzt::calc_inertial_rotational_rotam(
                         new_epoch_datetime, 
-                        self.central_body.clone());
+                        rot_rate * 3600. * sidereal_day);
 
                 let ecef_pos: Vector3<f64> = eci_ecef_rotam * eci_pos;
                 let ecef_vel: Vector3<f64> = eci_ecef_rotam * eci_vel;
@@ -469,19 +472,27 @@ impl Orbit {
                 let eci_pos: Vector3<f64> = pfcl_eci_rotam * pos;
                 let eci_vel: Vector3<f64> = pfcl_eci_rotam * vel;
 
-                let new_time: f64 = self.epoch.timestamp() as f64 + time;
+                let new_time: f64 = self.epoch.timestamp() as f64 + time_since_epoch;
                 let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
                     new_time as i64, 0).unwrap();
-                let eci_ecef_rotam: Matrix3<f64> = 
-                    xyzt::calc_inertial_rotational_rotam(
-                        new_epoch_datetime, 
-                        self.central_body.clone());
-
+                    let rot_rate: f64 = self.central_body.rotation_rate;
+                    let sidereal_day: f64 = self.central_body.sidereal_day_hours;
+    
+                    let eci_ecef_rotam: Matrix3<f64> = 
+                        xyzt::calc_inertial_rotational_rotam(
+                            new_epoch_datetime, 
+                            rot_rate * 3600. * sidereal_day);
+    
                 let ecef_pos: Vector3<f64> = eci_ecef_rotam * eci_pos;
                 let ecef_vel: Vector3<f64> = eci_ecef_rotam * eci_vel;
 
-                let lla_pos: Vector3<f64> = xyzt::ecef_to_lla(ecef_pos);
-                let lla_vel: Vector3<f64> = xyzt::ecef_to_lla(ecef_vel);
+                let lla_pos: Vector3<f64> = xyzt::ecef_to_lla(
+                    ecef_pos, 
+                    self.central_body.clone());
+                // FIXME-TD: not gonna work -V
+                let lla_vel: Vector3<f64> = xyzt::ecef_to_lla(
+                    ecef_vel, 
+                    self.central_body.clone());
                 return vec![lla_pos, lla_vel];
             }
         }
@@ -509,11 +520,11 @@ impl Orbit {
     /// 
     /// Inputs
     /// ------
-    /// time: `f64`
+    /// time_since_epoch: `f64`
     ///     Time since epoch
-    pub fn calc_true_anomaly(&self, time: f64) -> f64 {
+    pub fn calc_true_anomaly(&self, time_since_epoch: f64) -> f64 {
         let mean_anom: f64 = (
-            self.mean_anomaly + self.mean_motion * time) * cst::DEG_TO_RAD;
+            self.mean_anomaly + self.mean_motion * time_since_epoch) * cst::DEG_TO_RAD;
         let ecc_anom: f64 = (
             mean_anom - self.eccentricity * cst::DEG_TO_RAD * (
                 1.0 - mean_anom.cos())) * cst::DEG_TO_RAD;
@@ -886,15 +897,12 @@ impl Orbit {
     /// 
     /// Inputs
     /// ------
-    /// time: `f64`
-    ///     Time for evaluation
-    pub fn calc_ground_coverage_radius(&self, time: f64) -> f64 {
-        let motion_ecef = self.calc_motion(
-            time, xyzt::ReferenceFrames::RotationalCartesian);
-        let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(motion_ecef[0]);
-        let theta: f64 = (
-            self.central_body.eq_radius / (self.central_body.eq_radius + pos_lla.z)).acos();
-        let cov_radius: f64 = theta * self.central_body.eq_radius;
+    /// pos_ecef: `Vector3<f64>`
+    ///     Position of spacecraft
+    pub fn calc_ground_coverage_radius(&self, pos_ecef: Vector3<f64>, eq_radius: ) -> f64 {
+        let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(pos_ecef);
+        let theta: f64 = (eq_radius / (eq_radius + pos_lla.z)).acos();
+        let cov_radius: f64 = theta * eq_radius;
         return cov_radius
     }
 
