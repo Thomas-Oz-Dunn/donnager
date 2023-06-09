@@ -8,7 +8,13 @@ use crate::donnager::constants as cst;
 /// 
 /// Inputs
 /// ------
+/// mass_matrix
 /// 
+/// damp_matrix
+/// 
+/// gyro_matrix
+/// 
+/// stiff_matrix
 pub fn calc_2d_lyanpunov_stability(
     mass_matrix: Matrix2<f64>,
     damp_matrix: Matrix2<f64>,
@@ -45,12 +51,13 @@ mod stability_tests {
     {
         let mass_ratio = cst::EARTH::MASS / (cst::EARTH::MASS + cst::SUN::MASS);
 
+        // Libration point
         let mass_matrix = Matrix2::<f64>::identity();
         let damp_matrix = Matrix2::<f64>::zeros();
         let gyro_matrix = Matrix2::<f64>::new(0., -2., 2., 0.);
         let stiff_matrix = Matrix2::<f64>::new(
-            -3./4., -3.* (3f64.powf(0.5))/2. * (mass_ratio - 0.5),
-            3.* (3f64.powf(0.5))/2. * (mass_ratio - 0.5), -9./4.
+            -3./4., -3.* (3f64.sqrt())/2. * (mass_ratio - 0.5),
+            3.* (3f64.sqrt())/2. * (mass_ratio - 0.5), -9./4.
         );
 
         let roots = calc_2d_lyanpunov_stability(
