@@ -9,6 +9,6 @@ pub mod barneshut;
 pub mod kepler;
 
 // Interplanetary trajectory tools
-// pub mod interplan;
+pub mod interplan;
 
-// pub mod sgp4;s
+// pub mod sgp4;
