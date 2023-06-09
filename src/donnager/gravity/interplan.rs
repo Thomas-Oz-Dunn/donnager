@@ -1,6 +1,7 @@
 /*
 Interplanetary Mission Planner
 */
+use std::f64::consts::PI;
 use polars::prelude::*;
 use chrono::{DateTime, Utc};
 use nalgebra::{Vector3, Matrix3, self as na};
@@ -103,18 +104,18 @@ pub fn calc_porkchop_plots(
     let frame = xyzt::ReferenceFrames::InertialCartesian;
     
     for launch_time in start_date_time.timestamp()..stop_date_time.timestamp() {
-        let motion1 = orbit_1.calc_motion(launch_time as f64, frame);
-        let motion2 = orbit_2.calc_motion(launch_time as f64, frame);
+        let radius_1: Vector3<f64> = orbit_1.calc_motion(launch_time as f64, frame)[0];
+        let radius_2: Vector3<f64> = orbit_2.calc_motion(launch_time as f64, frame)[0];
         let v_inf: f64 = calc_esc_vel(
             cst::SUN::GRAV_PARAM,
-            motion1[0].norm(), 
-            motion2[0].norm());
+            radius_1.norm(), 
+            radius_2.norm());
         }
 
     let lambert = lambert_solve(orb_dpt, orb_arr);
             
-    let dv_dpt = na.norm(man_lambert.impulses[0][1]);
-    let dv_arr = na.norm(man_lambert.impulses[1][1]);
+    let dv_dpt = man_lambert.impulses[0][1].norm();
+    let dv_arr = man_lambert.impulses[1][1].norm();
 
     return [dv_dpt, dv_arrs]
 }
@@ -172,11 +173,11 @@ pub fn lambert_solve(
 
     let time = tof * ((2. * k / semi_perim.powi(3)).powf(0.5) as i32);
 
+    
+    let M_max: f64 = (time / PI).floor();
+    let T_00: f64 = ll.acos() + ll * (1. - ll.powi(2)).powf(0.5);  // T_xM
+    
     // FIXME-TD: Translate into Rust -V
-
-    // M_max = np.floor(T / pi);
-    // T_00 = np.arccos(ll) + ll * np.sqrt(1 - ll**2)  # T_xM
-
     // # Refine maximum number of revolutions if necessary
     // if T < T_00 + M_max * pi and M_max > 0:
     //     _, T_min = _compute_T_min(ll, M_max, numiter, rtol)
