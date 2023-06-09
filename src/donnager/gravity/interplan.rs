@@ -3,8 +3,7 @@ Interplanetary Mission Planner
 */
 use polars::prelude::*;
 use chrono::{DateTime, Utc};
-use plotters::prelude::*;
-use std::ops::Range;
+use nalgebra::{Vector3, Matrix3, self as na};
 
 use crate::donnager::{
     constants as cst, 
@@ -100,7 +99,7 @@ pub fn calc_porkchop_plots(
     stop_date_time: DateTime<Utc>,
     orbit_1: kepler::Orbit,
     orbit_2: kepler::Orbit
-) -> Vector<f64> {
+) -> Vector3<f64> {
     let frame = xyzt::ReferenceFrames::InertialCartesian;
     
     for launch_time in start_date_time.timestamp()..stop_date_time.timestamp() {
@@ -112,62 +111,66 @@ pub fn calc_porkchop_plots(
             motion2[0].norm());
         }
 
-    let lambert = lambert(orb_dpt, orb_arr);
+    let lambert = lambert_solve(orb_dpt, orb_arr);
             
-    let dv_dpt = nalgebra.norm(man_lambert.impulses[0][1]);
-    let dv_arr = nalgebra.norm(man_lambert.impulses[1][1]);
+    let dv_dpt = na.norm(man_lambert.impulses[0][1]);
+    let dv_arr = na.norm(man_lambert.impulses[1][1]);
 
     return [dv_dpt, dv_arrs]
 }
 
 
+/// Izzo based lambert solver
+///
+/// Inputs
+/// ------
+/// orbit_i: `kepler::Orbit`
+///     Initial orbit
+///
+/// orbit_f: `kepler::Orbit`
+///     Final orbit
+///
+/// Returns
+/// -------
+/// 
+
 pub fn lambert_solve(
     orbit_i: kepler::Orbit,
-    orbit_f: kepler::Orbit
-) {
-    // Izzo based lambert solver
-    
-    // Parameters
-    // ----------
-    // orbit_i: `kepler::Orbit`
-    //     Initial orbit
-    
-    // orbit_f: `kepler::Orbit`
-    //     Initial orbit
-    let k = orbit_i.Body.GRAV_PARAM;
-    let r_i = orbit_i.radial_distance;
-    let r_f = orbit_f.r;
+    orbit_f: kepler::Orbit,
+    prograde_sign: f64
+){
+    let k: f64 = orbit_i.central_body.grav_param;
+    let r_i: Vector3<f64> = orbit_i.calc_motion(
+        0.0, xyzt::ReferenceFrames::InertialCartesian)[0];
+    let r_f: Vector3<f64> = orbit_f.calc_motion(
+        0.0, xyzt::ReferenceFrames::InertialCartesian)[0];
     let tof = orbit_f.epoch - orbit_i.epoch;
-    let chord = r_f - r_i;
+    let chord: Vector3<f64> = r_f - r_i;
 
-    let c_norm = nalgebra::norm(chord);
-    let r_i_norm = nalgebra::norm(r_i);
-    let r_f_norm = nalgebra::norm(r_f);
-    let semi_perim = (r1_norm + r2_norm + c_norm) * 0.5;
+    let c_norm: f64 = chord.norm();
+    let r_i_norm: f64 = r_i.norm();
+    let r_f_norm: f64 = r_f.norm();
+    let semi_perim: f64 = (r_i_norm + r_f_norm + c_norm) * 0.5;
 
-    let i_r_i = r_i / r_i_norm;
-    let i_r_f = r_f / r_f_norm;
+    let u_r_i: Vector3<f64> = r_i / r_i_norm;
+    let u_r_f: Vector3<f64> = r_f / r_f_norm;
 
-    let i_h = nalgebra::cross(i_r1, i_r2);
-    let i_h = i_h / nalgebra::norm(i_h);
+    let i_h: Vector3<f64> = u_r_i.cross(&u_r_f);
+    let u_h: Vector3<f64> = i_h / i_h.norm();
 
-    if is_prograde{
-        let prograde_sign = -1;
-    } else {
-        let prograde_sign = 1;
-    }
-
-    if i_h[2] < 0.0 {
-        let ll = -prograde_sign*nalgebra.sqrt(1 - min(1.0, c_norm / semi_perim));
-        let i_t_i = prograde_sign*cross(i_r_i, i_h);
-        let i_t_f = prograde_sign*cross(i_r_f, i_h);
+    let min: f64 = (1.0f64).min(c_norm / semi_perim);
+    let mut ll: f64 = prograde_sign * (1.0 - min).powf(0.5);
+    if u_h[2] < 0.0 {
+        ll: f64 = -ll;
+        let u_t_i: Vector3<f64> = prograde_sign * u_r_i.cross(&u_h);
+        let u_t_f: Vector3<f64> = prograde_sign * u_r_f.cross(&u_h);
     }
     else{
-        let ll = prograde_sign*nalgebra.sqrt(1 - min(1.0, c_norm / semi_perim));
-        let i_t_i = prograde_sign*cross(i_h, i_r_i);
-        let i_t_f = prograde_sign*cross(i_h, i_r_f);
+        let u_t_i: Vector3<f64> = prograde_sign * u_h.cross(&u_r_i);
+        let u_t_f: Vector3<f64> = prograde_sign * u_h.cross(&u_r_f);
     }
-    let time = (2 * k / semi_perim**3).powf(1/2) * tof;
+
+    let time = tof * ((2. * k / semi_perim.powi(3)).powf(0.5) as i32);
 
     // FIXME-TD: Translate into Rust -V
 
@@ -229,20 +232,19 @@ pub fn lambert_solve(
     //         return x
     //     x = p
 
-    // y = np.sqrt(1 - ll**2 * (1 - x**2))
+    let y: f64 = (1. - ll.powi(2) * (1. - x.powi(2))).powf(0.5);
 
+    let gamma: f64 = (k * semi_perim / 2.).powf(0.5);
+    let rho: f64 = (r_i_norm - r_f_norm) / c_norm;
+    let sigma: f64 = (1. - rho.powi(2)).powf(0.5);
 
-    let gam = np.sqrt(k * semi_perim / 2);
-    let rho = (r_i_norm - r_f_norm) / c_norm;
-    let sigma = np.sqrt(1 - rho**2);
+    let v_r_i = gamma * ((ll * y - x) - rho * (ll * y + x)) / r_i;
+    let v_r_f = -gamma * ((ll * y - x) + rho * (ll * y + x)) / r_f;
+    let v_t_i = gamma * sigma * (y + ll * x) / r_i;
+    let v_t_f = gamma * sigma * (y + ll * x) / r_f;
 
-    let v_r_i = gamma * ((ll * y - x) - rho * (ll * y + x)) / r1;
-    let v_r_f = -gamma * ((ll * y - x) + rho * (ll * y + x)) / r2;
-    let v_t_i = gamma * sigma * (y + ll * x) / r1;
-    let v_t_f = gamma * sigma * (y + ll * x) / r2;
-
-    let v_i = v_r_i * (r_i / r_i_norm) + v_t_i * i_t1;
-    let v_f = v_r_f * (r_f / r_f_norm) + v_t_f * i_t2;
+    let v_i: Vector3<f64> = v_r_i * (r_i / r_i_norm) + v_t_i * i_t_i;
+    let v_f: Vector3<f64> = v_r_f * (r_f / r_f_norm) + v_t_f * i_t_f;
 
     return (v_i, v_f)
 }
