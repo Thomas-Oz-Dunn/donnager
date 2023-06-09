@@ -413,30 +413,27 @@ impl Orbit {
     /// Outputs
     /// -------
     /// motion: `[order, xyz]`
+    ///     Position and Velocity in reference frame
     pub fn calc_motion(
         &self, 
         time: f64, 
         frame: xyzt::ReferenceFrames
     ) -> Vec<Vector3<f64>> {
- 
         let true_anomaly_rad: f64 = self.calc_true_anomaly(time);
-        let cos_true_anom: f64 = true_anomaly_rad.cos();
-        let sin_true_anom: f64 = true_anomaly_rad.sin();
-
-        let radius: f64 = self.semi_major_axis * (
-            1.0 - self.eccentricity.powi(2)) / 
-            (1.0 + self.eccentricity * cos_true_anom);
+        let cos_true_anomaly: f64 = true_anomaly_rad.cos();
+        let sin_true_anomaly: f64 = true_anomaly_rad.sin();
+        let radius: f64 = self.calc_radius(cos_true_anomaly);
         
         // Vectorize with [n_evals, 3dim, n_order]
         // Perifocal
-        let x_pos: f64 = radius * cos_true_anom;
-        let y_pos: f64 = radius * sin_true_anom;
+        let x_pos: f64 = radius * cos_true_anomaly;
+        let y_pos: f64 = radius * sin_true_anomaly;
         let z_pos: f64 = 0.0;
         let pos: Vector3<f64> = Vector3::new(x_pos, y_pos, z_pos);
 
         // Perifocal
-        let x_vel: f64 = -self.mean_motion * radius * sin_true_anom;
-        let y_vel: f64 = self.mean_motion * radius * (self.eccentricity + cos_true_anom);
+        let x_vel: f64 = -self.mean_motion * radius * sin_true_anomaly;
+        let y_vel: f64 = self.mean_motion * radius * (self.eccentricity + cos_true_anomaly);
         let z_vel: f64 = 0.0;
         let vel: Vector3<f64> = Vector3::new(x_vel, y_vel, z_vel);
         
@@ -490,11 +487,30 @@ impl Orbit {
         }
     }
 
+    /// Calculate radius at true anomaly
+    /// 
+    /// Inputs
+    /// ------
+    /// cos_true_anomaly: `f64`
+    ///     Cosine of true anomaly angle
+    /// 
+    /// Outputs
+    /// -------
+    /// radius: `f64`
+    ///     Magnitude of radius
+    fn calc_radius(&self, cos_true_anomaly: f64) -> f64 {
+        let radius: f64 = self.semi_major_axis * 
+            (1.0 - self.eccentricity.powi(2)) / 
+            (1.0 + self.eccentricity * cos_true_anomaly);
+        return radius
+    }
+
     /// Calculate true anomaly in radians
     /// 
     /// Inputs
     /// ------
     /// time: `f64`
+    ///     Time since epoch
     pub fn calc_true_anomaly(&self, time: f64) -> f64 {
         let mean_anom: f64 = (
             self.mean_anomaly + self.mean_motion * time) * cst::DEG_TO_RAD;
@@ -517,17 +533,20 @@ impl Orbit {
         let sin_arg_peri: f64 = self.argument_of_perigee.sin();
 
         let rot_mat: Matrix3<f64> = 
-            Matrix3::new(cos_raan, -sin_raan, 0.0,
-                             sin_raan, cos_raan, 0.0,
-                             0.0, 0.0, 1.0);
+            Matrix3::new(
+                cos_raan, -sin_raan, 0.0,
+                sin_raan, cos_raan, 0.0,
+                0.0, 0.0, 1.0);
 
         let rot_mat_2: Matrix3<f64> =
-            Matrix3::new(cos_inc, 0.0, sin_inc,
-                 0.0, 1.0, 0.0, 
-                 -sin_inc, 0.0, cos_inc);
+            Matrix3::new(
+                cos_inc, 0.0, sin_inc,
+                0.0, 1.0, 0.0, 
+                -sin_inc, 0.0, cos_inc);
 
         let rot_mat_3: Matrix3<f64> = 
-            Matrix3::new(cos_arg_peri, sin_arg_peri, 0.0, 
+            Matrix3::new(
+                cos_arg_peri, sin_arg_peri, 0.0, 
                 -sin_arg_peri, cos_arg_peri, 0.0, 
                 0.0, 0.0, 1.0);
 
