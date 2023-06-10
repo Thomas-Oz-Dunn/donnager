@@ -876,12 +876,14 @@ impl Orbit {
         let frame = xyzt::ReferenceFrames::RotationalCartesian;
 
         let mut motion_ecef = self.calc_motion(time, frame);
-        let pos_lla = xyzt::ecef_to_lla(motion_ecef[0]);
+        let pos_lla = xyzt::ecef_to_lla(
+            motion_ecef[0], self.central_body);
         kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
         time += 60.0;
         while time < self.epoch.timestamp() as f64 + 86400.0 {
             motion_ecef = self.calc_motion(time, frame);
-            let pos_lla = xyzt::ecef_to_lla(motion_ecef[0]);
+            let pos_lla = xyzt::ecef_to_lla(
+                motion_ecef[0], self.central_body);
             kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
             time += 60.0;
         }
@@ -899,10 +901,12 @@ impl Orbit {
     /// ------
     /// pos_ecef: `Vector3<f64>`
     ///     Position of spacecraft
-    pub fn calc_ground_coverage_radius(&self, pos_ecef: Vector3<f64>, eq_radius: ) -> f64 {
-        let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(pos_ecef);
-        let theta: f64 = (eq_radius / (eq_radius + pos_lla.z)).acos();
-        let cov_radius: f64 = theta * eq_radius;
+    pub fn calc_ground_coverage_radius(&self, pos_ecef: Vector3<f64>) -> f64 {
+        let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(
+            pos_ecef, self.central_body);
+        let theta: f64 = (
+            self.central_body.eq_radius / (self.central_body.eq_radius + pos_lla.z)).acos();
+        let cov_radius: f64 = theta * self.central_body.eq_radius;
         return cov_radius
     }
 
@@ -1139,7 +1143,7 @@ mod orbit_tests {
     fn test_hill_sphere(){
         let earth_mass: f64 = cst::EARTH::MASS;
         let sun_mass: f64 = cst::SUN::MASS;
-        let earth_orbit_semi_major: f64 = cst::EARTH::SEMI_MAJOR;
+        let earth_orbit_semi_major: f64 = cst::EARTH::ORBIT_SEMI_MAJOR;
         let earth_orbit_ecc: f64 = cst::EARTH::ORBIT_ECC;
 
         let sphere_rad: f64 = calc_hill_sphere(
