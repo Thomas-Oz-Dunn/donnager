@@ -90,6 +90,8 @@ impl MERCURY{
     pub const RADIUS_EQUATOR: f64 = 2439.7;
     pub const GRAV_PARAM: f64 = MERCURY::MASS * GRAV_CONST;
     pub const SURFACE_ECC: f64 = 7.004;
+    
+    /// Orbital Characteristics
     pub const ORBIT_SEMI_MAJOR: f64 = 5.7909050e7; // km
     pub const ORBIT_ECC: f64 = 0.205630;
     pub const ARG_PERIHELION: f64 = 29.124 * DEG_TO_RAD;
@@ -105,12 +107,6 @@ impl VENUS{
     pub const GRAV_PARAM: f64 = VENUS::MASS * GRAV_CONST;
     pub const ECC: f64 = 3.39471;
 }
-
-pub struct VenusSunOrbit;
-impl VenusSunOrbit{
-    // pub const SEMI_MAJOR: f64 = ; // km
-}
-
 
 /// Characteristics of Earth
 /// 
@@ -134,7 +130,8 @@ impl EARTH {
     pub const DAYS_PER_YEAR: f64 = 365.25;
     pub const AXIAL_TILT: f64 = -23.44;
 
-    pub const SEMI_MAJOR: f64 = 149.60e6; // km
+    /// Orbital characteristics
+    pub const ORBIT_SEMI_MAJOR: f64 = 149.60e6; // km
     pub const ORBIT_ECC: f64 = 0.0167086;
     pub const ARG_PERIHELION: f64 = 102.9372 * DEG_TO_RAD;
     pub const INC: f64 = 0.0 * DEG_TO_RAD;
@@ -148,16 +145,12 @@ impl MOON{
     pub const MASS: f64 = 7.34767309e22; // kg
     pub const RADIUS_EQUATOR: f64 = 1.737e6; // m
     pub const GRAV_PARAM: f64 = MOON::MASS * GRAV_CONST; // m^3 * s^-2
-}
 
-// Moon-Earth System
-pub struct MoonEarthOrbit;
-impl MoonEarthOrbit{
-    pub const ECC: f64 = 0.0549;
-    pub const SEMI_MAJOR: f64 = 384400.0; // km   
+    pub const ORBIT_SEMI_MAJOR: f64 = 384400.0; // km   
+    pub const ORBIT_ECC: f64 = 0.0549;
     pub const INC: f64 = 5.145;
     pub const RAAN: f64 = 125.08;
-    pub const ARG_PERIHELION: f64 = 318.15;
+    pub const ARG_PERIGEE: f64 = 318.15;
 }
 
 
@@ -166,7 +159,6 @@ impl MoonEarthOrbit{
 /// Source
 /// ------
 /// https://en.wikipedia.org/wiki/Mars
-
 pub struct MARS;
 impl MARS{
     pub const MASS: f64 = 6.4171e23; // kg
@@ -185,29 +177,48 @@ impl MARS{
     pub const MEAN_ANOMALY: f64 = 19.412 * DEG_TO_RAD; // radians
 }
 
+/// Characteristics of Jupiter
+/// 
+/// Source
+/// ------
+/// https://en.wikipedia.org/wiki/Jupiter
 pub struct JUPITER;
 impl JUPITER{
     pub const MASS: f64 = 1.899e27;
-    pub const RADIUS_EQUATOR: f64 = 71492.; // m
-    pub const GRAV_PARAM: f64 = MARS::MASS * GRAV_CONST; // m^3 * s^-2
+    pub const RADIUS_EQUATOR: f64 = 7.1492e7; // m
+    pub const GRAV_PARAM: f64 = JUPITER::MASS * GRAV_CONST; // m^3 * s^-2
     pub const ECC: f64 = 0.04838624;
     pub const SIDEREAL_DAY: f64 = 0.4135; // hours
     // pub const ROT_RATE: f64 = ; // radians per second
 }
 
+
+/// Characteristics of Jupiter
+/// 
+/// Source
+/// ------
+/// https://en.wikipedia.org/wiki/Saturn
 pub struct SATURN;
 impl SATURN{
     pub const MASS: f64 = 5.685e26;
+    pub const RADIUS_EQUATOR: f64 = 6.0268e7;
+    pub const GRAV_PARAM: f64 = SATURN::MASS * GRAV_CONST;
+    pub const ECC: f64 = 0.0565;
+    pub const SIDEREAL_DAY: f64 = 10.5;
 }
 
 pub struct URANUS;
 impl URANUS{
     pub const MASS: f64 = 8.682e25;
+    pub const RADIUS_EQUATOR: f64 = 2.5559e7;
+    pub const GRAV_PARAM: f64 = URANUS::MASS * GRAV_CONST;
 }
 
 pub struct NEPTUNE;
 impl NEPTUNE{
     pub const MASS: f64 = 1.024e26;
+    pub const RADIUS_EQUATOR: f64 = 2.4764e7;
+    pub const GRAV_PARAM: f64 = NEPTUNE::MASS * GRAV_CONST;
 }
 
 
