@@ -259,37 +259,6 @@ pub fn get_ephemeris() -> DataFrame {
             cst::URANUS::MASS, 
             cst::NEPTUNE::MASS
         ],
-
-        "orbit_semi_major" => &[
-            cst::MercurySunOrbit::SEMI_MAJOR, 
-            cst::VenusSunOrbit::SEMI_MAJOR, 
-            cst::EarthSunOrbit::SEMI_MAJOR, 
-            cst::MarsSunOrbit::SEMI_MAJOR, 
-            None, 
-            None, 
-            None, 
-            None],
-
-        "orbit_ecc" => &[
-            cst::MercurySunOrbit::ECC, 
-            cst::VenusSunOrbit::ECC, 
-            cst::EarthSunOrbit::ECC, 
-            cst::MarsSunOrbit::ECC, 
-            None, 
-            None, 
-            None, 
-            None],
-        
-        "argument_perigelion" => &[
-            cst::MercurySunOrbit::ARG_PERIHELION, 
-            cst::VenusSunOrbit::ARG_PERIHELION, 
-            cst::EarthSunOrbit::ARG_PERIHELION, 
-            cst::MarsSunOrbit::ARG_PERIHELION, 
-            None, 
-            None, 
-            None, 
-            None],
-
         "equatorial_radius" => &[
             cst::MERCURY::RADIUS_EQUATOR,
             cst::VENUS::RADIUS_EQUATOR,
@@ -856,7 +825,18 @@ mod spacetime_tests {
             -4662.0,
             5124.0
         );
-        let pos_lla = ecef_to_lla(pos_ecef);
+        let earth: Body = Body {
+            name: String::from("Earth"),
+            grav_param: cst::EARTH::GRAV_PARAM,
+            eq_radius: cst::EARTH::RADIUS_EQUATOR,
+            rotation_rate: cst::EARTH::ROT_RATE,
+            sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
+            eccentricity: cst::EARTH::SURFACE_ECC
+        };
+
+        let pos_lla = ecef_to_lla(
+            pos_ecef, earth);
+
         assert_eq!(pos_lla, Vector3::new(
             44.54968779193849, 
             -117.07402908139512, 
