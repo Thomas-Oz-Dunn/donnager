@@ -135,13 +135,13 @@ pub fn lambert_solve(
     // x = _householder(x_0, T, ll, M, rtol, numiter)
 
     for ii in 0..maxiter {
-        let y = (1 - ll**2 * (1 - x_0**2)).sqrt();
+        let y = (1 - ll.powi(2) * (1 - x_0.powi(2))).sqrt();
 
-        if M == 0.0 && (0.6).sqrt() < x < (1.4).sqrt(){
-            eta = y - ll * x_0
+        if M == 0.0 && (0.6).sqrt() < x && x < (1.4).sqrt(){
+            let mut eta = y - ll * x_0;
             S_1 = (1 - ll - x_0 * eta) * 0.5
             Q = 4 / 3 * hyp2f1b(S_1)
-            T_ = (eta**3 * Q + 4 * ll * eta) * 0.5
+            T_= (eta**3 * Q + 4 * ll * eta) * 0.5
         } else {
 
             if -1 <= x < 1{
