@@ -75,6 +75,9 @@ pub fn calc_porkchop_plots(
 /// orbit_f: `kepler::Orbit`
 ///     Final orbit
 ///
+/// prograde_sign: `f64`
+///     Prograde vs retrograde
+/// 
 /// Returns
 /// -------
 /// 
@@ -91,6 +94,7 @@ pub fn lambert_solve(
     let tof = orbit_f.epoch - orbit_i.epoch;
     let chord: Vector3<f64> = r_f - r_i;
 
+    // Normalize operations
     let c_norm: f64 = chord.norm();
     let r_i_norm: f64 = r_i.norm();
     let r_f_norm: f64 = r_f.norm();
@@ -114,6 +118,7 @@ pub fn lambert_solve(
         let u_t_f: Vector3<f64> = prograde_sign * u_h.cross(&u_r_f);
     }
 
+    // Dimensionless time parameters
     let time = tof * ((2. * k / semi_perim.powi(3)).sqrt() as i32);
     
     let M_max: f64 = time / (PI as i32);
@@ -134,51 +139,51 @@ pub fn lambert_solve(
     // # Start Householder iterations from x_0 and find x, y
     // x = _householder(x_0, T, ll, M, rtol, numiter)
 
-    for ii in 0..maxiter {
-        let y = (1 - ll.powi(2) * (1 - x_0.powi(2))).sqrt();
+    // for ii in 0..maxiter {
+    //     let y = (1 - ll.powi(2) * (1 - x_0.powi(2))).sqrt();
 
-        if M == 0.0 && (0.6).sqrt() < x && x < (1.4).sqrt(){
-            let mut eta = y - ll * x_0;
-            S_1 = (1 - ll - x_0 * eta) * 0.5
-            Q = 4 / 3 * hyp2f1b(S_1)
-            T_= (eta**3 * Q + 4 * ll * eta) * 0.5
-        } else {
+    //     if M == 0.0 && (0.6).sqrt() < x && x < (1.4).sqrt(){
+    //         let mut eta = y - ll * x_0;
+    //         S_1 = (1 - ll - x_0 * eta) * 0.5
+    //         Q = 4 / 3 * hyp2f1b(S_1)
+    //         T_= (eta**3 * Q + 4 * ll * eta) * 0.5
+    //     } else {
 
-            if -1 <= x < 1{
-                psi = np.arccos(x * y + ll * (1 - x**2));
-            }
-            else if (x > 1){
-                psi = np.arcsinh((y - x * ll) * (x**2 - 1).sqrt());
-            }
-            else{
-                psi = 0.0;
-            }
+    //         if -1 <= x < 1{
+    //             psi = np.arccos(x * y + ll * (1 - x**2));
+    //         }
+    //         else if (x > 1){
+    //             psi = np.arcsinh((y - x * ll) * (x**2 - 1).sqrt());
+    //         }
+    //         else{
+    //             psi = 0.0;
+    //         }
 
-            psi = _compute_psi(x_0, y, ll)
-            T_ = np.divide(
-                np.divide(psi + M * pi, np.sqrt(np.abs(1 - x_0**2))) - x_0 + ll * y,
-                (1 - x_0**2),
-            )
-        }
+    //         psi = _compute_psi(x_0, y, ll)
+    //         T_ = np.divide(
+    //             np.divide(psi + M * pi, np.sqrt(np.abs(1 - x_0**2))) - x_0 + ll * y,
+    //             (1 - x_0**2),
+    //         )
+    //     }
 
-        fval =  T_ - T0
+    //     fval =  T_ - T0
         
-        T = fval + T0
-        fder = (3 * T * x_0 - 2 + 2 * ll**3 * x_0 / y) / (1 - x_0**2) 
-        fder2 = (3 * T + 5 * x_0 * dT + 2 * (1 - ll**2) * ll**3 / y**3) / (1 - x**2)
-        fder3 = (
-            7 * x_0 * ddT + 8 * dT - 6 * (1 - ll**2) * ll**5 * x / y**5
-        ) / (1 - x_0**2)
+    //     T = fval + T0
+    //     fder = (3 * T * x_0 - 2 + 2 * ll**3 * x_0 / y) / (1 - x_0**2) 
+    //     fder2 = (3 * T + 5 * x_0 * dT + 2 * (1 - ll**2) * ll**3 / y**3) / (1 - x**2)
+    //     fder3 = (
+    //         7 * x_0 * ddT + 8 * dT - 6 * (1 - ll**2) * ll**5 * x / y**5
+    //     ) / (1 - x_0**2)
 
-        // # Householder step (quartic)
-        p = x_0 - fval * (
-            (fder**2 - fval * fder2 / 2) / (fder * (fder**2 - fval * fder2) + fder3 * fval**2 / 6)
-        )
+    //     // # Householder step (quartic)
+    //     p = x_0 - fval * (
+    //         (fder**2 - fval * fder2 / 2) / (fder * (fder**2 - fval * fder2) + fder3 * fval**2 / 6)
+    //     )
 
-        if abs(x - x_0) < tol:
-            return x
-        x = p
-    }
+    //     if abs(x - x_0) < tol:
+    //         return x
+    //     x = p
+    // }
 
     let y: f64 = (1. - ll.powi(2) * (1. - x.powi(2))).sqrt();
 
@@ -186,11 +191,13 @@ pub fn lambert_solve(
     let rho: f64 = (r_i_norm - r_f_norm) / c_norm;
     let sigma: f64 = (1. - rho.powi(2)).sqrt();
 
+    // Radial and Tangential Components
     let v_r_i = gamma * ((ll * y - x) - rho * (ll * y + x)) / r_i;
     let v_r_f = -gamma * ((ll * y - x) + rho * (ll * y + x)) / r_f;
     let v_t_i = gamma * sigma * (y + ll * x) / r_i;
     let v_t_f = gamma * sigma * (y + ll * x) / r_f;
 
+    // Velocity vectors
     let v_i: Vector3<f64> = v_r_i * (r_i / r_i_norm) + v_t_i * i_t_i;
     let v_f: Vector3<f64> = v_r_f * (r_f / r_f_norm) + v_t_f * i_t_f;
 
