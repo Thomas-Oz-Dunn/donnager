@@ -3,10 +3,11 @@ Interplanetary Mission Planner
 */
 use std::f64::consts::PI;
 use na::Vector;
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, Timelike};
 use nalgebra::{Vector3, Matrix3, self as na};
 
 use crate::donnager::{
+    constants as cst,
     gravity::kepler as kepler, 
     spacetime as xyzt};
 
@@ -43,24 +44,16 @@ pub fn calc_esc_vel(
 pub fn calc_porkchop_plots(
     start_date_time: DateTime<Utc>,
     stop_date_time: DateTime<Utc>,
-    orbit_1: kepler::Orbit,
-    orbit_2: kepler::Orbit
-) -> Vec<f64> {
-    let frame = xyzt::ReferenceFrames::InertialCartesian;
+    orbit_i: kepler::Orbit,
+    orbit_f: kepler::Orbit
+) -> f64 {
+    // TODO-TD: parallelize across start stop datetimes using rayon
+    let (dv1, dv2) = lambert_solve(orbit_i, orbit_f, 1.0);
     
-    for launch_time in start_date_time.timestamp()..stop_date_time.timestamp() {
-        let radius_1: Vector3<f64> = orbit_1.calc_motion(launch_time as f64, frame)[0];
-        let radius_2: Vector3<f64> = orbit_2.calc_motion(launch_time as f64, frame)[0];
-
-        let lambert_vels = lambert_solve(
-            orbit_1, 
-            orbit_2, 
-            1.0);
-                
-        let dv_dpt = lambert_vels[0] - orbit_1.calc_motion(start_date_time as f64, frame)[1];
-        let dv_arr = lambert_vels[1] - orbit_1.calc_motion(stop_date_time as f64, frame)[1];
-        let dv_tot = dv_dpt.norm() + dpt_arr.norm();
-        }
+    let frame = xyzt::ReferenceFrames::InertialCartesian;
+    let dv_dpt = dv1 - orbit_i.calc_motion(start_date_time.second() as f64, frame)[1];
+    let dv_arr = dv2 - orbit_f.calc_motion(stop_date_time.second() as f64, frame)[1];
+    let dv_tot = dv_dpt.norm() + dv_arr.norm();
     return dv_tot
 }
 
@@ -86,7 +79,7 @@ pub fn lambert_solve(
     orbit_f: kepler::Orbit,
     prograde_sign: f64
 ) -> (Vector3<f64>, Vector3<f64>) {
-    let k: f64 = orbit_i.central_body.grav_param;
+    let grav_param: f64 = orbit_i.central_body.grav_param;
     let r_i: Vector3<f64> = orbit_i.calc_motion(
         0.0, xyzt::ReferenceFrames::InertialCartesian)[0];
     let r_f: Vector3<f64> = orbit_f.calc_motion(
@@ -107,36 +100,76 @@ pub fn lambert_solve(
     let u_h: Vector3<f64> = i_h / i_h.norm();
 
     let min: f64 = (1.0f64).min(c_norm / semi_perim);
-    let mut ll: f64 = prograde_sign * (1.0 - min).sqrt();
+    let mut lambda: f64 = prograde_sign * (1.0 - min).sqrt();
+    let mut u_t_i: Vector3<f64>;
+    let mut u_t_f: Vector3<f64>;
+
     if u_h[2] < 0.0 {
-        ll = -ll;
-        let u_t_i: Vector3<f64> = prograde_sign * u_r_i.cross(&u_h);
-        let u_t_f: Vector3<f64> = prograde_sign * u_r_f.cross(&u_h);
+        lambda = -lambda;
+        u_t_i = prograde_sign * u_r_i.cross(&u_h);
+        u_t_f = prograde_sign * u_r_f.cross(&u_h);
     }
     else{
-        let u_t_i: Vector3<f64> = prograde_sign * u_h.cross(&u_r_i);
-        let u_t_f: Vector3<f64> = prograde_sign * u_h.cross(&u_r_f);
+        u_t_i = prograde_sign * u_h.cross(&u_r_i);
+        u_t_f = prograde_sign * u_h.cross(&u_r_f);
     }
 
     // Dimensionless time parameters
-    let time = tof * ((2. * k / semi_perim.powi(3)).sqrt() as i32);
+    let time = tof.num_seconds() as f64 * ((2. * grav_param / semi_perim.powi(3)).sqrt());
     
-    let M_max: f64 = time / (PI as i32);
-    let T_00: f64 = ll.acos() + ll * (1. - ll.powi(2)).sqrt();  // T_xM
-    
-    // FIXME-TD: Translate into Rust -V
-    // # Refine maximum number of revolutions if necessary
-    if (time < T_00 + M_max * PI) && (M_max > 0){
-        //     _, T_min = _compute_T_min(ll, M_max, numiter, rtol)
-        //     if T < T_min:
-        //         M_max -= 1
+    let x = find_xy(time, &lambda);
+    let y: f64 = (1. - lambda.powi(2) * (1. - x.powi(2))).sqrt();
 
+    let gamma: f64 = (grav_param * semi_perim / 2.).sqrt();
+    let rho: f64 = (r_i_norm - r_f_norm) / c_norm;
+    let sigma: f64 = (1. - rho.powi(2)).sqrt();
+
+    // Radial and Tangential Components
+    let v_r_i = gamma * ((lambda * y - x) - rho * (lambda * y + x)) / r_i;
+    let v_r_f = -gamma * ((lambda * y - x) + rho * (lambda * y + x)) / r_f;
+    let v_t_i = gamma * sigma * (y + lambda * x) / r_i;
+    let v_t_f = gamma * sigma * (y + lambda * x) / r_f;
+
+    // Velocity vectors
+    let v_i: Vector3<f64> = v_r_i * u_r_i + v_t_i * u_t_i;
+    let v_f: Vector3<f64> = v_r_f * u_r_f + v_t_f * u_t_f;
+
+    return (v_i, v_f)
+}
+
+///  Find x and y in time lambda space (izzo 2014)
+///
+/// Inputs
+/// ------
+/// time: `decimal,  seconds`
+/// 
+/// lambda: `decimal, seconds`
+/// 
+fn find_xy(time: f64, lambda: f64) ->  Vector3<f64>{
+    let mut M_max: f64 = time / PI; // floor to int
+    let T_00: f64 = lambda.acos() + lambda * (1. - lambda.powi(2)).sqrt();
+
+    // Refine maximum number of revolutions if necessary
+    if (time < T_00 + M_max * PI) && (M_max > 0.0){
+        
+        //  Halley iteration
+        //     _, T_min = _compute_T_min(ll, M_max, numiter, rtol)
+        if time < T_min{M_max = M_max - 1.0;}
     }
 
-    // # Initial guess
-    // x_0 = _initial_guess(T, ll, M, lowpath)
-
-    // # Start Householder iterations from x_0 and find x, y
+    let T_1 = 2/3 * (1- lambda.powi(3));
+    let mut x_0: f64;
+    if time < T_1{
+        x_0 = 2 * T_1/time  - 1; 
+    }
+    else if time >= T_1 &&  time < T_0{
+        x_0 = (T_0  / time).powf((T_1/T_0).log2())
+    } else {
+        x_0 = T_0 / time - 1;
+    }
+    
+    // FIXME-TD: Translate into Rust -V
+    // Start Householder iterations from x_0 and find x, y
     // x = _householder(x_0, T, ll, M, rtol, numiter)
 
     // for ii in 0..maxiter {
@@ -150,7 +183,7 @@ pub fn lambert_solve(
     //     } else {
 
     //         if -1 <= x < 1{
-    //             psi = np.arccos(x * y + ll * (1 - x**2));
+    //             psi = (x * y + ll * (1 - x**2)).acos();
     //         }
     //         else if (x > 1){
     //             psi = np.arcsinh((y - x * ll) * (x**2 - 1).sqrt());
@@ -184,24 +217,6 @@ pub fn lambert_solve(
     //         return x
     //     x = p
     // }
-
-    let y: f64 = (1. - ll.powi(2) * (1. - x.powi(2))).sqrt();
-
-    let gamma: f64 = (k * semi_perim / 2.).sqrt();
-    let rho: f64 = (r_i_norm - r_f_norm) / c_norm;
-    let sigma: f64 = (1. - rho.powi(2)).sqrt();
-
-    // Radial and Tangential Components
-    let v_r_i = gamma * ((ll * y - x) - rho * (ll * y + x)) / r_i;
-    let v_r_f = -gamma * ((ll * y - x) + rho * (ll * y + x)) / r_f;
-    let v_t_i = gamma * sigma * (y + ll * x) / r_i;
-    let v_t_f = gamma * sigma * (y + ll * x) / r_f;
-
-    // Velocity vectors
-    let v_i: Vector3<f64> = v_r_i * (r_i / r_i_norm) + v_t_i * i_t_i;
-    let v_f: Vector3<f64> = v_r_f * (r_f / r_f_norm) + v_t_f * i_t_f;
-
-    return (v_i, v_f)
 }
 
 #[cfg(test)]
