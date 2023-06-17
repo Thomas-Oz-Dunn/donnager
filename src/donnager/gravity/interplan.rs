@@ -95,9 +95,11 @@ pub fn calc_mission_delta_v(
 /// 
 /// Sources
 /// ------- 
-/// link to polisatro's repo
+/// Poliastro (Python Implementation)
+/// https://github.com/poliastro/poliastro
 /// 
-/// link to izzo's paper
+/// Dario Izzo, Revisiting Lambert's Problem. 2014 
+/// https://arxiv.org/abs/1403.2705
 /// 
 pub fn lambert_solve(
     grav_param: f64,
