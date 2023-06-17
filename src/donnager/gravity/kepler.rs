@@ -609,6 +609,8 @@ impl Orbit {
         }
 
     /// Show orbit plot
+    /// 
+    /// TODO-TD: migrate  to python interface for plotting
     pub fn show(&self, frame: xyzt::ReferenceFrames) {
 
         let pathname = format!("{}_orbit_{:?}.png", self.name, &frame);
@@ -853,6 +855,8 @@ impl Orbit {
 
     /// Convert orbit to KML string
     /// 
+    /// TODO-TD:  test
+    /// 
     /// Inputs
     /// ------
     /// None
@@ -934,13 +938,13 @@ pub fn calc_lagrange_points(
 ) -> Vec<Vector3<f64>> {
     let mass_ratio: f64= mass_2 / (mass_1 + mass_2);
 
-    // Permissible if mass_2 is <<<< mass_1
-    let xl12: f64 = (mass_2/(3.*mass_1)).powf(1./3.);
-    let xl3: f64 = 7.*mass_2 / (12. * mass_1);
+    // Permissible if mass_2 is << mass_1
+    let x_l12: f64 = (mass_2 / (3.*mass_1)).powf(1./3.);
+    let x_l3: f64 = 7. *  mass_2 / (12. * mass_1);
 
-    let l1: Vector3<f64> = Vector3::new(1. - xl12, 0.,0.);
-    let l2: Vector3<f64> = Vector3::new(1. + xl12 ,0.,0.);
-    let l3: Vector3<f64> = Vector3::new(-xl3 ,0.,0.);
+    let l1: Vector3<f64> = Vector3::new(1. - x_l12, 0.,0.);
+    let l2: Vector3<f64> = Vector3::new(1. + x_l12 ,0.,0.);
+    let l3: Vector3<f64> = Vector3::new(x_l3 ,0.,0.);
     let l4: Vector3<f64> = Vector3::new(mass_ratio - 0.5, -(3_f64).sqrt()/2., 0.);
     let l5: Vector3<f64> = Vector3::new(mass_ratio - 0.5, (3_f64).sqrt()/2., 0.);
     return vec![l1, l2, l3, l4, l5]
