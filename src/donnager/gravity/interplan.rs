@@ -92,6 +92,9 @@ pub fn calc_mission_delta_v(
 /// 
 /// Returns
 /// -------
+/// v_i: `[xyz, ]  decimal`
+/// 
+/// v_f: `[xyz, ]  decimal`
 /// 
 /// Sources
 /// ------- 
@@ -139,7 +142,7 @@ pub fn lambert_solve(
     }
 
     // Dimensionless time parameters
-    let time = tof * ((2. * grav_param / semi_perim.powi(3)).sqrt());
+    let time: f64 = tof * ((2. * grav_param / semi_perim.powi(3)).sqrt());
     
     let x = find_xy(time, lambda);
     let y: f64 = (1. - lambda.powi(2) * (1. - x.powi(2))).sqrt();
@@ -177,51 +180,23 @@ fn find_xy(time: f64, lambda: f64) ->  Vector3<f64>{
     if (time < T_00 + M_max * PI) && (M_max > 0.0){
         
         //  Halley iteration
-        //     _, T_min = _compute_T_min(ll, M_max, numiter, rtol)
+        let T_min: f64 = _compute_T_min(lambda, M_max, numiter, rtol);
         if time < T_min{M_max = M_max - 1.0;}
     }
 
-    let T_1 = 2/3 * (1- lambda.powi(3));
+    let T_1 = 2/3 * (1.0 - lambda.powi(3));
     let mut x_0: f64;
-    if time < T_1{
-        x_0 = 2 * T_1/time  - 1; 
-    }
+
+    if time < T_1 {
+        x_0 = 2 * T_1/time  - 1;}
     else if time >= T_1 &&  time < T_0{
         x_0 = (T_0  / time).powf((T_1/T_0).log2())
     } else {
-        x_0 = T_0 / time - 1;
-    }
+        x_0 = T_0 / time - 1;}
     
     // FIXME-TD: Translate into Rust -V
     // Start Householder iterations from x_0 and find x, y
     // x = _householder(x_0, T, ll, M, rtol, numiter)
-
-    // for ii in 0..maxiter {
-    //     let y = (1 - ll.powi(2) * (1 - x_0.powi(2))).sqrt();
-
-    //     if M == 0.0 && (0.6).sqrt() < x && x < (1.4).sqrt(){
-    //         let mut eta = y - ll * x_0;
-    //         S_1 = (1 - ll - x_0 * eta) * 0.5
-    //         Q = 4 / 3 * hyp2f1b(S_1)
-    //         T_= (eta**3 * Q + 4 * ll * eta) * 0.5
-    //     } else {
-
-    //         if -1 <= x < 1{
-    //             psi = (x * y + ll * (1 - x**2)).acos();
-    //         }
-    //         else if (x > 1){
-    //             psi = np.arcsinh((y - x * ll) * (x**2 - 1).sqrt());
-    //         }
-    //         else{
-    //             psi = 0.0;
-    //         }
-
-    //         psi = _compute_psi(x_0, y, ll)
-    //         T_ = np.divide(
-    //             np.divide(psi + M * pi, np.sqrt(np.abs(1 - x_0**2))) - x_0 + ll * y,
-    //             (1 - x_0**2),
-    //         )
-    //     }
 
     //     fval =  T_ - T0
         
@@ -241,6 +216,46 @@ fn find_xy(time: f64, lambda: f64) ->  Vector3<f64>{
     //         return x
     //     x = p
     // }
+}
+
+
+fn householder(
+    x_0: f64, 
+    time: f64, 
+    lambda: f64, 
+    M: f64, 
+    rtol: f64,
+    numiter: i32
+) -> f64 {
+    let mut x = x_0;
+    let mut time_ = time;
+
+    for ii in 0..maxiter {
+        let y = (1. - lambda.powi(2) * (1. - x.powi(2))).sqrt();
+
+        if M == 0.0 && (0.6_f64).sqrt() < x && x < (1.4_f64).sqrt(){
+            let eta = y - lambda * x;
+            let S_1 = (1. - lambda - x * eta) * 0.5;
+            let Q = 4 / 3 * hyp2f1b(S_1); //  what?
+            time_ = (eta.powi(3) * Q + 4. * lambda * eta) * 0.5;
+
+        } else {
+            let mut psi: f64;
+            if -1. <= x && x < 1.{
+                psi = (x * y + lambda * (1. - x.powi(2))).acos();
+            }
+            else if (x >= 1.){
+                psi = ((y - x * lambda) * (x.powi(2) - 1.).sqrt()).asinh();
+            }
+            else{
+                psi = 0.0;
+            }
+            let z = 1 - x.powi(2);
+            time_ = (((psi + M * PI)/((z).abs()).sqrt()) - x + lambda * y) / (z)
+            
+        }
+    }
+    return time_
 }
 
 #[cfg(test)]
