@@ -172,27 +172,50 @@ pub fn lambert_solve(
 /// 
 /// lambda: `decimal, seconds`
 /// 
-fn find_xy(time: f64, lambda: f64) ->  Vector3<f64>{
+fn find_xy(time: f64, lambda: f64) ->  f64{
     let mut M_max: f64 = time / PI; // floor to int
     let T_00: f64 = lambda.acos() + lambda * (1. - lambda.powi(2)).sqrt();
 
+    let mut T_min:  f64;
     // Refine maximum number of revolutions if necessary
     if (time < T_00 + M_max * PI) && (M_max > 0.0){
         
         //  Halley iteration
+        if lambda == 1.0{
+            let x_T_min = 0.0;
+            let T_min = _tof_equation(x_T_min, 0.0, lambda, mean_motion);
+        }
+        else{
+            if mean_motion == 0{
+                T_min = 0.0
+            }
+            else{
+
+                // # Set x_i > 0 to avoid problems at ll = -1
+                x_i = 0.1
+                T_i = _tof_equation(x_i, 0.0, lambda, mean_motion)
+                x_T_min = _halley(x_i, T_i, lambda, rtol, numiter)
+                T_min = _tof_equation(x_T_min, 0.0, lambda, mean_motion)
+            }
+        }
+
         let T_min: f64 = _compute_T_min(lambda, M_max, numiter, rtol);
-        if time < T_min{M_max = M_max - 1.0;}
+        if time < T_min{
+            M_max = M_max - 1.0;
+        }
     }
 
     let T_1 = 2/3 * (1.0 - lambda.powi(3));
     let mut x_0: f64;
 
     if time < T_1 {
-        x_0 = 2 * T_1/time  - 1;}
+        x_0 = 2 * T_1/time  - 1;
+    }
     else if time >= T_1 &&  time < T_0{
         x_0 = (T_0  / time).powf((T_1/T_0).log2())
     } else {
-        x_0 = T_0 / time - 1;}
+        x_0 = T_0 / time - 1;
+    }
     
     // FIXME-TD: Translate into Rust -V
     // Start Householder iterations from x_0 and find x, y
@@ -223,7 +246,7 @@ fn householder(
     x_0: f64, 
     time: f64, 
     lambda: f64, 
-    M: f64, 
+    mean_motion: f64, 
     rtol: f64,
     numiter: i32
 ) -> f64 {
@@ -233,11 +256,10 @@ fn householder(
     for ii in 0..maxiter {
         let y = (1. - lambda.powi(2) * (1. - x.powi(2))).sqrt();
 
-        if M == 0.0 && (0.6_f64).sqrt() < x && x < (1.4_f64).sqrt(){
+        if mean_motion == 0.0 && (0.6_f64).sqrt() < x && x < (1.4_f64).sqrt(){
             let eta = y - lambda * x;
-            let S_1 = (1. - lambda - x * eta) * 0.5;
-            let Q = 4 / 3 * hyp2f1b(S_1); //  what?
-            time_ = (eta.powi(3) * Q + 4. * lambda * eta) * 0.5;
+            let q = 4 / 3 * hyp2f1b((1. - lambda - x * eta) * 0.5); //  what?
+            time_ = (eta.powi(3) * q + 4. * lambda * eta) * 0.5;
 
         } else {
             let mut psi: f64;
@@ -250,8 +272,8 @@ fn householder(
             else{
                 psi = 0.0;
             }
-            let z = 1 - x.powi(2);
-            time_ = (((psi + M * PI)/((z).abs()).sqrt()) - x + lambda * y) / (z)
+            let z = 1. - x.powi(2);
+            time_ = (((psi + mean_motion * PI)/((z).abs()).sqrt()) - x + lambda * y) / (z)
             
         }
     }
