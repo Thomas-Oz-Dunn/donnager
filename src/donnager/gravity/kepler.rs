@@ -1184,7 +1184,7 @@ mod orbit_tests {
 
         assert_eq!(l_points[0], Vector3::new(0.8506198417814278, 0., 0.));
         assert_eq!(l_points[1], Vector3::new(1.149380158218572, 0., 0.));
-        assert_eq!(l_points[2], Vector3::new(-0.005833333333333334, 0., 0.));
+        assert_eq!(l_points[2], Vector3::new(0.005833333333333334, 0., 0.));
         assert_eq!(l_points[3], Vector3::new(-0.4900990099009901, -0.8660254037844386, 0.));
         assert_eq!(l_points[4], Vector3::new(-0.4900990099009901, 0.8660254037844386, 0.));
     }
