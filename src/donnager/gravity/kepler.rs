@@ -881,13 +881,13 @@ impl Orbit {
 
         let mut motion_ecef = self.calc_motion(time, frame);
         let pos_lla = xyzt::ecef_to_lla(
-            motion_ecef[0], self.central_body);
+            motion_ecef[0], self.central_body.clone());
         kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
         time += 60.0;
         while time < self.epoch.timestamp() as f64 + 86400.0 {
             motion_ecef = self.calc_motion(time, frame);
             let pos_lla = xyzt::ecef_to_lla(
-                motion_ecef[0], self.central_body);
+                motion_ecef[0], self.central_body.clone());
             kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
             time += 60.0;
         }
@@ -907,7 +907,7 @@ impl Orbit {
     ///     Position of spacecraft
     pub fn calc_ground_coverage_radius(&self, pos_ecef: Vector3<f64>) -> f64 {
         let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(
-            pos_ecef, self.central_body);
+            pos_ecef, self.central_body.clone());
         let theta: f64 = (
             self.central_body.eq_radius / (self.central_body.eq_radius + pos_lla.z)).acos();
         let cov_radius: f64 = theta * self.central_body.eq_radius;

@@ -15,6 +15,9 @@ use crate::donnager::constants as cst;
 /// ----------
 /// name: `String`
 ///     Name of body
+/// 
+/// grav_param: `f64`
+///     Gravitational Parameter
 #[derive(Clone, Debug, PartialEq)]
 pub struct Body{
     pub name: String,
@@ -24,7 +27,6 @@ pub struct Body{
     pub sidereal_day_hours: f64,
     pub eccentricity: f64
 }
-
 
 
 /// Reference Frames
@@ -56,8 +58,8 @@ impl Body {
     ///     `Particle` equivalent of body
     pub fn to_particle(&self, motion: Vec<Vector3<f64>>) -> Particle {
         let mass: f64 = self.grav_param / cst::GRAV_CONST;
-        let particle: Particle = Particle {mass: mass, motion: motion};
-        particle
+        let particle: Particle = Particle {mass: mass.clone(), motion: motion};
+        return particle
     }
 
 
