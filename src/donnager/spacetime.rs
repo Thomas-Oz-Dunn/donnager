@@ -800,14 +800,14 @@ mod spacetime_tests {
     #[test]
     fn test_earth_day_length(){
         let year: i32 = 2023;
-        let month: i32 = 2;
+        let month: i32 = 3;
         let day: i32 = 5;
         let long_deg: f64 = -83.7101;
         let lat_deg: f64 = 42.2929; 
 
         let julian_day: i32 = date_to_julian_day_num(year, month, day);
         let day_light_hrs: f64 = calc_earth_day_length(lat_deg, long_deg, julian_day);
-        assert_eq!(day_light_hrs, 8.54933135165009);
+        assert_eq!(day_light_hrs, 8.403851475586468);
 
     }
 
