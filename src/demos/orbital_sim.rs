@@ -4,7 +4,10 @@ Orbital systems modelling Application in Rust
 use std::{fs::File, io::{BufWriter, Write}};
 use nalgebra::Vector3;
 
-use donnager::donnager::{gravity as grav, spacetime as xyzt};
+use donnager::donnager::{
+    gravity as grav, 
+    spacetime as xyzt, 
+    constants as cst};
 
 fn main() {
 
@@ -24,7 +27,17 @@ fn main() {
     let new_orb: grav::kepler::Orbit = orbit.propogate(dt);
     let motion_ecef = new_orb.calc_motion(0., xyzt::ReferenceFrames::RotationalCartesian);
 
-    let p_lla: Vector3<f64> = xyzt::ecef_to_lla(motion_ecef[0]);
+    // Earth
+    let earth: xyzt::Body = xyzt::Body {
+        name: String::from("Earth"),
+        grav_param: cst::EARTH::GRAV_PARAM,
+        eq_radius: cst::EARTH::RADIUS_EQUATOR,
+        rotation_rate: cst::EARTH::ROT_RATE,
+        sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
+        eccentricity: cst::EARTH::SURFACE_ECC
+    };
+
+    let p_lla: Vector3<f64> = xyzt::ecef_to_lla(motion_ecef[0], earth);
     
     // TODO: compare against observed baselines
     println!("{} is at {} altitude above {} deg N and {} deg E at {}",

@@ -20,6 +20,7 @@ pub struct Multistage{
 }
 
 impl Vehicle {
+    
     /// Calculate fuel mass to reach a particular delta v
     pub fn calc_mass_fuel(
         &self, 
@@ -49,6 +50,14 @@ impl Multistage {
 
 
     /// Calculate total fuel mass required for delta v
+    /// 
+    /// Inputs
+    /// ------
+    /// delta_v: `f64`
+    ///     Desired delta v
+    /// 
+    /// launch_site: `spacetime::SurfacePoint`
+    ///     Launch site location
     pub fn calc_mass_fuel(
         &self, 
         delta_v: f64, 

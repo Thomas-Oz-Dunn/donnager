@@ -1,5 +1,6 @@
 /*
 Gravitational Bodies
+kraus
 */
 
 use nalgebra::{Vector3, Matrix3};
@@ -264,7 +265,7 @@ impl Orbit {
         let md: (u32, u32) = xyzt::calc_month_day(day_of_year, year);
         
         let percent_of_day: f64 = 
-        (".".to_owned() + &epoch_day_full[1].to_string())
+        (".".to_owned() + epoch_day_full[1])
             .parse::<f64>()
             .unwrap();
 
@@ -298,7 +299,7 @@ impl Orbit {
             .unwrap();
 
         let ecc: f64 =
-        (".".to_owned() + & line2[4].to_string())
+            (".".to_owned() + line2[4])
             .parse::<f64>()
             .unwrap();
 
@@ -329,7 +330,7 @@ impl Orbit {
             eq_radius: cst::EARTH::RADIUS_EQUATOR,
             rotation_rate: cst::EARTH::ROT_RATE,
             sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
-            eccentricity: cst::EARTH::ECC
+            eccentricity: cst::EARTH::SURFACE_ECC
         };
 
         Orbit {
@@ -412,30 +413,27 @@ impl Orbit {
     /// Outputs
     /// -------
     /// motion: `[order, xyz]`
+    ///     Position and Velocity in reference frame
     pub fn calc_motion(
         &self, 
-        time: f64, 
+        time_since_epoch: f64, 
         frame: xyzt::ReferenceFrames
     ) -> Vec<Vector3<f64>> {
- 
-        let true_anomaly_rad: f64 = self.calc_true_anomaly(time);
-        let cos_true_anom: f64 = true_anomaly_rad.cos();
-        let sin_true_anom: f64 = true_anomaly_rad.sin();
-
-        let radius: f64 = self.semi_major_axis * (
-            1.0 - self.eccentricity.powi(2)) / 
-            (1.0 + self.eccentricity * cos_true_anom);
+        let true_anomaly_rad: f64 = self.calc_true_anomaly(time_since_epoch);
+        let cos_true_anomaly: f64 = true_anomaly_rad.cos();
+        let sin_true_anomaly: f64 = true_anomaly_rad.sin();
+        let radius: f64 = self.calc_radius(cos_true_anomaly);
         
         // Vectorize with [n_evals, 3dim, n_order]
         // Perifocal
-        let x_pos: f64 = radius * cos_true_anom;
-        let y_pos: f64 = radius * sin_true_anom;
+        let x_pos: f64 = radius * cos_true_anomaly;
+        let y_pos: f64 = radius * sin_true_anomaly;
         let z_pos: f64 = 0.0;
         let pos: Vector3<f64> = Vector3::new(x_pos, y_pos, z_pos);
 
         // Perifocal
-        let x_vel: f64 = -self.mean_motion * radius * sin_true_anom;
-        let y_vel: f64 = self.mean_motion * radius * (self.eccentricity + cos_true_anom);
+        let x_vel: f64 = -self.mean_motion * radius * sin_true_anomaly;
+        let y_vel: f64 = self.mean_motion * radius * (self.eccentricity + cos_true_anomaly);
         let z_vel: f64 = 0.0;
         let vel: Vector3<f64> = Vector3::new(x_vel, y_vel, z_vel);
         
@@ -454,13 +452,16 @@ impl Orbit {
                 let eci_pos: Vector3<f64> = pfcl_eci_rotam * pos;
                 let eci_vel: Vector3<f64> = pfcl_eci_rotam * vel;
 
-                let new_time: f64 = self.epoch.timestamp() as f64 + time;
+                let new_time: f64 = self.epoch.timestamp() as f64 + time_since_epoch;
                 let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
                     new_time as i64, 0).unwrap();
+                let rot_rate: f64 = self.central_body.rotation_rate;
+                let sidereal_day: f64 = self.central_body.sidereal_day_hours;
+
                 let eci_ecef_rotam: Matrix3<f64> = 
                     xyzt::calc_inertial_rotational_rotam(
                         new_epoch_datetime, 
-                        self.central_body.clone());
+                        rot_rate * 3600. * sidereal_day);
 
                 let ecef_pos: Vector3<f64> = eci_ecef_rotam * eci_pos;
                 let ecef_vel: Vector3<f64> = eci_ecef_rotam * eci_vel;
@@ -471,32 +472,59 @@ impl Orbit {
                 let eci_pos: Vector3<f64> = pfcl_eci_rotam * pos;
                 let eci_vel: Vector3<f64> = pfcl_eci_rotam * vel;
 
-                let new_time: f64 = self.epoch.timestamp() as f64 + time;
+                let new_time: f64 = self.epoch.timestamp() as f64 + time_since_epoch;
                 let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
                     new_time as i64, 0).unwrap();
-                let eci_ecef_rotam: Matrix3<f64> = 
-                    xyzt::calc_inertial_rotational_rotam(
-                        new_epoch_datetime, 
-                        self.central_body.clone());
-
+                    let rot_rate: f64 = self.central_body.rotation_rate;
+                    let sidereal_day: f64 = self.central_body.sidereal_day_hours;
+    
+                    let eci_ecef_rotam: Matrix3<f64> = 
+                        xyzt::calc_inertial_rotational_rotam(
+                            new_epoch_datetime, 
+                            rot_rate * 3600. * sidereal_day);
+    
                 let ecef_pos: Vector3<f64> = eci_ecef_rotam * eci_pos;
                 let ecef_vel: Vector3<f64> = eci_ecef_rotam * eci_vel;
 
-                let lla_pos: Vector3<f64> = xyzt::ecef_to_lla(ecef_pos);
-                let lla_vel: Vector3<f64> = xyzt::ecef_to_lla(ecef_vel);
+                let lla_pos: Vector3<f64> = xyzt::ecef_to_lla(
+                    ecef_pos, 
+                    self.central_body.clone());
+                // FIXME-TD: not gonna work -V
+                let lla_vel: Vector3<f64> = xyzt::ecef_to_lla(
+                    ecef_vel, 
+                    self.central_body.clone());
                 return vec![lla_pos, lla_vel];
             }
         }
+    }
+
+    /// Calculate radius at true anomaly
+    /// 
+    /// Inputs
+    /// ------
+    /// cos_true_anomaly: `f64`
+    ///     Cosine of true anomaly angle
+    /// 
+    /// Outputs
+    /// -------
+    /// radius: `f64`
+    ///     Magnitude of radius
+    fn calc_radius(&self, cos_true_anomaly: f64) -> f64 {
+        let radius: f64 = self.semi_major_axis * 
+            (1.0 - self.eccentricity.powi(2)) / 
+            (1.0 + self.eccentricity * cos_true_anomaly);
+        return radius
     }
 
     /// Calculate true anomaly in radians
     /// 
     /// Inputs
     /// ------
-    /// time: `f64`
-    pub fn calc_true_anomaly(&self, time: f64) -> f64 {
+    /// time_since_epoch: `f64`
+    ///     Time since epoch
+    pub fn calc_true_anomaly(&self, time_since_epoch: f64) -> f64 {
         let mean_anom: f64 = (
-            self.mean_anomaly + self.mean_motion * time) * cst::DEG_TO_RAD;
+            self.mean_anomaly + self.mean_motion * time_since_epoch) * cst::DEG_TO_RAD;
         let ecc_anom: f64 = (
             mean_anom - self.eccentricity * cst::DEG_TO_RAD * (
                 1.0 - mean_anom.cos())) * cst::DEG_TO_RAD;
@@ -516,17 +544,20 @@ impl Orbit {
         let sin_arg_peri: f64 = self.argument_of_perigee.sin();
 
         let rot_mat: Matrix3<f64> = 
-            Matrix3::new(cos_raan, -sin_raan, 0.0,
-                             sin_raan, cos_raan, 0.0,
-                             0.0, 0.0, 1.0);
+            Matrix3::new(
+                cos_raan, -sin_raan, 0.0,
+                sin_raan, cos_raan, 0.0,
+                0.0, 0.0, 1.0);
 
         let rot_mat_2: Matrix3<f64> =
-            Matrix3::new(cos_inc, 0.0, sin_inc,
-                 0.0, 1.0, 0.0, 
-                 -sin_inc, 0.0, cos_inc);
+            Matrix3::new(
+                cos_inc, 0.0, sin_inc,
+                0.0, 1.0, 0.0, 
+                -sin_inc, 0.0, cos_inc);
 
         let rot_mat_3: Matrix3<f64> = 
-            Matrix3::new(cos_arg_peri, sin_arg_peri, 0.0, 
+            Matrix3::new(
+                cos_arg_peri, sin_arg_peri, 0.0, 
                 -sin_arg_peri, cos_arg_peri, 0.0, 
                 0.0, 0.0, 1.0);
 
@@ -578,6 +609,8 @@ impl Orbit {
         }
 
     /// Show orbit plot
+    /// 
+    /// TODO-TD: migrate  to python interface for plotting
     pub fn show(&self, frame: xyzt::ReferenceFrames) {
 
         let pathname = format!("{}_orbit_{:?}.png", self.name, &frame);
@@ -822,6 +855,8 @@ impl Orbit {
 
     /// Convert orbit to KML string
     /// 
+    /// TODO-TD:  test
+    /// 
     /// Inputs
     /// ------
     /// None
@@ -845,12 +880,14 @@ impl Orbit {
         let frame = xyzt::ReferenceFrames::RotationalCartesian;
 
         let mut motion_ecef = self.calc_motion(time, frame);
-        let pos_lla = xyzt::ecef_to_lla(motion_ecef[0]);
+        let pos_lla = xyzt::ecef_to_lla(
+            motion_ecef[0], self.central_body.clone());
         kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
         time += 60.0;
         while time < self.epoch.timestamp() as f64 + 86400.0 {
             motion_ecef = self.calc_motion(time, frame);
-            let pos_lla = xyzt::ecef_to_lla(motion_ecef[0]);
+            let pos_lla = xyzt::ecef_to_lla(
+                motion_ecef[0], self.central_body.clone());
             kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
             time += 60.0;
         }
@@ -866,12 +903,11 @@ impl Orbit {
     /// 
     /// Inputs
     /// ------
-    /// time: `f64`
-    ///     Time for evaluation
-    pub fn calc_ground_coverage_radius(&self, time: f64) -> f64 {
-        let motion_ecef = self.calc_motion(
-            time, xyzt::ReferenceFrames::RotationalCartesian);
-        let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(motion_ecef[0]);
+    /// pos_ecef: `Vector3<f64>`
+    ///     Position of spacecraft
+    pub fn calc_ground_coverage_radius(&self, pos_ecef: Vector3<f64>) -> f64 {
+        let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(
+            pos_ecef, self.central_body.clone());
         let theta: f64 = (
             self.central_body.eq_radius / (self.central_body.eq_radius + pos_lla.z)).acos();
         let cov_radius: f64 = theta * self.central_body.eq_radius;
@@ -902,13 +938,13 @@ pub fn calc_lagrange_points(
 ) -> Vec<Vector3<f64>> {
     let mass_ratio: f64= mass_2 / (mass_1 + mass_2);
 
-    // Permissible if mass_2 is <<<< mass_1
-    let xl12: f64 = (mass_2/(3.*mass_1)).powf(1./3.);
-    let xl3: f64 = 7.*mass_2 / (12. * mass_1);
+    // Permissible if mass_2 is << mass_1
+    let x_l12: f64 = (mass_2 / (3.*mass_1)).powf(1./3.);
+    let x_l3: f64 = 7. *  mass_2 / (12. * mass_1);
 
-    let l1: Vector3<f64> = Vector3::new(1. - xl12, 0.,0.);
-    let l2: Vector3<f64> = Vector3::new(1. + xl12 ,0.,0.);
-    let l3: Vector3<f64> = Vector3::new(-xl3 ,0.,0.);
+    let l1: Vector3<f64> = Vector3::new(1. - x_l12, 0.,0.);
+    let l2: Vector3<f64> = Vector3::new(1. + x_l12 ,0.,0.);
+    let l3: Vector3<f64> = Vector3::new(x_l3 ,0.,0.);
     let l4: Vector3<f64> = Vector3::new(mass_ratio - 0.5, -(3_f64).sqrt()/2., 0.);
     let l5: Vector3<f64> = Vector3::new(mass_ratio - 0.5, (3_f64).sqrt()/2., 0.);
     return vec![l1, l2, l3, l4, l5]
@@ -1111,8 +1147,8 @@ mod orbit_tests {
     fn test_hill_sphere(){
         let earth_mass: f64 = cst::EARTH::MASS;
         let sun_mass: f64 = cst::SUN::MASS;
-        let earth_orbit_semi_major: f64 = cst::EarthSunOrbit::SEMI_MAJOR;
-        let earth_orbit_ecc: f64 = cst::EarthSunOrbit::ECC;
+        let earth_orbit_semi_major: f64 = cst::EARTH::ORBIT_SEMI_MAJOR;
+        let earth_orbit_ecc: f64 = cst::EARTH::ORBIT_ECC;
 
         let sphere_rad: f64 = calc_hill_sphere(
             sun_mass, 
@@ -1143,8 +1179,44 @@ mod orbit_tests {
     fn test_calc_lagrange_points()
     {
         let mass_1: f64 = 1.;
-        let mass_2: f64 = 0.001;
-        let l_points = calc_lagrange_points(mass_1, mass_2);
-        assert_eq!(l_points[0], Vector3::new(0.9306638725649365, 0., 0.));
+        let mass_2: f64 = 0.01;
+        let l_points: Vec<Vector3<f64>> = calc_lagrange_points(mass_1, mass_2);
+
+        assert_eq!(l_points[0], Vector3::new(0.8506198417814278, 0., 0.));
+        assert_eq!(l_points[1], Vector3::new(1.149380158218572, 0., 0.));
+        assert_eq!(l_points[2], Vector3::new(0.005833333333333334, 0., 0.));
+        assert_eq!(l_points[3], Vector3::new(-0.4900990099009901, -0.8660254037844386, 0.));
+        assert_eq!(l_points[4], Vector3::new(-0.4900990099009901, 0.8660254037844386, 0.));
+    }
+
+    #[test]
+    fn check_solar_sytem_params()
+    {
+        let grav_param: f64 = cst::SUN::GRAV_PARAM;
+        let periods: [f64; 8] = [
+            0.241,      // Mercury
+            0.615,      // Venus
+            1.,         // Earth
+            1.881,      // Mars
+            11.86,      // Jupiter
+            29.46,      // Saturn
+            84.01,      // Uranus
+            164.79];    // Neptune
+        
+        let semi_majors: [f64; 8] = periods.map(|period| {
+            calc_semi_major_axis(grav_param, 1.0 / (period * 365.25 * 86400.))
+            }
+        );
+        assert_eq!(semi_majors, [
+            1.9726853165415475e11,  // Mercury Orbit Semi Major Axis
+            3.683804104432092e11,   // Venus
+            5.09385349788403e11,    // Earth
+            7.761976328545394e11,   // Mars
+            2.6491277965803633e12,  // Jupiter
+            4.858866259527982e12,   // Saturn
+            9.770882110650564e12,   // Uranus
+            1.5310887052726793e13   // Neptune
+        ]);
+        
     }
 }

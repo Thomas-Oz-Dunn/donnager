@@ -361,7 +361,7 @@ mod barneshut_tests{
             eq_radius: cst::EARTH::RADIUS_EQUATOR,
             rotation_rate: cst::EARTH::ROT_RATE,
             sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
-            eccentricity: cst::EARTH::ECC
+            eccentricity: cst::EARTH::SURFACE_ECC
         };
 
         let radius: f64 = earth.calc_stationary_orbit();
@@ -376,7 +376,7 @@ mod barneshut_tests{
         let sat_motion_0: Vec<Vector3<f64>> = vec![radius_vec, vel_vec, acc_vec];
         assert_eq!(acc_vec, Vector3::new(0.2242056497591453, 0., 0.));
 
-        let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(radius_vec);
+        let pos_lla: Vector3<f64> = xyzt::ecef_to_lla(radius_vec, earth.clone());
         assert_eq!(pos_lla, Vector3::new(0.0, 0.0, 42157401420.13436));
         let satellite: xyzt::Particle = xyzt::Particle { mass: 5e4, motion: sat_motion_0};
 
