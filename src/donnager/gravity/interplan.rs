@@ -192,9 +192,9 @@ fn find_xy(time: f64, lambda: f64) ->  f64{
             }
             else{
                 let x_i: f64 = 0.1;
-                let T_i: f64 = _tof_equation(x_i, 0.0, lambda, mean_motion);
+                let T_i: f64 = _tof_equation(x_i, 0.0, lambda, M_max);
                 let x_T_min = _halley(x_i, T_i, lambda, rtol, numiter);
-                let T_min = _tof_equation(x_T_min, 0.0, lambda, mean_motion);
+                let T_min = _tof_equation(x_T_min, 0.0, lambda, M_max);
             }
         }
 
@@ -240,19 +240,30 @@ fn find_xy(time: f64, lambda: f64) ->  f64{
     // }
 }
 
-///
+/// Calculate time of flight equations
+/// 
+/// Parameters
+/// ----------
+/// x
+/// 
+/// T_0
+/// 
+/// lambda
+/// 
+/// mean_motion
 fn _tof_equation(
     x: f64, 
     T0: f64, 
     lambda: f64, 
     mean_motion: f64
 )-> f64 {
-    let y = (1. - lambda.powi(2) * (1. - x.powi(2))).sqrt();
+    let y: f64 = (1. - lambda.powi(2) * (1. - x.powi(2))).sqrt();
     let mut time_: f64;
 
     if mean_motion == 0.0 && (0.6_f64).sqrt() < x && x < (1.4_f64).sqrt(){
         let eta:   f64 = y - lambda * x;
-        let q:   f64 = 4. / 3. * math::hyp2f1b((1. - lambda - x * eta) * 0.5); 
+        let s: f64 = (1. - lambda - x * eta) * 0.5;
+        let q:   f64 = 4. / 3. * math::hyp2f1b(s); 
         time_ = (eta.powi(3) * q + 4. * lambda * eta) * 0.5;
 
     } else {
@@ -260,20 +271,22 @@ fn _tof_equation(
         if -1. <= x && x < 1.{
             psi = (x * y + lambda * (1. - x.powi(2))).acos();
         }
-        else if (x >= 1.){
+        else if x >= 1.{
             psi = ((y - x * lambda) * (x.powi(2) - 1.).sqrt()).asinh();
         }
         else{
             psi = 0.0;
         }
-        let z = 1. - x.powi(2);
-        time_ = (((psi + mean_motion * PI)/((z).abs()).sqrt()) - x + lambda * y) / (z)
+        let z: f64 = 1. - x.powi(2);
+        let sqrt_z:  f64 = ((z).abs()).sqrt();
+        time_ = (((psi + mean_motion * PI)/sqrt_z) - x + lambda * y) / z
         
     }
     return time_ - T0
 
 }
 
+/// Householder iteration
 fn householder(
     x_0: f64, 
     time: f64, 
@@ -286,7 +299,7 @@ fn householder(
     let mut time_ = time;
 
     for ii in 0..numiter {
-        time_ = _tof_equation(x, time, lambda, mean_motion)
+        time_ = _tof_equation(x, time_, lambda, mean_motion)
     }
     return time_
 }
