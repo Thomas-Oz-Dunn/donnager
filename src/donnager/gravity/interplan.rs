@@ -184,19 +184,17 @@ fn find_xy(time: f64, lambda: f64) ->  f64{
         //  Halley iteration
         if lambda == 1.0{
             let x_T_min = 0.0;
-            let T_min = _tof_equation(x_T_min, 0.0, lambda, mean_motion);
+            let T_min = _tof_equation(x_T_min, 0.0, lambda, M_max);
         }
         else{
-            if mean_motion == 0 {
-                T_min = 0.0
+            if M_max == 0.0 {
+                T_min = 0.0;
             }
             else{
-
-                // # Set x_i > 0 to avoid problems at ll = -1
-                x_i = 0.1
-                T_i = _tof_equation(x_i, 0.0, lambda, mean_motion)
-                x_T_min = _halley(x_i, T_i, lambda, rtol, numiter)
-                T_min = _tof_equation(x_T_min, 0.0, lambda, mean_motion)
+                let x_i: f64 = 0.1;
+                let T_i: f64 = _tof_equation(x_i, 0.0, lambda, mean_motion);
+                let x_T_min = _halley(x_i, T_i, lambda, rtol, numiter);
+                let T_min = _tof_equation(x_T_min, 0.0, lambda, mean_motion);
             }
         }
 
@@ -287,8 +285,8 @@ fn householder(
     let mut x = x_0;
     let mut time_ = time;
 
-    for ii in 0..maxiter {
-        _tof_equation(x, T0, lambda, mean_motion)
+    for ii in 0..numiter {
+        time_ = _tof_equation(x, time, lambda, mean_motion)
     }
     return time_
 }
