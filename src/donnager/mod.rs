@@ -5,6 +5,9 @@ Library of donnager's modules
 /// A Module of useful constants
 pub mod constants;
 
+/// Mathematics
+pub mod math;
+
 /// Propulsion related module
 pub mod propulsion;
 
