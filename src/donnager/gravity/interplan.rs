@@ -180,40 +180,58 @@ fn find_xy(time: f64, lambda: f64) ->  f64{
     let mut T_min:  f64;
     // Refine maximum number of revolutions if necessary
     if (time < T_00 + M_max * PI) && (M_max > 0.0){
-        
         //  Halley iteration
         if lambda == 1.0{
             let x_T_min = 0.0;
-            let T_min = _tof_equation(x_T_min, 0.0, lambda, M_max);
-        }
-        else{
+            T_min = _tof_equation(
+                x_T_min, 
+                0.0, 
+                lambda, 
+                M_max);
+        }else{
             if M_max == 0.0 {
                 T_min = 0.0;
             }
             else{
                 let x_i: f64 = 0.1;
-                let T_i: f64 = _tof_equation(x_i, 0.0, lambda, M_max);
-                let x_T_min = _halley(x_i, T_i, lambda, rtol, numiter);
-                let T_min = _tof_equation(x_T_min, 0.0, lambda, M_max);
+                let T_i: f64 = _tof_equation(
+                    x_i, 
+                    0.0, 
+                    lambda,
+                    M_max);
+                let x_T_min = _halley(
+                    x_i, 
+                    T_i, 
+                    lambda, 
+                    rtol, 
+                    numiter);
+                T_min = _tof_equation(
+                    x_T_min, 
+                    0.0, 
+                    lambda,
+                    M_max);
             }
         }
 
-        let T_min: f64 = _compute_T_min(lambda, M_max, numiter, rtol);
+        T_min = _compute_T_min(
+            lambda, 
+            M_max, 
+            numiter, 
+            rtol);
+
         if time < T_min{
             M_max = M_max - 1.0;
         }
     }
 
-    let T_1 = 2/3 * (1.0 - lambda.powi(3));
+    let T_1:  f64 = 2. / 3. * (1.0 - lambda.powi(3));
     let mut x_0: f64;
 
-    if time < T_1 {
-        x_0 = 2 * T_1/time  - 1;
-    }
-    else if time >= T_1 &&  time < T_0{
-        x_0 = (T_0  / time).powf((T_1/T_0).log2())
+    if time < T_1 {x_0 = 2. * T_1 / time  - 1.;
+    } else if time >= T_1 &&  time < T_min{
+        x_0 = (T_min / time).powf((T_1 / T_min).log2())
     } else {
-        x_0 = T_0 / time - 1;
+        x_0 = T_min / time - 1;
     }
     
     // FIXME-TD: Translate into Rust -V
@@ -251,6 +269,11 @@ fn find_xy(time: f64, lambda: f64) ->  f64{
 /// lambda
 /// 
 /// mean_motion
+/// 
+/// Returns
+/// -------
+/// tof: `f64`
+///     Time of flight
 fn _tof_equation(
     x: f64, 
     T0: f64, 
