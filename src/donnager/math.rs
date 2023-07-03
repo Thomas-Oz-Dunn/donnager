@@ -52,6 +52,19 @@ fn stumpff_analytic(t:  f64) -> Vec<f64> {
     }
 }
 
+/// Factorial
+/// 
+/// Calculate n!
+/// 
+/// Inputs
+/// ------
+/// n: u128
+/// 
+pub fn factorial(n: u128) -> u128 {
+    return (1..=n).product()
+}
+
+
 
 #[cfg(test)]
 mod math_tests {
@@ -68,5 +81,18 @@ mod math_tests {
 
         let t_1= 1.0;
         let c_n_1 = stumpff_analytic(t_1);
+    }
+
+    #[test]
+    fn test_factorial(){
+        let n_1: u128 = 1;
+        let n_1_fact = factorial(n_1);
+
+        assert_eq!(1, n_1_fact);
+
+        let n_10: u128 = 10;
+        let n_fact_10 = factorial(n_10);
+
+        assert_eq!(3628800, n_fact_10);
     }
 }
