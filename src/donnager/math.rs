@@ -31,7 +31,7 @@ pub fn hyp2f1b(x: f64) -> f64 {
 /// -------
 /// c_n: Vec<f64>
 ///     Four orders of solutions
-fn stumpff_analytic(t:  f64) -> Vec<f64> {
+pub fn stumpff_analytic(t:  f64) -> Vec<f64> {
     if t==0.{
         return vec![1., 1., 0.5, 1./6.]
     } else{
@@ -52,6 +52,13 @@ fn stumpff_analytic(t:  f64) -> Vec<f64> {
     }
 }
 
+
+fn error_ck(t: f64, k:  u32,  N:  u32) -> f64{
+    let base = 2 * N + k  + 2;
+    let eps = abs(t.powi(N)/factorial(base));
+    return eps
+}
+
 /// Factorial
 /// 
 /// Calculate n!
@@ -59,12 +66,10 @@ fn stumpff_analytic(t:  f64) -> Vec<f64> {
 /// Inputs
 /// ------
 /// n: u128
-/// 
+///     Base to factorialize 
 pub fn factorial(n: u128) -> u128 {
     return (1..=n).product()
 }
-
-
 
 #[cfg(test)]
 mod math_tests {
