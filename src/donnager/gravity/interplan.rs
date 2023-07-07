@@ -1,7 +1,7 @@
 /*
 Interplanetary Mission Planner
 */
-use std::f64::consts::PI;
+use std::{f64::consts::PI, error::Error};
 use chrono::{DateTime, Utc, Timelike};
 use nalgebra::{Vector3};
 
@@ -173,89 +173,116 @@ pub fn lambert_solve(
 /// 
 /// lambda: `decimal, seconds`
 /// 
-fn find_xy(time: f64, lambda: f64) ->  f64{
+fn find_xy(time: f64, mean_motion: f64, lambda: f64, is_max: bool) ->  f64{
     let mut M_max: f64 = time / PI; // floor to int
     let T_00: f64 = lambda.acos() + lambda * (1. - lambda.powi(2)).sqrt();
 
     let mut T_min:  f64;
     // Refine maximum number of revolutions if necessary
     if (time < T_00 + M_max * PI) && (M_max > 0.0){
-        //  Halley iteration
-        if lambda == 1.0{
-            let x_T_min = 0.0;
-            T_min = _tof_equation(
-                x_T_min, 
-                0.0, 
-                lambda, 
-                M_max);
-        }else{
-            if M_max == 0.0 {
-                T_min = 0.0;
-            }
-            else{
-                let x_i: f64 = 0.1;
-                let T_i: f64 = _tof_equation(
-                    x_i, 
-                    0.0, 
-                    lambda,
-                    M_max);
-                let x_T_min = _halley(
-                    x_i, 
-                    T_i, 
-                    lambda, 
-                    rtol, 
-                    numiter);
-                T_min = _tof_equation(
-                    x_T_min, 
-                    0.0, 
-                    lambda,
-                    M_max);
-            }
-        }
-
-        T_min = _compute_T_min(
-            lambda, 
-            M_max, 
-            numiter, 
-            rtol);
-
+        _compute_t_min(lambda, &mut T_min, M_max);
         if time < T_min{
             M_max = M_max - 1.0;
         }
     }
 
-    let T_1:  f64 = 2. / 3. * (1.0 - lambda.powi(3));
-    let mut x_0: f64;
-
-    if time < T_1 {x_0 = 2. * T_1 / time  - 1.;
-    } else if time >= T_1 &&  time < T_min{
-        x_0 = (T_min / time).powf((T_1 / T_min).log2())
-    } else {
-        x_0 = T_min / time - 1;
+    if mean_motion > M_max{
+        // error out
     }
+
+    //  Initial guess
+    let x_0: f64 = _initial_guess(time, lambda, mean_motion, is_max);
+
+    //  Start Householder iterations from x_0 and find x, y
+    let x = _householder(x_0, T, ll, M, rtol, numiter);
+    y = _compute_y(x, ll)
+    return x, y
+
+    // let T_1:  f64 = 2. / 3. * (1.0 - lambda.powi(3));
+    // let mut x_0: f64;
+
+    // if time < T_1 {x_0 = 2. * T_1 / time  - 1.;
+    // } else if time >= T_1 &&  time < T_min{
+    //     x_0 = (T_min / time).powf((T_1 / T_min).log2())
+    // } else {
+    //     x_0 = T_min / time - 1;
+    // }
     
     // FIXME-TD: Translate into Rust -V
     // Start Householder iterations from x_0 and find x, y
     // x = _householder(x_0, T, ll, M, rtol, numiter)
 
-    //     fval =  T_ - T0
+
+}
+
+fn _initial_guess(
+    time: f64, 
+    lambda: f64, 
+    mean_motion:f64, 
+    is_max: bool
+) -> f64 {
+    let mut x_0: f64;
+    if mean_motion == 0.0{
+        // Singular Revolution
+        let T_0: f64 = lambda.acos() + lambda * (1. - lambda.powi(2)).sqrt() + mean_motion * PI;  
+        let T_1: f64 = (2. as f64).powf(1. - lambda.powi(3)) / 3.;
+        if time >= T_0{
+            x_0 = (T_0 / time).powf(2. / 3.) - 1.;
+        } else if time < T_1{
+            x_0 = 5. / 2. * T_1 / time * (T_1 - time) / (1. - lambda.powi(5)) + 1.;
+        } else{
+            // See https://github.com/poliastro/poliastro/issues/1362
+            x_0 = ((2. as f64).ln() * (time / T_0).ln() / (T_1 / T_0).ln()).exp() - 1.;
+        }
         
-    //     T = fval + T0
-    //     fder = (3 * T * x_0 - 2 + 2 * ll**3 * x_0 / y) / (1 - x_0**2) 
-    //     fder2 = (3 * T + 5 * x_0 * dT + 2 * (1 - ll**2) * ll**3 / y**3) / (1 - x**2)
-    //     fder3 = (
-    //         7 * x_0 * ddT + 8 * dT - 6 * (1 - ll**2) * ll**5 * x / y**5
-    //     ) / (1 - x_0**2)
+    } else  {
+        // Multiple revolutions
+        let v_l: f64 = ((mean_motion * PI + PI) / (8. * time)).powf(2. / 3.);
+        let x_0l: f64 = (v_l - 1.) / (v_l + 1.);
+        let v_r: f64= ((8. * time) / (mean_motion * PI)).powf(2. / 3.);   
+        let x_0r: f64 = (v_r - 1.) / (v_r + 1.);
+        
+        if is_max{
+            x_0 = x_0l.max(x_0r);
+        }  else{
+            x_0 = x_0l.min(x_0r);
+        }
+    }
+    return x_0        
+}
 
-    //     // # Householder step (quartic)
-    //     p = x_0 - fval * (
-    //         (fder**2 - fval * fder2 / 2) / (fder * (fder**2 - fval * fder2) + fder3 * fval**2 / 6)
-    //     )
-
-    //     if abs(x - x_0) < tol:
-    //         return x
-    //     x = p
-    // }
+fn _compute_t_min(lambda: f64, T_min: &mut f64, M_max: f64) {
+    if lambda == 1.0{
+        let x_T_min = 0.0;
+        *T_min = _tof_equation(
+            x_T_min, 
+            0.0, 
+            lambda, 
+            M_max);
+    }else{
+        if M_max == 0.0 {
+            *T_min = 0.0;
+        }
+        else{
+            let x_i: f64 = 0.1;
+            let T_i: f64 = _tof_equation(
+                x_i, 
+                0.0, 
+                lambda,
+                M_max);
+            let x_T_min = _halley(
+                x_i, 
+                T_i, 
+                lambda, 
+                rtol, 
+                numiter);
+            *T_min = _tof_equation(
+                x_T_min, 
+                0.0, 
+                lambda,
+                M_max);
+        }
+    }
 }
 
 /// Calculate time of flight equations
@@ -317,14 +344,45 @@ fn householder(
     mean_motion: f64, 
     rtol: f64,
     numiter: i32
-) -> f64 {
-    let mut x = x_0;
-    let mut time_ = time;
+) -> Option<f64> {
+    let mut x_0: f64  = x_0;
+    for _ in 1..numiter
+    {
+        let y = _compute_y(x_0, lambda);
+        let fval = _tof_equation_y(x_0, y, T0, ll, M);
+        let T = fval + T0;
+        let fder: f64 = _tof_equation_p(x_0, y, time, lambda);
+        let fder2: f64 = _tof_equation_p2(x_0, y, time, fder, lambda);
+        let fder3: f64 = _tof_equation_p3(x_0, y, time, fder, fder2, lambda);
 
-    for ii in 0..numiter {
-        time_ = _tof_equation(x, time_, lambda, mean_motion)
+        // Householder step (quartic)
+        let x = x_0 - fval * (
+            (fder.powi(2) - fval * fder2 / 2.)
+            / (fder * (fder.powi(2) - fval * fder2) + fder3 * fval.powi(2) / 6.)
+        );
+
+        if (x - x_0).abs() < rtol{
+            Some(x)
+        }
+        x_0 = x
     }
-    return time_
+    Err(x_0)
+}
+
+fn _compute_y(x: f64, lambda: f64) ->  f64 {
+    return (1. - lambda.powi(2) * (1. - x.powi(2))).powf(0.5)
+}
+
+fn _tof_equation_p(x:  f64, y:  f64, time:  f64, lambda:  f64) -> f64 {
+    return (3. * time * x - 2. + 2. * lambda.powi(3) * x / y) / (1. - x.powi(2));
+}
+
+fn _tof_equation_p2(x_0:  f64, y:  f64, time:  f64, fder: f64, lambda:  f64) -> f64{
+    return (3. * time + 5. * x_0 * fder + (2. as f64).powf(1. - lambda.powi(2)) * lambda.powi(3) / y.powi(3)) / (1. - x_0.powi(2))
+}
+
+fn _tof_equation_p3(x_0: f64, y: f64, time: f64, fder: f64, fder2: f64, lambda: f64) -> f64{
+    return (7. * x_0 * fder2 + 8. * fder - 6. * (1. - lambda.powi(2)) * lambda.powi(5) * x_0 / y.powi(5)) / (1. - x_0.powi(2));
 }
 
 #[cfg(test)]

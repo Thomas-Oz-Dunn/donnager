@@ -54,8 +54,8 @@ pub fn stumpff_analytic(t:  f64) -> Vec<f64> {
 
 
 fn error_ck(t: f64, k:  u32,  N:  u32) -> f64{
-    let base = 2 * N + k  + 2;
-    let eps = abs(t.powi(N)/factorial(base));
+    let base: u32 = 2 * N + k  + 2;
+    let eps = (t.powi(N as i32) / factorial(base)).abs();
     return eps
 }
 
@@ -65,9 +65,9 @@ fn error_ck(t: f64, k:  u32,  N:  u32) -> f64{
 /// 
 /// Inputs
 /// ------
-/// n: u128
+/// n: u32
 ///     Base to factorialize 
-pub fn factorial(n: u128) -> u128 {
+pub fn factorial(n: u32) -> u32 {
     return (1..=n).product()
 }
 
