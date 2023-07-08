@@ -173,7 +173,12 @@ pub fn lambert_solve(
 /// 
 /// lambda: `decimal, seconds`
 /// 
-fn find_xy(time: f64, mean_motion: f64, lambda: f64, is_max: bool) ->  f64{
+fn find_xy(
+    time: f64, 
+    mean_motion: f64, 
+    lambda: f64, 
+    is_max: bool
+) ->  Vec<f64>{
     let mut M_max: f64 = time / PI; // floor to int
     let T_00: f64 = lambda.acos() + lambda * (1. - lambda.powi(2)).sqrt();
 
@@ -194,24 +199,9 @@ fn find_xy(time: f64, mean_motion: f64, lambda: f64, is_max: bool) ->  f64{
     let x_0: f64 = _initial_guess(time, lambda, mean_motion, is_max);
 
     //  Start Householder iterations from x_0 and find x, y
-    let x = _householder(x_0, T, ll, M, rtol, numiter);
-    y = _compute_y(x, ll)
-    return x, y
-
-    // let T_1:  f64 = 2. / 3. * (1.0 - lambda.powi(3));
-    // let mut x_0: f64;
-
-    // if time < T_1 {x_0 = 2. * T_1 / time  - 1.;
-    // } else if time >= T_1 &&  time < T_min{
-    //     x_0 = (T_min / time).powf((T_1 / T_min).log2())
-    // } else {
-    //     x_0 = T_min / time - 1;
-    // }
-    
-    // FIXME-TD: Translate into Rust -V
-    // Start Householder iterations from x_0 and find x, y
-    // x = _householder(x_0, T, ll, M, rtol, numiter)
-
+    let x: f64 = _householder(x_0, time, lambda, mean_motion, rtol, numiter);
+    let y: f64 = _compute_y(x, lambda);
+    return vec![x, y]
 
 }
 
@@ -362,11 +352,12 @@ fn householder(
         );
 
         if (x - x_0).abs() < rtol{
-            Some(x)
+            return x
         }
         x_0 = x
     }
-    Err(x_0)
+    return Error
+    
 }
 
 fn _compute_y(x: f64, lambda: f64) ->  f64 {
