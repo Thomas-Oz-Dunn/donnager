@@ -56,12 +56,17 @@ pub fn calc_mission_delta_v(
     let r_f: Vector3<f64> = orbit_f.calc_motion(
         0.0, xyzt::ReferenceFrames::InertialCartesian)[0];
     let tof = (orbit_f.epoch - orbit_i.epoch).num_seconds() as f64;
+    let prograde_sign = 1.0;
+    let is_max = false;
+
     let (dv1, dv2) = lambert_solve(
         grav_param,  
         r_i,  
         r_f, 
         tof, 
-        1.0);
+        prograde_sign,
+        is_max
+    );
         
     
     let frame = xyzt::ReferenceFrames::InertialCartesian;
@@ -110,7 +115,8 @@ pub fn lambert_solve(
     r_i: Vector3<f64>,
     r_f: Vector3<f64>,
     tof: f64,
-    prograde_sign: f64
+    prograde_sign: f64,
+    is_max: bool
 ) -> (Vector3<f64>, Vector3<f64>) {
     let chord: Vector3<f64> = r_f - r_i;
 
@@ -144,8 +150,10 @@ pub fn lambert_solve(
 
     // Dimensionless time parameters
     let time: f64 = tof * ((2. * grav_param / semi_perim.powi(3)).sqrt());
-    
-    let x = find_xy(time, lambda);
+    let mean_motion = time / PI;
+    let xy = find_xy(time, mean_motion, lambda,  is_max);
+    let x = xy[0];
+    let y = xy[1];
     let y: f64 = (1. - lambda.powi(2) * (1. - x.powi(2))).sqrt();
 
     let gamma: f64 = (grav_param * semi_perim / 2.).sqrt();
@@ -153,10 +161,10 @@ pub fn lambert_solve(
     let sigma: f64 = (1. - rho.powi(2)).sqrt();
 
     // Radial and Tangential Components
-    let v_r_i = gamma * ((lambda * y - x) - rho * (lambda * y + x)) / r_i;
-    let v_r_f = -gamma * ((lambda * y - x) + rho * (lambda * y + x)) / r_f;
-    let v_t_i = gamma * sigma * (y + lambda * x) / r_i;
-    let v_t_f = gamma * sigma * (y + lambda * x) / r_f;
+    let v_r_i: f64 = gamma * ((lambda * y - x) - rho * (lambda * y + x)) / r_i_norm;
+    let v_r_f: f64 = -gamma * ((lambda * y - x) + rho * (lambda * y + x)) / r_f_norm;
+    let v_t_i: f64 = gamma * sigma * (y + lambda * x) / r_i_norm;
+    let v_t_f: f64 = gamma * sigma * (y + lambda * x) / r_f_norm;
 
     // Velocity vectors
     let v_i: Vector3<f64> = v_r_i * u_r_i + v_t_i * u_t_i;
@@ -199,7 +207,7 @@ fn find_xy(
     let x_0: f64 = _initial_guess(time, lambda, mean_motion, is_max);
 
     //  Start Householder iterations from x_0 and find x, y
-    let x: f64 = _householder(x_0, time, lambda, mean_motion, rtol, numiter);
+    let x: f64 = householder(x_0, time, lambda, mean_motion, rtol, numiter);
     let y: f64 = _compute_y(x, lambda);
     return vec![x, y]
 
@@ -334,7 +342,7 @@ fn householder(
     mean_motion: f64, 
     rtol: f64,
     numiter: i32
-) -> Option<f64> {
+) -> f64 {
     let mut x_0: f64  = x_0;
     for _ in 1..numiter
     {
@@ -357,7 +365,7 @@ fn householder(
         x_0 = x
     }
     return Error
-    
+
 }
 
 fn _compute_y(x: f64, lambda: f64) ->  f64 {
