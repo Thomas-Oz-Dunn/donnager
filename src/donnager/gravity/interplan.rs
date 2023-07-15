@@ -199,7 +199,9 @@ pub fn lambert_solve(
 ///
 /// Inputs
 /// ------
-/// time: `decimal,  seconds`
+/// time: `f64,  seconds`
+/// 
+/// mean_motion: `f64`
 /// 
 /// lambda: `decimal, seconds`
 /// 
@@ -246,15 +248,15 @@ fn _initial_guess(
     let mut x_0: f64;
     if mean_motion == 0.0{
         // Singular Revolution
-        let T_0: f64 = lambda.acos() + lambda * (1. - lambda.powi(2)).sqrt() + mean_motion * PI;  
-        let T_1: f64 = (2. as f64).powf(1. - lambda.powi(3)) / 3.;
-        if time >= T_0{
-            x_0 = (T_0 / time).powf(2. / 3.) - 1.;
-        } else if time < T_1{
-            x_0 = 5. / 2. * T_1 / time * (T_1 - time) / (1. - lambda.powi(5)) + 1.;
+        let t_0: f64 = lambda.acos() + lambda * (1. - lambda.powi(2)).sqrt() + mean_motion * PI;  
+        let t_1: f64 = (2. as f64).powf(1. - lambda.powi(3)) / 3.;
+        if time >= t_0{
+            x_0 = (t_0 / time).powf(2. / 3.) - 1.;
+        } else if time < t_1{
+            x_0 = 5. / 2. * t_1 / time * (t_1 - time) / (1. - lambda.powi(5)) + 1.;
         } else{
             // See https://github.com/poliastro/poliastro/issues/1362
-            x_0 = ((2. as f64).ln() * (time / T_0).ln() / (T_1 / T_0).ln()).exp() - 1.;
+            x_0 = ((2. as f64).ln() * (time / t_0).ln() / (t_1 / t_0).ln()).exp() - 1.;
         }
         
     } else  {
@@ -397,17 +399,35 @@ fn _compute_y(x: f64, lambda: f64) ->  f64 {
 }
 
 fn _tof_equation_p(x:  f64, y:  f64, time:  f64, lambda:  f64) -> f64 {
-    let numerator: f64 =3. * time * x - 2. + 2. * lambda.powi(3) * x / y;
+    let numerator: f64 = 3. * time * x - 2. + 2. * lambda.powi(3) * x / y;
     return  numerator / (1. - x.powi(2));
 }
 
-fn _tof_equation_p2(x_0:  f64, y:  f64, time:  f64, fder: f64, lambda:  f64) -> f64{
-    let numerator: f64 = 3. * time + 5. * x_0 * fder + (2. as f64).powf(1. - lambda.powi(2)) * lambda.powi(3) / y.powi(3);
-    return numerator / (1. - x_0.powi(2))
+fn _tof_equation_p2(
+    x_0:  f64, 
+    y:  f64, 
+    time:  f64, 
+    fder: f64, 
+    lambda:  f64
+) -> f64{
+    let a: f64 = 3. * time;
+    let b: f64 = 5. * x_0 * fder;
+    let c: f64 = (2. as f64).powf(1. - lambda.powi(2)) * lambda.powi(3) / y.powi(3);
+    return (a + b + c) / (1. - x_0.powi(2))
 }
 
-fn _tof_equation_p3(x_0: f64, y: f64, time: f64, fder: f64, fder2: f64, lambda: f64) -> f64{
-    return (7. * x_0 * fder2 + 8. * fder - 6. * (1. - lambda.powi(2)) * lambda.powi(5) * x_0 / y.powi(5)) / (1. - x_0.powi(2));
+fn _tof_equation_p3(
+    x_0: f64, 
+    y: f64, 
+    time: f64, 
+    fder: f64, 
+    fder2: f64, 
+    lambda: f64
+) -> f64{
+    let a: f64 = 7. * x_0 * fder2;
+    let b: f64 = 8. * fder;
+    let c: f64 = 6. * (1. - lambda.powi(2)) * lambda.powi(5) * x_0 / y.powi(5);
+    return  (a + b - c) / (1. - x_0.powi(2));
 }
 
 #[cfg(test)]
