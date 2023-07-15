@@ -2,8 +2,6 @@
 
 use nalgebra::*;
 
-use crate::donnager::constants as cst;
-
 /// Calculate lyanpunov stablity
 /// 
 /// Inputs
@@ -45,6 +43,7 @@ pub fn calc_2d_lyanpunov_stability(
 mod stability_tests {
 
     use super::*;
+    use crate::donnager::constants as cst;    
 
     #[test]
     fn test_calc_lyanpunov_stability()

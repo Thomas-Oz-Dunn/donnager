@@ -10,7 +10,7 @@ pub fn hyp2f1b(x: f64) -> f64 {
         let mut term: f64 = 1.0;
         let mut ii: f64 = 0.;
 
-        while(term > 0.){
+        while term > 0.{
             term = term * (3. + ii) * (1. + ii) / (5. / 2. + ii) * x / (ii + 1.);
             res_old = res;
             res += term;
@@ -55,7 +55,7 @@ pub fn stumpff_analytic(t:  f64) -> Vec<f64> {
 
 fn error_ck(t: f64, k:  u32,  N:  u32) -> f64{
     let base: u32 = 2 * N + k  + 2;
-    let eps = (t.powi(N as i32) / factorial(base)).abs();
+    let eps = (t.powi(N as i32) / (factorial(base) as f64)).abs() ;
     return eps
 }
 
@@ -90,12 +90,12 @@ mod math_tests {
 
     #[test]
     fn test_factorial(){
-        let n_1: u128 = 1;
+        let n_1: u32 = 1;
         let n_1_fact = factorial(n_1);
 
         assert_eq!(1, n_1_fact);
 
-        let n_10: u128 = 10;
+        let n_10: u32 = 10;
         let n_fact_10 = factorial(n_10);
 
         assert_eq!(3628800, n_fact_10);
