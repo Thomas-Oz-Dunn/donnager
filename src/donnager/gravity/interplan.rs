@@ -4,6 +4,7 @@ Interplanetary Mission Planner
 use std::{f64::consts::PI, error::Error};
 use chrono::{DateTime, Utc, Timelike};
 use nalgebra::{Vector3};
+use rayon::prelude::*;
 
 use crate::donnager::{
     gravity::kepler as kepler, 
@@ -47,15 +48,24 @@ pub fn calc_mission_delta_v(
     start_date_time: DateTime<Utc>,
     stop_date_time: DateTime<Utc>,
     orbit_i: kepler::Orbit,
-    orbit_f: kepler::Orbit
+    orbit_f: kepler::Orbit,
+    rtol: f64,
+    numiter: i32
 ) -> f64 {
     // TODO-TD: parallelize across start stop datetimes using rayon
     let grav_param: f64 = orbit_i.central_body.grav_param;
+    let eval_time = 0.0;
     let r_i: Vector3<f64> = orbit_i.calc_motion(
-        0.0, xyzt::ReferenceFrames::InertialCartesian)[0];
-    let r_f: Vector3<f64> = orbit_f.calc_motion(
-        0.0, xyzt::ReferenceFrames::InertialCartesian)[0];
+        eval_time, 
+        xyzt::ReferenceFrames::InertialCartesian, 
+        0);
+
     let tof = (orbit_f.epoch - orbit_i.epoch).num_seconds() as f64;
+    let r_f: Vector3<f64> = orbit_f.calc_motion(
+        eval_time + tof, 
+        xyzt::ReferenceFrames::InertialCartesian, 
+        0);
+
     let prograde_sign = 1.0;
     let is_max = false;
 
@@ -65,14 +75,17 @@ pub fn calc_mission_delta_v(
         r_f, 
         tof, 
         prograde_sign,
-        is_max
+        is_max,
+        rtol,
+        numiter
     );
         
     
     let frame = xyzt::ReferenceFrames::InertialCartesian;
-    let dv_dpt = dv1 - orbit_i.calc_motion(start_date_time.second() as f64, frame)[1];
-    let dv_arr = dv2 - orbit_f.calc_motion(stop_date_time.second() as f64, frame)[1];
+    let dv_dpt = dv1 - orbit_i.calc_motion(start_date_time.second() as f64, frame, 1);
+    let dv_arr = dv2 - orbit_f.calc_motion(stop_date_time.second() as f64, frame, 1);
     let dv_tot = dv_dpt.norm() + dv_arr.norm();
+
     return dv_tot
 }
 
@@ -116,7 +129,9 @@ pub fn lambert_solve(
     r_f: Vector3<f64>,
     tof: f64,
     prograde_sign: f64,
-    is_max: bool
+    is_max: bool,
+    rtol: f64,
+    numiter: i32
 ) -> (Vector3<f64>, Vector3<f64>) {
     let chord: Vector3<f64> = r_f - r_i;
 
@@ -151,9 +166,16 @@ pub fn lambert_solve(
     // Dimensionless time parameters
     let time: f64 = tof * ((2. * grav_param / semi_perim.powi(3)).sqrt());
     let mean_motion = time / PI;
-    let xy = find_xy(time, mean_motion, lambda,  is_max);
-    let x = xy[0];
-    let y = xy[1];
+    let xy: Vec<f64> = find_xy(
+        time, 
+        mean_motion, 
+        lambda,  
+        is_max,
+        rtol,
+        numiter
+    );
+    let x: f64 = xy[0];
+    let y: f64 = xy[1];
     let y: f64 = (1. - lambda.powi(2) * (1. - x.powi(2))).sqrt();
 
     let gamma: f64 = (grav_param * semi_perim / 2.).sqrt();
@@ -185,7 +207,9 @@ fn find_xy(
     time: f64, 
     mean_motion: f64, 
     lambda: f64, 
-    is_max: bool
+    is_max: bool,
+    rtol: f64,
+    numiter: i32
 ) ->  Vec<f64>{
     let mut M_max: f64 = time / PI; // floor to int
     let T_00: f64 = lambda.acos() + lambda * (1. - lambda.powi(2)).sqrt();
@@ -346,7 +370,7 @@ fn householder(
     let mut x_0: f64  = x_0;
     for _ in 1..numiter
     {
-        let y = _compute_y(x_0, lambda);
+        let y: f64 = _compute_y(x_0, lambda);
         let fval = _tof_equation_y(x_0, y, T0, ll, M);
         let T = fval + T0;
         let fder: f64 = _tof_equation_p(x_0, y, time, lambda);
@@ -373,11 +397,13 @@ fn _compute_y(x: f64, lambda: f64) ->  f64 {
 }
 
 fn _tof_equation_p(x:  f64, y:  f64, time:  f64, lambda:  f64) -> f64 {
-    return (3. * time * x - 2. + 2. * lambda.powi(3) * x / y) / (1. - x.powi(2));
+    let numerator: f64 =3. * time * x - 2. + 2. * lambda.powi(3) * x / y;
+    return  numerator / (1. - x.powi(2));
 }
 
 fn _tof_equation_p2(x_0:  f64, y:  f64, time:  f64, fder: f64, lambda:  f64) -> f64{
-    return (3. * time + 5. * x_0 * fder + (2. as f64).powf(1. - lambda.powi(2)) * lambda.powi(3) / y.powi(3)) / (1. - x_0.powi(2))
+    let numerator: f64 = 3. * time + 5. * x_0 * fder + (2. as f64).powf(1. - lambda.powi(2)) * lambda.powi(3) / y.powi(3);
+    return numerator / (1. - x_0.powi(2))
 }
 
 fn _tof_equation_p3(x_0: f64, y: f64, time: f64, fder: f64, fder2: f64, lambda: f64) -> f64{
