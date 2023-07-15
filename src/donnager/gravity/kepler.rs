@@ -40,10 +40,10 @@ pub fn calc_coplanar_maneuver(
     let frame: xyzt::ReferenceFrames = xyzt::ReferenceFrames::InertialCartesian;
     let t_start: f64 = epoch_datetime.timestamp() as f64;
 
-    let motion0 = orbit_0.calc_motion(t_start, frame);
-    let motionf = orbit_f.calc_motion(t_start, frame);
+    let vel0 = orbit_0.calc_motion(t_start, frame,  1);
+    let velf = orbit_f.calc_motion(t_start, frame, 1);
 
-    let delv = motionf[1] - motion0[1];
+    let delv = velf - vel0;
     let man: Maneuver = Maneuver { delta_v: (delv), act_time: (t_start) };
 
     return man
@@ -77,19 +77,20 @@ pub fn calc_maneuvers(
     let radius_1: f64 = orbit_0.semi_major_axis;
     let radius_2: f64 = orbit_f.semi_major_axis;
     let t_start: f64 = epoch_datetime.timestamp() as f64;
-    let motion1 = orbit_0.calc_motion(t_start, frame);
-    let (del1, del2) = calc_hohmann_transfer(radius_1, radius_2, motion1[1].norm());
+    let vel1 = orbit_0.calc_motion(t_start, frame, 1);
+    let (del1, del2) = calc_hohmann_transfer(radius_1, radius_2, vel1.norm());
 
     // Maneuver 1
-    let dv_1 = del1 * motion1[1] / motion1[1].norm();
+    let dv_1 = del1 * vel1 / vel1.norm();
     let man1: Maneuver = Maneuver { delta_v: (dv_1), act_time: (t_start) };
     
     let name = "Transfer orbit";
-    let vel = motion1[1] + dv_1;
+    let vel = vel1 + dv_1;
+    let pos = orbit_0.calc_motion(t_start, frame, 0);
     let trans_orbit: Orbit = Orbit::from_pos_vel(
         name.to_string(), 
         orbit_0.central_body, 
-        motion1[0], 
+        pos, 
         vel, 
         epoch_datetime);
 
@@ -97,8 +98,8 @@ pub fn calc_maneuvers(
 
     // Maneuver 2
     let time_2: f64 = t_start + period / 2.;
-    let motion2 = trans_orbit.calc_motion(time_2, frame);
-    let dv_2 = del2 * motion2[1] / motion2[1].norm();
+    let vel2 = trans_orbit.calc_motion(time_2, frame, 1);
+    let dv_2 = del2 * vel2 / vel2.norm();
     let man2: Maneuver = Maneuver { delta_v: (dv_2), act_time: (time_2) };
 
     let maneuvers = vec![man1, man2];
@@ -401,7 +402,7 @@ impl Orbit {
 
     }
 
-    /// Calculate position and velocity vectors in perfocal frame
+    /// Calculate motion vectors in frame
     /// 
     /// Inputs	
     /// ------
@@ -410,6 +411,9 @@ impl Orbit {
     /// frame: `str`
     ///     Reference frame
     /// 
+    /// order: `i8`
+    ///     0:  pos, 1: vel,  2:  acc
+    /// 
     /// Outputs
     /// -------
     /// motion: `[order, xyz]`
@@ -417,14 +421,15 @@ impl Orbit {
     pub fn calc_motion(
         &self, 
         time_since_epoch: f64, 
-        frame: xyzt::ReferenceFrames
-    ) -> Vec<Vector3<f64>> {
+        frame: xyzt::ReferenceFrames,
+        order: i8
+    ) -> Vector3<f64> {
         let true_anomaly_rad: f64 = self.calc_true_anomaly(time_since_epoch);
         let cos_true_anomaly: f64 = true_anomaly_rad.cos();
         let sin_true_anomaly: f64 = true_anomaly_rad.sin();
         let radius: f64 = self.calc_radius(cos_true_anomaly);
         
-        // Vectorize with [n_evals, 3dim, n_order]
+        // TODO-TD: Vectorize with [n_evals, 3dim, n_order]?
         // Perifocal
         let x_pos: f64 = radius * cos_true_anomaly;
         let y_pos: f64 = radius * sin_true_anomaly;
@@ -436,16 +441,24 @@ impl Orbit {
         let y_vel: f64 = self.mean_motion * radius * (self.eccentricity + cos_true_anomaly);
         let z_vel: f64 = 0.0;
         let vel: Vector3<f64> = Vector3::new(x_vel, y_vel, z_vel);
-        
+
+        let acc: Vector3<f64> = calc_acc(self.central_body.grav_param, pos);
+
         match frame {
             xyzt::ReferenceFrames::Perifocal => {
-                return vec![pos, vel];
+                match order {
+                    0 => {return pos},
+                    1 => {return vel},
+                    2 => {return acc}
+                }
             },
             xyzt::ReferenceFrames::InertialCartesian => {
                 let rotam: Matrix3<f64> = self.calc_pfcl_inertial_rotam();
-                let p_ic: Vector3<f64> = rotam * pos;
-                let v_ic: Vector3<f64> = rotam * vel;
-                return vec![p_ic, v_ic];
+                match order {
+                    0 => {return rotam * pos},
+                    1 => {return rotam * vel},
+                    2 => {return rotam * acc}
+                }
             },
             xyzt::ReferenceFrames::RotationalCartesian => {
                 let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_inertial_rotam();
@@ -465,7 +478,12 @@ impl Orbit {
 
                 let ecef_pos: Vector3<f64> = eci_ecef_rotam * eci_pos;
                 let ecef_vel: Vector3<f64> = eci_ecef_rotam * eci_vel;
-                return vec![ecef_pos, ecef_vel];
+
+                match order {
+                    0 => {return eci_ecef_rotam * pfcl_eci_rotam * pos},
+                    1 => {return eci_ecef_rotam * pfcl_eci_rotam * vel},
+                    2 => {return eci_ecef_rotam * pfcl_eci_rotam * acc}
+                }
             },
             xyzt::ReferenceFrames::Planetodetic => {
                 let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_inertial_rotam();
@@ -489,11 +507,13 @@ impl Orbit {
                 let lla_pos: Vector3<f64> = xyzt::ecef_to_lla(
                     ecef_pos, 
                     self.central_body.clone());
+
                 // FIXME-TD: not gonna work -V
                 let lla_vel: Vector3<f64> = xyzt::ecef_to_lla(
                     ecef_vel, 
                     self.central_body.clone());
-                return vec![lla_pos, lla_vel];
+
+                return lla_pos;
             }
         }
     }
@@ -594,15 +614,16 @@ impl Orbit {
     pub fn propogate_in_place(&mut self, dt: f64) {
         let new_time: f64 = self.epoch.timestamp() as f64 + dt;
         let frame = xyzt::ReferenceFrames::InertialCartesian;
-        let motion = self.calc_motion(new_time, frame);
+        let pos = self.calc_motion(new_time, frame, 0);
+        let vel = self.calc_motion(new_time, frame,  1);
         let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
             new_time as i64, 0).unwrap();
 
         let new_orbit: Orbit = Orbit::from_pos_vel(
             self.name.clone(), 
             self.central_body.clone(), 
-            motion[0], 
-            motion[1], 
+            pos, 
+            vel, 
             new_epoch_datetime);
         *self = new_orbit;
 
@@ -624,8 +645,8 @@ impl Orbit {
         
         let mut pos_mut: Vec<Vector3<f64>> = Vec::new();
         times.values().for_each(|time| {
-            let motion_frame = self.calc_motion(time, frame);
-            pos_mut.push(motion_frame[0]);
+            let pos_frame = self.calc_motion(time, frame, 0);
+            pos_mut.push(pos_frame);
         });
 
         // Plot
@@ -877,17 +898,13 @@ impl Orbit {
         kml_string_mut.push_str("<altitudeMode>absolute</altitudeMode>\n");
         kml_string_mut.push_str("<coordinates>\n");
         let mut time: f64 = self.epoch.timestamp() as f64;
-        let frame = xyzt::ReferenceFrames::RotationalCartesian;
+        let frame = xyzt::ReferenceFrames::Planetodetic;
 
-        let mut motion_ecef = self.calc_motion(time, frame);
-        let pos_lla = xyzt::ecef_to_lla(
-            motion_ecef[0], self.central_body.clone());
+        let mut pos_lla = self.calc_motion(time, frame, 0);
         kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
         time += 60.0;
         while time < self.epoch.timestamp() as f64 + 86400.0 {
-            motion_ecef = self.calc_motion(time, frame);
-            let pos_lla = xyzt::ecef_to_lla(
-                motion_ecef[0], self.central_body.clone());
+            pos_lla = self.calc_motion(time, frame, 0);
             kml_string_mut.push_str(&format!("{},{},{}\n", pos_lla[1], pos_lla[0], pos_lla[2]));
             time += 60.0;
         }
@@ -1065,6 +1082,27 @@ pub fn calc_mean_motion(semi_major_axis: f64, grav_param: f64) -> f64 {
 pub fn calc_semi_major_axis(grav_param: f64, mean_motion: f64) -> f64 {
     let semi_major_axis: f64 = ((grav_param)/mean_motion.powi(2)).powf(1.0/3.0);
     semi_major_axis
+}
+
+
+
+/// Calculate gravitational acceleration
+/// 
+/// Inputs
+/// ------
+/// grav_param: `f64`
+/// 
+/// pos: `Vector3<f64>`
+/// 
+/// Outputs
+/// -------
+/// acc
+pub fn calc_acc(
+    grav_param: f64,
+    pos: Vector3<f64>
+) ->  Vector3<f64>{
+    let acc_vec: Vector3<f64> = -1. * grav_param / pos.norm().powi(3) * pos;
+    return acc_vec
 }
 
 /// Calculate total delta v for hohmann transfer
