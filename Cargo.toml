@@ -2,7 +2,7 @@
 
 [package]
 name = "donnager"
-version = "0.1.2"
+version = "0.1.3"
 description = "Blazingly fast astrodynamics calculations in Rust"
 license = "MIT"
 keywords = ["astrodynamics", "astronomy", "satellites"]
@@ -35,4 +35,4 @@ nalgebra = "0.31.4"
 plotters = "0.3.4"
 chrono = "0.4.23"
 polars = "0.28.0"
-
+rayon = "1.7.0"
