@@ -49,44 +49,76 @@ pub fn calc_mission_delta_v(
     stop_date_time: DateTime<Utc>,
     orbit_i: kepler::Orbit,
     orbit_f: kepler::Orbit,
+    time_step: f64,
     rtol: f64,
     numiter: i32
 ) -> f64 {
     // TODO-TD: parallelize across start stop datetimes using rayon
-    let grav_param: f64 = orbit_i.central_body.grav_param;
-    let eval_time = 0.0;
-    let r_i: Vector3<f64> = orbit_i.calc_motion(
-        eval_time, 
-        xyzt::ReferenceFrames::InertialCartesian, 
-        0);
-
-    let tof = (orbit_f.epoch - orbit_i.epoch).num_seconds() as f64;
-    let r_f: Vector3<f64> = orbit_f.calc_motion(
-        eval_time + tof, 
-        xyzt::ReferenceFrames::InertialCartesian, 
-        0);
-
-    let prograde_sign = 1.0;
-    let is_max = false;
-
-    let (dv1, dv2) = lambert_solve(
-        grav_param,  
-        r_i,  
-        r_f, 
-        tof, 
-        prograde_sign,
-        is_max,
-        rtol,
-        numiter
-    );
-        
+    let t_start = start_date_time.timestamp() as f64;
+    let t_end = stop_date_time.timestamp() as f64; 
+    let eval_times: [f64] = (t_start..t_end).step_by(time_step);  
+    let tofs: [f64] = (0.0_f64..(t_end - t_start)).step_by(time_step) ;  
     
-    let frame = xyzt::ReferenceFrames::InertialCartesian;
-    let dv_dpt = dv1 - orbit_i.calc_motion(start_date_time.second() as f64, frame, 1);
-    let dv_arr = dv2 - orbit_f.calc_motion(stop_date_time.second() as f64, frame, 1);
+    parallel_lambert(
+        orbit_i, 
+        orbit_f, 
+        rtol, 
+        numiter, 
+        eval_times,
+        tofs
+    );
+
     let dv_tot = dv_dpt.norm() + dv_arr.norm();
 
     return dv_tot
+}
+
+fn parallel_lambert(
+    orbit_i: kepler::Orbit, 
+    orbit_f: kepler::Orbit, 
+    rtol: f64, 
+    numiter: i32, 
+    eval_times:  &[f64],
+    tofs:  &[f64]
+) -> Vec<(Vector3<f64>, Vector3<f64>)> {
+
+    let dvs = eval_times.par_iter().for_each(|  eval_time  | {
+
+        let r_i: Vector3<f64> = orbit_i.calc_motion(
+        *eval_time, 
+        xyzt::ReferenceFrames::InertialCartesian, 
+        0);
+
+        let r_f: Vector3<f64> = orbit_f.calc_motion(
+            *eval_time + tof, 
+            xyzt::ReferenceFrames::InertialCartesian, 
+            0);
+
+
+        let (dv1, dv2) = lambert_solve(
+            orbit_i.central_body.grav_param,  
+            r_i,  
+            r_f, 
+            tof, 
+            1.0,
+            false,
+            rtol,
+            numiter);
+
+        let dv_dpt = dv1 - orbit_i.calc_motion(
+            *eval_time, 
+            xyzt::ReferenceFrames::InertialCartesian, 
+            1);
+        let dv_arr = dv2 - orbit_f.calc_motion(
+            *eval_time + tof, 
+            xyzt::ReferenceFrames::InertialCartesian, 
+            1);
+
+        (dv_dpt, dv_arr)
+        });
+
+    return dvs
+        
 }
 
 
@@ -165,7 +197,7 @@ pub fn lambert_solve(
 
     // Dimensionless time parameters
     let time: f64 = tof * ((2. * grav_param / semi_perim.powi(3)).sqrt());
-    let mean_motion = time / PI;
+    let mean_motion: f64 = time / PI;
     let xy: Vec<f64> = find_xy(
         time, 
         mean_motion, 
@@ -375,9 +407,9 @@ fn householder(
         let y: f64 = _compute_y(x_0, lambda);
         let fval = _tof_equation_y(x_0, y, T0, ll, M);
         let T = fval + T0;
-        let fder: f64 = _tof_equation_p(x_0, y, time, lambda);
-        let fder2: f64 = _tof_equation_p2(x_0, y, time, fder, lambda);
-        let fder3: f64 = _tof_equation_p3(x_0, y, time, fder, fder2, lambda);
+        let fder: f64 = _tof_equation_d(x_0, y, time, lambda);
+        let fder2: f64 = _tof_equation_d2(x_0, y, time, fder, lambda);
+        let fder3: f64 = _tof_equation_d3(x_0, y, time, fder, fder2, lambda);
 
         // Householder step (quartic)
         let x = x_0 - fval * (
@@ -398,12 +430,12 @@ fn _compute_y(x: f64, lambda: f64) ->  f64 {
     return (1. - lambda.powi(2) * (1. - x.powi(2))).powf(0.5)
 }
 
-fn _tof_equation_p(x:  f64, y:  f64, time:  f64, lambda:  f64) -> f64 {
+fn _tof_equation_d(x:  f64, y:  f64, time:  f64, lambda:  f64) -> f64 {
     let numerator: f64 = 3. * time * x - 2. + 2. * lambda.powi(3) * x / y;
     return  numerator / (1. - x.powi(2));
 }
 
-fn _tof_equation_p2(
+fn _tof_equation_d2(
     x_0:  f64, 
     y:  f64, 
     time:  f64, 
@@ -416,7 +448,7 @@ fn _tof_equation_p2(
     return (a + b + c) / (1. - x_0.powi(2))
 }
 
-fn _tof_equation_p3(
+fn _tof_equation_d3(
     x_0: f64, 
     y: f64, 
     time: f64, 
