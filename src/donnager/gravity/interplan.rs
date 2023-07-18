@@ -53,7 +53,6 @@ pub fn calc_mission_delta_v(
     rtol: f64,
     numiter: i32
 ) -> f64 {
-    // TODO-TD: parallelize across start stop datetimes using rayon
     let t_start = start_date_time.timestamp() as f64;
     let t_end = stop_date_time.timestamp() as f64; 
     let eval_times: [f64] = (t_start..t_end).step_by(time_step);  
@@ -64,8 +63,8 @@ pub fn calc_mission_delta_v(
         orbit_f, 
         rtol, 
         numiter, 
-        eval_times,
-        tofs
+        &eval_times,
+        &tofs
     );
 
     let dv_tot = dv_dpt.norm() + dv_arr.norm();
@@ -83,39 +82,41 @@ fn parallel_lambert(
 ) -> Vec<(Vector3<f64>, Vector3<f64>)> {
 
     let dvs = eval_times.par_iter().for_each(|  eval_time  | {
+        tofs.par_iter().for_each(|tof | {
 
-        let r_i: Vector3<f64> = orbit_i.calc_motion(
-        *eval_time, 
-        xyzt::ReferenceFrames::InertialCartesian, 
-        0);
-
-        let r_f: Vector3<f64> = orbit_f.calc_motion(
-            *eval_time + tof, 
+            let r_i: Vector3<f64> = orbit_i.calc_motion(
+                *eval_time, 
             xyzt::ReferenceFrames::InertialCartesian, 
             0);
 
+            let r_f: Vector3<f64> = orbit_f.calc_motion(
+                *eval_time + tof, 
+                xyzt::ReferenceFrames::InertialCartesian, 
+                0);
 
-        let (dv1, dv2) = lambert_solve(
-            orbit_i.central_body.grav_param,  
-            r_i,  
-            r_f, 
-            tof, 
-            1.0,
-            false,
-            rtol,
-            numiter);
 
-        let dv_dpt = dv1 - orbit_i.calc_motion(
+            let (dv1, dv2) = lambert_solve(
+                orbit_i.central_body.grav_param,  
+                r_i,  
+                r_f, 
+                tof, 
+                1.0,
+                false,
+                rtol,
+                numiter);
+
+            let dv_dpt = dv1 - orbit_i.calc_motion(
             *eval_time, 
             xyzt::ReferenceFrames::InertialCartesian, 
             1);
-        let dv_arr = dv2 - orbit_f.calc_motion(
+            let dv_arr = dv2 - orbit_f.calc_motion(
             *eval_time + tof, 
             xyzt::ReferenceFrames::InertialCartesian, 
             1);
-
+                    
         (dv_dpt, dv_arr)
-        });
+        })
+    });
 
     return dvs
         
