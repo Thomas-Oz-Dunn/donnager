@@ -49,14 +49,15 @@ pub fn calc_mission_delta_v(
     stop_date_time: DateTime<Utc>,
     orbit_i: kepler::Orbit,
     orbit_f: kepler::Orbit,
-    time_step: f64,
+    n_evals: u32,
     rtol: f64,
     numiter: i32
 ) -> f64 {
     let t_start = start_date_time.timestamp() as f64;
-    let t_end = stop_date_time.timestamp() as f64; 
-    let eval_times: [f64] = (t_start..t_end).step_by(time_step);  
-    let tofs: [f64] = (0.0_f64..(t_end - t_start)).step_by(time_step) ;  
+    let t_end = stop_date_time.timestamp() as f64;
+    let time_step = (t_end - t_start) / n_evals as f64;
+    let eval_times: [f64; 2] = [t_start, t_end];  
+    let tofs: [f64; 2] = [0.0_f64, (t_end - t_start)];  
     
     parallel_lambert(
         orbit_i, 
@@ -82,24 +83,24 @@ fn parallel_lambert(
 ) -> Vec<(Vector3<f64>, Vector3<f64>)> {
 
     let dvs = eval_times.par_iter().for_each(|  eval_time  | {
-        tofs.par_iter().for_each(|tof | {
+        tofs.par_iter()
+            .for_each(|tof | {
 
             let r_i: Vector3<f64> = orbit_i.calc_motion(
-                *eval_time, 
+            *eval_time, 
             xyzt::ReferenceFrames::InertialCartesian, 
             0);
 
             let r_f: Vector3<f64> = orbit_f.calc_motion(
-                *eval_time + tof, 
-                xyzt::ReferenceFrames::InertialCartesian, 
-                0);
-
+            *eval_time + tof, 
+            xyzt::ReferenceFrames::InertialCartesian, 
+            0);
 
             let (dv1, dv2) = lambert_solve(
                 orbit_i.central_body.grav_param,  
                 r_i,  
                 r_f, 
-                tof, 
+                *tof, 
                 1.0,
                 false,
                 rtol,
@@ -114,8 +115,10 @@ fn parallel_lambert(
             xyzt::ReferenceFrames::InertialCartesian, 
             1);
                     
-        (dv_dpt, dv_arr)
+            (dv_dpt, dv_arr)
         })
+        .collect();
+
     });
 
     return dvs
