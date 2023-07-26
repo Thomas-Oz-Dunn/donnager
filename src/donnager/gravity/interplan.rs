@@ -57,18 +57,20 @@ pub fn calc_mission_delta_v(
     let t_end = stop_date_time.timestamp() as f64;
     let time_step = (t_end - t_start) / n_evals as f64;
     let eval_times: [f64; 2] = [t_start, t_end];  
-    let tofs: [f64; 2] = [0.0_f64, (t_end - t_start)];  
-    
-    parallel_lambert(
-        orbit_i, 
-        orbit_f, 
-        rtol, 
-        numiter, 
-        &eval_times,
-        &tofs
-    );
+    for i_val in (0..n_vals){
+        let tof = time_step * i_val;
+        let dvs = parallel_lambert(
+            orbit_i, 
+            orbit_f, 
+            rtol, 
+            numiter, 
+            &eval_times,
+            tof
+        );
 
-    let dv_tot = dv_dpt.norm() + dv_arr.norm();
+        let dv_tot = dv_dpt.norm() + dv_arr.norm();
+    }
+
 
     return dv_tot
 }
@@ -79,48 +81,48 @@ fn parallel_lambert(
     rtol: f64, 
     numiter: i32, 
     eval_times:  &[f64],
-    tofs:  &[f64]
+    tof:  f64
 ) -> Vec<(Vector3<f64>, Vector3<f64>)> {
+    // TODO-TD: parallel across orbits 
+    
+    // Parallel across start time 
+    let parallel_val_times = eval_times.par_iter()
+        .map(|  eval_time  | {
+        
+        // TODO-TD: parallel across tof
 
-    let dvs = eval_times.par_iter().for_each(|  eval_time  | {
-        tofs.par_iter()
-            .for_each(|tof | {
+        let r_i: Vector3<f64> = orbit_i.calc_motion(
+        *eval_time, 
+        xyzt::ReferenceFrames::InertialCartesian, 
+        0);
 
-            let r_i: Vector3<f64> = orbit_i.calc_motion(
-            *eval_time, 
-            xyzt::ReferenceFrames::InertialCartesian, 
-            0);
+        let r_f: Vector3<f64> = orbit_f.calc_motion(
+        *eval_time + tof, 
+        xyzt::ReferenceFrames::InertialCartesian, 
+        0);
 
-            let r_f: Vector3<f64> = orbit_f.calc_motion(
-            *eval_time + tof, 
-            xyzt::ReferenceFrames::InertialCartesian, 
-            0);
+        let (dv1, dv2) = lambert_solve(
+            orbit_i.central_body.grav_param,  
+            r_i,  
+            r_f, 
+            tof, 
+            1.0,
+            false,
+            rtol,
+            numiter);
 
-            let (dv1, dv2) = lambert_solve(
-                orbit_i.central_body.grav_param,  
-                r_i,  
-                r_f, 
-                *tof, 
-                1.0,
-                false,
-                rtol,
-                numiter);
-
-            let dv_dpt = dv1 - orbit_i.calc_motion(
-            *eval_time, 
-            xyzt::ReferenceFrames::InertialCartesian, 
-            1);
-            let dv_arr = dv2 - orbit_f.calc_motion(
-            *eval_time + tof, 
-            xyzt::ReferenceFrames::InertialCartesian, 
-            1);
+        let dv_dpt = dv1 - orbit_i.calc_motion(
+        *eval_time, 
+        xyzt::ReferenceFrames::InertialCartesian, 
+        1);
+        let dv_arr = dv2 - orbit_f.calc_motion(
+        *eval_time + tof, 
+        xyzt::ReferenceFrames::InertialCartesian, 
+        1);
                     
-            (dv_dpt, dv_arr)
-        })
-        .collect();
-
+        return (dv_dpt, dv_arr)
     });
-
+    let dvs = parallel_val_times.collect();
     return dvs
         
 }
