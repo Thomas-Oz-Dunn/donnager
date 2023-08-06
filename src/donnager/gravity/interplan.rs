@@ -93,33 +93,33 @@ fn parallel_lambert(
         // TODO-TD: parallel across tof
 
         let r_i: Vector3<f64> = orbit_i.calc_motion(
-            time_since_epoch=*eval_time, 
-            frame=xyzt::ReferenceFrames::InertialCartesian, 
-            order=0);
+            *eval_time, 
+            xyzt::ReferenceFrames::InertialCartesian, 
+            0);
 
         let r_f: Vector3<f64> = orbit_f.calc_motion(
-            time_since_epoch=*eval_time + tof, 
-            frame=xyzt::ReferenceFrames::InertialCartesian, 
-            order=0);
+            *eval_time + tof, 
+            xyzt::ReferenceFrames::InertialCartesian, 
+            0);
 
         let (dv1, dv2) = lambert_solve(
-            grav_param=orbit_i.central_body.grav_param,  
-            r_i=r_i,  
-            r_f=r_f, 
-            tof=tof, 
-            prograde_sign=1.0,
-            is_max=false,
-            rtol=rtol,
-            numiter=numiter);
+            orbit_i.central_body.grav_param,  
+            r_i,  
+            r_f, 
+            tof, 
+            1.0,
+            false,
+            rtol,
+            numiter);
 
         let dv_dpt = dv1 - orbit_i.calc_motion(
-            time_since_epoch=*eval_time, 
-            frame=xyzt::ReferenceFrames::InertialCartesian, 
-            order=1);
+            *eval_time, 
+            xyzt::ReferenceFrames::InertialCartesian, 
+            1);
         let dv_arr = dv2 - orbit_f.calc_motion(
-            time_since_epoch=*eval_time + tof, 
-            frame=xyzt::ReferenceFrames::InertialCartesian, 
-            order=1);
+            *eval_time + tof, 
+            xyzt::ReferenceFrames::InertialCartesian, 
+            1);
                     
         return (dv_dpt, dv_arr)
     });
@@ -170,7 +170,7 @@ pub fn lambert_solve(
     prograde_sign: f64,
     is_max: bool,
     rtol: f64,
-    numiter: i32
+    n_iter: i32
 ) -> (Vector3<f64>, Vector3<f64>) {
     let chord: Vector3<f64> = r_f - r_i;
 
@@ -205,14 +205,8 @@ pub fn lambert_solve(
     // Dimensionless time parameters
     let time: f64 = tof * ((2. * grav_param / semi_perim.powi(3)).sqrt());
     let mean_motion: f64 = time / PI;
-    let xy: Vec<f64> = find_xy(
-        time=time, 
-        mean_motion=mean_motion, 
-        lambda=lambda,  
-        is_max=is_max,
-        rtol=rtol,
-        numiter=numiter
-    );
+    let xy: Vec<f64> = find_xy(time, mean_motion, lambda, is_max, rtol, n_iter);
+
     let x: f64 = xy[0];
     let y: f64 = xy[1];
     let y: f64 = (1. - lambda.powi(2) * (1. - x.powi(2))).sqrt();
@@ -250,21 +244,21 @@ fn find_xy(
     lambda: f64, 
     is_max: bool,
     rtol: f64,
-    numiter: i32
+    n_iter: i32
 ) ->  Vec<f64>{
-    let mut M_max: f64 = time / PI; // floor to int
-    let T_00: f64 = lambda.acos() + lambda * (1. - lambda.powi(2)).sqrt();
+    let mut m_max: f64 = time / PI; // floor to int
+    let t_00: f64 = lambda.acos() + lambda * (1. - lambda.powi(2)).sqrt();
 
-    let mut T_min:  f64;
+    let mut t_min:  f64;
     // Refine maximum number of revolutions if necessary
-    if (time < T_00 + M_max * PI) && (M_max > 0.0){
-        _compute_t_min(lambda, &mut T_min, M_max);
-        if time < T_min{
-            M_max = M_max - 1.0;
+    if (time < t_00 + m_max * PI) && (m_max > 0.0){
+        _compute_t_min(lambda, &mut t_min, m_max);
+        if time < t_min{
+            m_max = m_max - 1.0;
         }
     }
 
-    if mean_motion > M_max{
+    if mean_motion > m_max{
         // error out
     }
 
@@ -272,7 +266,7 @@ fn find_xy(
     let x_0: f64 = _initial_guess(time, lambda, mean_motion, is_max);
 
     //  Start Householder iterations from x_0 and find x, y
-    let x: f64 = householder(x_0, time, lambda, mean_motion, rtol, numiter);
+    let x: f64 = householder(x_0, time, lambda, mean_motion, rtol, n_iter);
     let y: f64 = _compute_y(x, lambda);
     return vec![x, y]
 
@@ -314,36 +308,36 @@ fn _initial_guess(
     return x_0        
 }
 
-fn _compute_t_min(lambda: f64, T_min: &mut f64, M_max: f64) {
+fn _compute_t_min(lambda: f64, t_min: &mut f64, m_max: f64) {
     if lambda == 1.0{
         let x_T_min = 0.0;
-        *T_min = _tof_equation(
+        *t_min = _tof_equation(
             x_T_min, 
             0.0, 
             lambda, 
-            M_max);
+            m_max);
     }else{
-        if M_max == 0.0 {
-            *T_min = 0.0;
+        if m_max == 0.0 {
+            *t_min = 0.0;
         }
         else{
             let x_i: f64 = 0.1;
-            let T_i: f64 = _tof_equation(
+            let t_i: f64 = _tof_equation(
                 x_i, 
                 0.0, 
                 lambda,
-                M_max);
+                m_max);
             let x_T_min = _halley(
                 x_i, 
-                T_i, 
+                t_i, 
                 lambda, 
                 rtol, 
                 numiter);
-            *T_min = _tof_equation(
+            *t_min = _tof_equation(
                 x_T_min, 
                 0.0, 
                 lambda,
-                M_max);
+                m_max);
         }
     }
 }
@@ -406,17 +400,17 @@ fn householder(
     lambda: f64, 
     mean_motion: f64, 
     rtol: f64,
-    numiter: i32
+    n_iter: i32
 ) -> f64 {
     let mut x_0: f64  = x_0;
-    for _ in 1..numiter
+    for _ in 1..n_iter
     {
         let y: f64 = _compute_y(x_0, lambda);
-        let fval = _tof_equation_y(x_0, y, T0, ll, M);
-        let T = fval + T0;
-        let fder: f64 = _tof_equation_d(x_0, y, time, lambda);
-        let fder2: f64 = _tof_equation_d2(x_0, y, time, fder, lambda);
-        let fder3: f64 = _tof_equation_d3(x_0, y, time, fder, fder2, lambda);
+        let fval = _tof_equation_y(x_0, y, time, lambda, mean_motion);
+        let t = fval + time;
+        let fder: f64 = _tof_equation_d(x_0, y, t, lambda);
+        let fder2: f64 = _tof_equation_d2(x_0, y, t, fder, lambda);
+        let fder3: f64 = _tof_equation_d3(x_0, y, t, fder, fder2, lambda);
 
         // Householder step (quartic)
         let x = x_0 - fval * (
