@@ -1213,9 +1213,9 @@ dependencies = [
 
 [[package]]
 name = "parse-tle"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "25415d5cc148ecdf800a6cd63cd7bdda47930ec93cc3c5ef963447904730b96e"
+checksum = "deccc8dcc4d5f0d0755cb0544cabbd14f69b522a79ed3edfc7b1dcd1b91767d0"
 
 [[package]]
 name = "paste"

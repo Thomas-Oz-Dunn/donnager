@@ -237,7 +237,8 @@ impl Orbit {
 
         // Two Line element usage assumes Earth Centered
         let semi_major_axis: f64 = calc_semi_major_axis(
-            cst::EARTH::GRAV_PARAM, tle.mean_motion);
+            cst::EARTH::GRAV_PARAM, 
+            tle.mean_motion);
 
         // Earth
         let earth: xyzt::Body = xyzt::Body {
@@ -250,16 +251,16 @@ impl Orbit {
         };
 
         Orbit {
-            name: name.to_string(),
+            name: tle.name.to_string(),
             central_body: earth,
-            tle.semi_major_axis,
-            tle.raan,
-            eccentricity: tle.ecc,
+            semi_major_axis: semi_major_axis,
+            raan: tle.raan,
+            eccentricity: tle.eccentricity,
             inclination: tle.inc,
             argument_of_perigee: tle.arg_perigee,
-            tle.mean_anomaly,
-            tle.mean_motion,
-            epoch: epoch_date_time
+            mean_anomaly: tle.mean_anomaly,
+            mean_motion: tle.mean_motion,
+            epoch: tle.epoch_date_time
         }
     
     }
