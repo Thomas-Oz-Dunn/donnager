@@ -463,6 +463,7 @@ version = "0.1.3"
 dependencies = [
  "chrono",
  "nalgebra",
+ "parse-tle",
  "plotters",
  "polars",
  "rayon",
@@ -1209,6 +1210,12 @@ dependencies = [
  "smallvec",
  "windows-sys 0.45.0",
 ]
+
+[[package]]
+name = "parse-tle"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "25415d5cc148ecdf800a6cd63cd7bdda47930ec93cc3c5ef963447904730b96e"
 
 [[package]]
 name = "paste"

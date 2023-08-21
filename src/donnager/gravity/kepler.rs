@@ -1,12 +1,13 @@
 /*
 Gravitational Bodies
-kraus
+
 */
 
 use nalgebra::{Vector3, Matrix3};
 use chrono::{DateTime, TimeZone, Utc};
 use plotters::prelude::*;
 use std::{f64::consts::PI, vec, ops::Range};
+use parse_tle::tle::*;
 
 use crate::donnager::{spacetime as xyzt, constants as cst};
 
@@ -232,97 +233,11 @@ impl Orbit {
     pub fn from_tle(
         tle_str: String
     ) -> Self {
-        let lines: Vec<&str> = tle_str.lines().collect();
-        let name: &str = lines[0];
-        let bind1 = lines[1].to_string();
-        let line1: Vec<&str> = bind1
-            .split_whitespace()
-            .collect();
-
-        let epoch_str: &str = line1[3];
-        let epoch_year: i32 = epoch_str[..=1]
-            .to_string()
-            .parse::<i32>()
-            .unwrap();
-
-        let year: i32;
-        if epoch_year < 57{
-            year = 2000 + epoch_year;
-        } else {
-            year = 1900 + epoch_year;
-        }
-
-        let binding = epoch_str[2..]
-            .to_string();
-        let epoch_day_full: Vec<&str> = binding
-            .split_terminator('.')
-            .collect();
-
-        let day_of_year: u32 = epoch_day_full[0]
-            .to_string()
-            .parse::<u32>()
-            .unwrap();
-
-        let md: (u32, u32) = xyzt::calc_month_day(day_of_year, year);
-        
-        let percent_of_day: f64 = 
-        (".".to_owned() + epoch_day_full[1])
-            .parse::<f64>()
-            .unwrap();
-
-        let hours_dec: f64 = percent_of_day * 24.0;
-        let hours_whole: u32 = hours_dec.div_euclid(24.0).floor() as u32;
-        let hours_part: f64 = hours_dec.rem_euclid(24.0);
-        
-        let minutes_dec: f64 = hours_part * 60.;
-        let minutes_whole: u32 = minutes_dec.div_euclid(60.).floor() as u32;
-        let minutes_part: f64 = minutes_dec.rem_euclid(60.);
-
-        let seconds_dec: f64 = minutes_part * 60.;
-        let seconds_whole: u32 = seconds_dec.div_euclid(60.).floor() as u32;
-
-        let epoch_date_time = xyzt::ymd_hms_to_datetime(
-            year, md.0, md.1, hours_whole, minutes_whole, seconds_whole);
-        // let mean_motion_prime: &str = line1[4];
-        // let mean_motion_2: &str = line1[5];
-        
-        let binding: String = lines[2].to_string();
-        let line2: Vec<&str> = binding.split_whitespace().collect();
-        
-        let inc: f64 = line2[2]
-            .to_string()
-            .parse::<f64>()
-            .unwrap();
-
-        let raan: f64 = line2[3]
-            .to_string()
-            .parse::<f64>()
-            .unwrap();
-
-        let ecc: f64 =
-            (".".to_owned() + line2[4])
-            .parse::<f64>()
-            .unwrap();
-
-        let arg_perigee: f64 = line2[5]
-            .to_string()
-            .parse::<f64>()
-            .unwrap();
-
-        let mean_anomaly: f64 = line2[6]
-            .to_string()
-            .parse::<f64>()
-            .unwrap();
-
-        let end_str: &str = line2[line2.len()-1];
-        let mean_motion: f64 = end_str[..11]
-            .to_string()
-            .parse::<f64>()
-            .unwrap();
+        let tle: TLE = parse(&tle_str); 
 
         // Two Line element usage assumes Earth Centered
         let semi_major_axis: f64 = calc_semi_major_axis(
-            cst::EARTH::GRAV_PARAM, mean_motion);
+            cst::EARTH::GRAV_PARAM, tle.mean_motion);
 
         // Earth
         let earth: xyzt::Body = xyzt::Body {
@@ -337,13 +252,13 @@ impl Orbit {
         Orbit {
             name: name.to_string(),
             central_body: earth,
-            semi_major_axis,
-            raan,
-            eccentricity: ecc,
-            inclination: inc,
-            argument_of_perigee: arg_perigee,
-            mean_anomaly,
-            mean_motion,
+            tle.semi_major_axis,
+            tle.raan,
+            eccentricity: tle.ecc,
+            inclination: tle.inc,
+            argument_of_perigee: tle.arg_perigee,
+            tle.mean_anomaly,
+            tle.mean_motion,
             epoch: epoch_date_time
         }
     
