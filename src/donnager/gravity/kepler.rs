@@ -9,7 +9,7 @@ use plotters::prelude::*;
 use std::{f64::consts::PI, vec, ops::Range};
 use parse_tle::tle::*;
 
-use crate::donnager::{spacetime as xyzt, constants as cst};
+use crate::donnager::{spacetime::{self as xyzt, ymd_hms_to_datetime}, constants as cst};
 
 pub struct Maneuver{
     pub delta_v: Vector3<f64>,
@@ -240,6 +240,15 @@ impl Orbit {
             cst::EARTH::GRAV_PARAM, 
             tle.mean_motion);
 
+        let year = tle.epoch_year as i32;
+        let month = tle.epoch_month;
+        let day = tle.epoch_day;
+        let hour = tle.epoch_hours;
+        let min = tle.epoch_min;
+        let sec = tle.epoch_sec;
+        let epoch_date_time:  DateTime<Utc> = ymd_hms_to_datetime(
+            year, month, day, hour, min, sec);
+
         // Earth
         let earth: xyzt::Body = xyzt::Body {
             name: String::from("Earth"),
@@ -260,7 +269,7 @@ impl Orbit {
             argument_of_perigee: tle.arg_perigee,
             mean_anomaly: tle.mean_anomaly,
             mean_motion: tle.mean_motion,
-            epoch: tle.epoch_date_time
+            epoch: epoch_date_time
         }
     
     }
