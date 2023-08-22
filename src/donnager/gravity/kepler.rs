@@ -238,16 +238,19 @@ impl Orbit {
         // Two Line element usage assumes Earth Centered
         let semi_major_axis: f64 = calc_semi_major_axis(
             cst::EARTH::GRAV_PARAM, 
-            tle.mean_motion);
+            tle.mean_motion
+        );
 
-        let year = tle.epoch_year as i32;
-        let month = tle.epoch_month;
-        let day = tle.epoch_day;
-        let hour = tle.epoch_hours;
-        let min = tle.epoch_min;
-        let sec = tle.epoch_sec;
+        // assembl epoch datetime
+        let year: i32 = tle.epoch_year as i32;
+        let month: u32 = tle.epoch_month;
+        let day: u32 = tle.epoch_day;
+        let hour: u32 = tle.epoch_hours;
+        let min: u32 = tle.epoch_min;
+        let sec: u32 = tle.epoch_sec;
         let epoch_date_time:  DateTime<Utc> = ymd_hms_to_datetime(
-            year, month, day, hour, min, sec);
+            year, month, day, hour, min, sec
+        );
 
         // Earth
         let earth: xyzt::Body = xyzt::Body {
