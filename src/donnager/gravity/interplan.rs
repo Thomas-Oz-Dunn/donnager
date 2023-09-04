@@ -503,7 +503,11 @@ mod interplan_tests {
         let grav_param: f64 = cst::SUN::GRAV_PARAM;
         let orb_radius_0: f64 = 1000000.;
         let orb_radius_f: f64 = 2000000.;
-        let esc_vel: f64 = calc_esc_vel(grav_param, orb_radius_0, orb_radius_f);
+        let esc_vel: f64 = calc_esc_vel(
+            grav_param, 
+            orb_radius_0, 
+            orb_radius_f
+        );
         assert_eq!(esc_vel, 13302555.410020536);
     }
 
