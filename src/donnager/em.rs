@@ -95,9 +95,10 @@ pub fn calc_max_solar_power_gen(
     panel_area_vec: Vector3<f64>,
     efficiency: f64,
 ) -> f64 {
+    let magnitude: f64 = panel_area_vec.norm() * em_flux_vec.norm();
     let inner_prod: f64 = panel_area_vec.dot(&em_flux_vec);
-    let cos_incidence: f64 = inner_prod / (panel_area_vec.norm() * em_flux_vec.norm());
-    let max_power: f64 = efficiency * panel_area_vec.norm() * em_flux_vec.norm() * cos_incidence;
+    let cos_incid: f64 = inner_prod / magnitude;
+    let max_power: f64 = efficiency * magnitude * cos_incid;
     return max_power
 }
 
@@ -121,7 +122,7 @@ pub fn calc_em_radiative_force(
 ) -> Vector3<f64> {
     let pressure: f64 = em_flux / cst::SPEED_OF_LIGHT;
     let mag: f64 = pressure * obj_reflecitivity * normal_area;
-    let force = mag * src_obj_vec/ src_obj_vec.norm();
+    let force: Vector3<f64> = mag * src_obj_vec / src_obj_vec.norm();
     return force
 }
 
@@ -135,7 +136,7 @@ pub fn calc_em_radiative_force(
 /// 
 /// Outputs
 /// -------
-/// c : `f64`
+/// radius : `f64`
 ///     Radial magnitudes
 pub fn calc_radial_distance(
     time_delay: f64
@@ -153,6 +154,11 @@ pub fn calc_radial_distance(
 /// 
 /// rx_wavelength: `f64`
 ///     Received wavelength
+/// 
+/// Outputs
+/// -------
+/// v_r: `f64`
+///     Radial velocity component
 pub fn calc_radial_vel(
     tx_wavelength: f64,
     rx_wavelength: f64
@@ -180,9 +186,9 @@ mod electromag_tests{
     fn test_power(){
         let efficiency: f64 = 0.1;
         let solar_flux_mag: f64 = cst::SUN::MEAN_SOLAR_FLUX;
-        let em_flux_vec: Vector3<f64> = Vector3::new(0., 0., 1.) * solar_flux_mag;
-        let panel_area_vec: Vector3<f64> = 
-            Vector3::new(0., 0., 1.);
+        let z_vec: Vector3<f64> = Vector3::new(0., 0., 1.);
+        let em_flux_vec: Vector3<f64> = z_vec * solar_flux_mag;
+        let panel_area_vec: Vector3<f64> = z_vec;
         let max_power: f64 = calc_max_solar_power_gen(
             em_flux_vec,
             panel_area_vec,

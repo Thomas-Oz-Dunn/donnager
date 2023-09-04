@@ -4,7 +4,10 @@ n-body simulation demonstration using Barnes Hut method
 
 use nalgebra::Vector3;
 
-use donnager::donnager::{gravity as grav, spacetime as xyzt};
+use donnager::donnager::{
+    gravity as grav, 
+    spacetime as xyzt
+};
 
 fn main() {
 

@@ -8,7 +8,8 @@ use donnager::donnager::{
     constants as cst, 
     spacetime as xyzt, 
     propulsion as prop, 
-    dynamics as dynam};
+    dynamics as dynam
+};
 
 
 fn main() {

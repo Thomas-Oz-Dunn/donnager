@@ -9,7 +9,10 @@ use plotters::prelude::*;
 use std::{f64::consts::PI, vec, ops::Range};
 use parse_tle::tle::*;
 
-use crate::donnager::{spacetime::{self as xyzt, ymd_hms_to_datetime}, constants as cst};
+use crate::donnager::{
+    spacetime as xyzt, 
+    constants as cst
+};
 
 pub struct Maneuver{
     pub delta_v: Vector3<f64>,
@@ -248,7 +251,7 @@ impl Orbit {
         let hour: u32 = tle.epoch_hours;
         let min: u32 = tle.epoch_min;
         let sec: u32 = tle.epoch_sec;
-        let epoch_date_time:  DateTime<Utc> = ymd_hms_to_datetime(
+        let epoch_date_time:  DateTime<Utc> = xyzt::ymd_hms_to_datetime(
             year, month, day, hour, min, sec
         );
 

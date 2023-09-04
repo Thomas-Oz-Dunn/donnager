@@ -3,7 +3,10 @@ Aldrin Cycler between Earth and Mars
 */
 
 
-use donnager::donnager::{constants as cst, spacetime as xyzt};
+use donnager::donnager::{
+    constants as cst, 
+    spacetime as xyzt
+};
 
 
 fn main() {

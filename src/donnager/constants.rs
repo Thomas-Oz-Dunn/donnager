@@ -193,7 +193,7 @@ impl JUPITER{
 }
 
 
-/// Characteristics of Jupiter
+/// Characteristics of Saturn
 /// 
 /// Source
 /// ------
@@ -207,6 +207,11 @@ impl SATURN{
     pub const SIDEREAL_DAY: f64 = 10.5;
 }
 
+/// Characteristics of Uranus
+/// 
+/// Source
+/// ------
+/// https://en.wikipedia.org/wiki/Uranus
 pub struct URANUS;
 impl URANUS{
     pub const MASS: f64 = 8.682e25;
@@ -214,6 +219,12 @@ impl URANUS{
     pub const GRAV_PARAM: f64 = URANUS::MASS * GRAV_CONST;
 }
 
+
+/// Characteristics of Neptune
+/// 
+/// Source
+/// ------
+/// https://en.wikipedia.org/wiki/Neptune
 pub struct NEPTUNE;
 impl NEPTUNE{
     pub const MASS: f64 = 1.024e26;
