@@ -94,8 +94,6 @@ fn main() {
     // Ground station
     let ground_station: Vector3<f64> = args.ground_station;
 
-    // Calculate ENU
-
     // TODO-TD: Parallelize
     for date_time in start_date_time..stop_date_time{
 
@@ -107,6 +105,12 @@ fn main() {
         );
 
         // Calculate angles in ENU
+        let p_enu: Vector3<f64> = xyzt::fixed_frame_to_enu(
+            ground_station, 
+            p_ecef,
+            orbit.body.equatorial_radius,
+            orbit.body.eccentricity
+        );
 
 
         // Return true each time above horizon
