@@ -21,13 +21,17 @@ fn main() {
     2 25544  51.6419 140.8390 0005926  43.3718 100.9839 15.49547192385127";
     
     let orbit: grav::kepler::Orbit = grav::kepler::Orbit::from_tle(tle_str.to_string());
-    let frame = xyzt::ReferenceFrames::Perifocal;
+    let frame: xyzt::ReferenceFrames = xyzt::ReferenceFrames::Perifocal;
 
     orbit.show(frame);
 
     let dt: f64 = 10.1;
     let new_orb: grav::kepler::Orbit = orbit.propogate(dt);
-    let motion_ecef = new_orb.calc_motion(0., xyzt::ReferenceFrames::RotationalCartesian,0);
+    let motion_ecef: Vector3<f64> = new_orb.calc_motion(
+        0., 
+        xyzt::ReferenceFrames::RotationalCartesian,
+        0
+    );
 
     // Earth
     let earth: xyzt::Body = xyzt::Body {
@@ -39,7 +43,10 @@ fn main() {
         eccentricity: cst::EARTH::SURFACE_ECC
     };
 
-    let p_lla: Vector3<f64> = xyzt::ecef_to_lla(motion_ecef[0], earth);
+    let p_lla: Vector3<f64> = xyzt::ecef_to_lla(
+        motion_ecef[0], 
+        earth
+    );
     
     // TODO: compare against observed baselines
     println!("{} is at {} altitude above {} deg N and {} deg E at {}",

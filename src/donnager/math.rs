@@ -40,7 +40,7 @@ pub fn stumpff_analytic(t:  f64) -> Vec<f64> {
     if t==0.{
         return vec![1., 1., 0.5, 1./6.]
     } else{
-        let y: f64 = t.abs().powf(0.5);
+        let y: f64 = t.abs().sqrt();
         if t>=0. {
             let c_0: f64 = y.cos();
             let c_1: f64 = y.sin()/y;

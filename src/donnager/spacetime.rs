@@ -662,8 +662,6 @@ pub fn ecef_to_lla(
     ecef: Vector3<f64>,
     body: Body
 ) -> Vector3<f64> {
-    let ephemeris = get_ephemeris();
-
     // Zhu's method
     let a: f64 = body.eq_radius;
     let b: f64 = body.eq_radius * (1. - body.eccentricity.powi(2)).sqrt();
