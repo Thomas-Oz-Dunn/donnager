@@ -18,6 +18,18 @@ use crate::donnager::constants as cst;
 /// 
 /// grav_param: `f64`
 ///     Gravitational Parameter
+/// 
+/// eq_radius: `f64`
+///     Equatorial Radius in km
+/// 
+/// rotation_rate: `f64`
+///     Rotation rate  in rad /s
+/// 
+/// sidereal_day_hours: `f64`
+///     Length of sidereal day
+/// 
+/// eccentricity: `f64`
+///     Polar Equatorial Eccentricity
 #[derive(Clone, Debug, PartialEq)]
 pub struct Body{
     pub name: String,
@@ -33,7 +45,14 @@ pub struct Body{
 /// 
 /// Valid Frames
 /// ------------
-/// InertialCartesian (ECI)
+/// InertialCartesian 
+///     Ex: (ECI)
+/// RotationalCartesian 
+///     Ex: (ECEF)
+/// Perifocal 
+///     Ex: (PFCL)
+/// Planetodetic 
+///     Ex: (Geodetic)
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ReferenceFrames {
     InertialCartesian, 
@@ -307,7 +326,8 @@ pub fn calc_inertial_rotational_rotam(
     let rotam: Matrix3<f64> = Matrix3::<f64>::new(
         theta.cos(), -theta.sin(), 0.,
         theta.sin(), theta.cos(), 0.,
-        0., 0., 1.);
+        0., 0., 1.
+    );
 
     return rotam
 }
@@ -334,16 +354,23 @@ pub fn calc_earth_day_length(
     
     // FIXME-TD: remove `magic numbers`
     let m: f64 = (357.5291 + 0.98560028 * j_star) % cst::CYCLES_TO_DEGREES;
-    let equat_center: f64 = 1.9148*(m.sin()) + 0.02*((2.*m).sin()) + 0.0003*((3.*m).sin());
+    let equat_center: f64 = 1.9148*(
+        m.sin()) + 0.02*((2.*m).sin()) + 0.0003*((3.*m).sin()
+    );
     let earth_tilt_adjust: f64 = (
         m + equat_center + cst::CYCLES_TO_DEGREES / 2. + 
         cst::EARTH::ARG_PERIHELION) % cst::CYCLES_TO_DEGREES;
 
     let sun_declination_rad: f64 = (
-        earth_tilt_adjust.sin() * (cst::EARTH::AXIAL_TILT).sin()).asin();
+        earth_tilt_adjust.sin() * (cst::EARTH::AXIAL_TILT).sin()
+    ).asin();
     let tan_lattitude: f64 = (lattitude_deg * cst::DEG_TO_RAD).tan();
-    let hour_angle_rad: f64 = (-(sun_declination_rad).tan() * tan_lattitude).acos();
-    let hours_per_radian: f64 = cst::EARTH::SOLAR_DAY / cst::CYCLES_TO_DEGREES * cst::RAD_TO_DEG;
+    let hour_angle_rad: f64 = (
+        -(sun_declination_rad).tan() * tan_lattitude
+    ).acos();
+    let hours_per_radian: f64 = (
+        cst::EARTH::SOLAR_DAY / cst::CYCLES_TO_DEGREES * cst::RAD_TO_DEG
+    );
     let daylight_hours: f64 = hour_angle_rad * hours_per_radian;
     return daylight_hours
 }
@@ -404,6 +431,11 @@ pub fn calc_month_day(
 /// 
 /// day : `i32`
 ///     Day of month
+/// 
+/// Outputs
+/// -------
+/// day_of_year: `i32`
+///     Day of year
 pub fn date_to_doy(
     year: i32, 
     month: i32,
@@ -438,6 +470,11 @@ pub fn date_to_doy(
 /// ------
 /// year: `i32`
 ///     Gregorian Year of common era.
+/// 
+/// Outputs
+/// -------
+/// is_leap_year: `bool`
+///     True if leap year
 fn check_if_leap_year(year: i32) -> bool {
     let rule1: bool = year % 4 == 0;
     let rule2: bool = year % 100 != 0;
@@ -457,6 +494,11 @@ fn check_if_leap_year(year: i32) -> bool {
 /// 
 /// day: `i32`
 ///     Day of month
+/// 
+/// Outputs
+/// -------
+/// julian_day_num: `i32`
+///     Julian Day Number
 pub fn date_to_julian_day_num(
     year: i32,
     month: i32,

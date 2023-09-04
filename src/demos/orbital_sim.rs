@@ -7,7 +7,8 @@ use nalgebra::Vector3;
 use donnager::donnager::{
     gravity as grav, 
     spacetime as xyzt, 
-    constants as cst};
+    constants as cst
+};
 
 fn main() {
 
@@ -25,7 +26,7 @@ fn main() {
 
     let dt: f64 = 10.1;
     let new_orb: grav::kepler::Orbit = orbit.propogate(dt);
-    let motion_ecef = new_orb.calc_motion(0., xyzt::ReferenceFrames::RotationalCartesian);
+    let motion_ecef = new_orb.calc_motion(0., xyzt::ReferenceFrames::RotationalCartesian,0);
 
     // Earth
     let earth: xyzt::Body = xyzt::Body {
@@ -47,7 +48,6 @@ fn main() {
     // Plot over earth map
 
     // Write KML
-    // TODO: verify
     if is_write_kml{
         let mut kml_file = File::create("orbit.kml").unwrap();
         let mut kml_writer = BufWriter::new(&mut kml_file);

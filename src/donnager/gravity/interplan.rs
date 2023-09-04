@@ -9,7 +9,8 @@ use rayon::prelude::*;
 use crate::donnager::{
     gravity::kepler as kepler, 
     spacetime as xyzt,
-    math as math};
+    math as math
+};
 
 /// Calculate interplanestary mission escape velocity
 /// 
@@ -85,7 +86,9 @@ fn parallel_lambert(
     tof:  f64
 ) -> Vec<(Vector3<f64>, Vector3<f64>)> {
     // TODO-TD: parallel across orbits 
-    
+    let reference_frame = xyzt::ReferenceFrames::InertialCartesian;
+    let pos_idx, vel_idx = 0, 1;
+
     // Parallel across start time 
     let parallel_val_times = eval_times.par_iter()
         .map(|  eval_time  | {
@@ -94,13 +97,15 @@ fn parallel_lambert(
 
         let r_i: Vector3<f64> = orbit_i.calc_motion(
             *eval_time, 
-            xyzt::ReferenceFrames::InertialCartesian, 
-            0);
+            reference_frame, 
+            pos_idx
+        );
 
         let r_f: Vector3<f64> = orbit_f.calc_motion(
             *eval_time + tof, 
-            xyzt::ReferenceFrames::InertialCartesian, 
-            0);
+            reference_frame, 
+            pos_idx
+        );
 
         let (dv1, dv2) = lambert_solve(
             orbit_i.central_body.grav_param,  
@@ -110,16 +115,19 @@ fn parallel_lambert(
             1.0,
             false,
             rtol,
-            numiter);
+            numiter
+        );
 
         let dv_dpt = dv1 - orbit_i.calc_motion(
             *eval_time, 
-            xyzt::ReferenceFrames::InertialCartesian, 
-            1);
+            reference_frame, 
+            vel_idx
+        );
         let dv_arr = dv2 - orbit_f.calc_motion(
             *eval_time + tof, 
-            xyzt::ReferenceFrames::InertialCartesian, 
-            1);
+            reference_frame, 
+            vel_idx
+        );
                     
         return (dv_dpt, dv_arr)
     });
@@ -238,6 +246,12 @@ pub fn lambert_solve(
 /// 
 /// lambda: `decimal, seconds`
 /// 
+/// is_max
+/// 
+/// rtol
+/// 
+/// n_iter
+/// 
 fn find_xy(
     time: f64, 
     mean_motion: f64, 
@@ -259,7 +273,7 @@ fn find_xy(
     }
 
     if mean_motion > m_max{
-        // error out
+        // FIXME-TD: error out
     }
 
     //  Initial guess
@@ -272,6 +286,8 @@ fn find_xy(
 
 }
 
+
+/// Initial  Guess for solvers
 fn _initial_guess(
     time: f64, 
     lambda: f64, 
@@ -308,6 +324,7 @@ fn _initial_guess(
     return x_0        
 }
 
+/// Computer minimum T
 fn _compute_t_min(lambda: f64, t_min: &mut f64, m_max: f64) {
     if lambda == 1.0{
         let x_T_min = 0.0;
@@ -431,11 +448,20 @@ fn _compute_y(x: f64, lambda: f64) ->  f64 {
     return (1. - lambda.powi(2) * (1. - x.powi(2))).powf(0.5)
 }
 
-fn _tof_equation_d(x:  f64, y:  f64, time:  f64, lambda:  f64) -> f64 {
+
+/// Time of flight first order derivative
+fn _tof_equation_d(
+    x:  f64, 
+    y:  f64, 
+    time:  f64, 
+    lambda:  f64
+) -> f64 {
     let numerator: f64 = 3. * time * x - 2. + 2. * lambda.powi(3) * x / y;
     return  numerator / (1. - x.powi(2));
 }
 
+
+/// Time of flight second order derivative
 fn _tof_equation_d2(
     x_0:  f64, 
     y:  f64, 
@@ -449,6 +475,8 @@ fn _tof_equation_d2(
     return (a + b + c) / (1. - x_0.powi(2))
 }
 
+
+/// Time of flight third order derivative
 fn _tof_equation_d3(
     x_0: f64, 
     y: f64, 

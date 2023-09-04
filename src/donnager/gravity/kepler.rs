@@ -471,6 +471,7 @@ impl Orbit {
     /// time_since_epoch: `f64`
     ///     Time since epoch
     pub fn calc_true_anomaly(&self, time_since_epoch: f64) -> f64 {
+        // TODO-TD: vectorize
         let mean_anom: f64 = (
             self.mean_anomaly + self.mean_motion * time_since_epoch) * cst::DEG_TO_RAD;
         let ecc_anom: f64 = (
