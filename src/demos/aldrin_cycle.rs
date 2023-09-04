@@ -10,9 +10,26 @@ use donnager::donnager::{
 
 
 fn main() {
+    
+    // TODO-TD: add cli parsing
+
     // Configurable 
-    // let start_date_time = xyzt::ymd_hms_to_datetime(2023, 1, 1, 12, 0, 0);
-    // let stop_date_time = xyzt::ymd_hms_to_datetime(2053, 1, 1, 12, 0, 0);
+    let start_date_time = xyzt::ymd_hms_to_datetime(
+        2023, 
+        1, 
+        1, 
+        12, 
+        0, 
+        0
+    );
+    let stop_date_time = xyzt::ymd_hms_to_datetime(
+        2053, 
+        1, 
+        1, 
+        12, 
+        0, 
+        0
+    );
    
     let start_alt: f64 = 408000.0;  
     let end_alt: f64 = 208000.0;  

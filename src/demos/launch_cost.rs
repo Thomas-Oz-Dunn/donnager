@@ -14,6 +14,8 @@ use donnager::donnager::{
 
 fn main() {
     
+    // TODO-TD: add cli parsing
+
     // Earth
     let earth: xyzt::Body = xyzt::Body {
         name: String::from("Earth"),
@@ -65,9 +67,17 @@ fn main() {
 
     // Calculation
     let delta_v: f64 = launch_site.calc_delta_v(altitude);
-    let mass_fuel: Vec<f64> = launch_vehicle.calc_mass_fuel(delta_v, launch_site);
+    let mass_fuel: Vec<f64> = launch_vehicle.calc_mass_fuel(
+        delta_v, 
+        launch_site
+    );
 
     // Results
-    println!("\n{:.4} kg of fuel to get {} kg to {} m alt", mass_fuel[0], launch_vehicle.stages[1].mass, altitude);
+    println!(
+        "\n{:.4} kg of fuel to get {} kg to {} m alt", 
+        mass_fuel[0], 
+        launch_vehicle.stages[1].mass, 
+        altitude
+    );
     
 }

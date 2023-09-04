@@ -10,6 +10,7 @@ use donnager::donnager::{
 };
 
 fn main() {
+    // TODO-TD: add cli parser
 
     // Body
     let particle1: xyzt::Particle = xyzt::Particle {
