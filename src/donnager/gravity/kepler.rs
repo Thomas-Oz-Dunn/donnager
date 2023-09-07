@@ -400,14 +400,14 @@ impl Orbit {
                 let new_time: Vec<f64> = self.epoch.timestamp() as f64 + time_since_epoch;
                 // FIXME-TD: vector of datetime
                 let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
-                    new_time as i64, 0
+                    new_time, 0
                 ).unwrap();
 
                 let rot_rate: f64 = self.central_body.rotation_rate;
                 let sidereal_day: f64 = self.central_body.sidereal_day_hours;
 
-                // FIXME-TD: tensor?
-                let eci_ecef_rotam: Matrix3<f64> = 
+                // FIXME-TD: tensoriize
+                let eci_ecef_rotam: Tensor3<f64> = 
                     xyzt::calc_inertial_rotational_rotam(
                         new_epoch_datetime, 
                         rot_rate * 3600. * sidereal_day
@@ -427,7 +427,7 @@ impl Orbit {
                 let eci_pos: Vector3<Vec<f64>> = pfcl_eci_rotam * pos;
                 let eci_vel: Vector3<Vec<f64>> = pfcl_eci_rotam * vel;
 
-                let new_time: f64 = self.epoch.timestamp() as f64 + time_since_epoch;
+                let new_time: Vec<f64> = self.epoch.timestamp() as f64 + time_since_epoch;
                 let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(
                     new_time as i64, 0
                 ).unwrap();
@@ -435,16 +435,16 @@ impl Orbit {
                 let rot_rate: f64 = self.central_body.rotation_rate;
                 let sidereal_day: f64 = self.central_body.sidereal_day_hours;
 
-                let eci_ecef_rotam: Matrix3<f64> = 
+                let eci_ecef_rotam: Tensor3<f64> = 
                     xyzt::calc_inertial_rotational_rotam(
                         new_epoch_datetime, 
                         rot_rate * 3600. * sidereal_day
                     );
     
-                let ecef_pos: Vector3<f64> = eci_ecef_rotam * eci_pos;
-                let ecef_vel: Vector3<f64> = eci_ecef_rotam * eci_vel;
+                let ecef_pos: Vector3<Vec<f64>> = eci_ecef_rotam * eci_pos;
+                let ecef_vel: Vector3<Vec<f64>> = eci_ecef_rotam * eci_vel;
 
-                let lla_pos: Vector3<f64> = xyzt::ecef_to_lla(
+                let lla_pos: Vector3<Vec<f64>> = xyzt::ecef_to_lla(
                     ecef_pos, 
                     self.central_body.clone()
                 );
