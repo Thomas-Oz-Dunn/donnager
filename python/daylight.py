@@ -11,15 +11,13 @@ if __name__ == '__main__':
     mesh_days, mesh_lats = np.meshgrid(days, lats, indexing='xy')
     longs = np.zeros_like(lats)
 
-    # meshgrid
     hours = dgr.calc_earth_day_length(
+        lattitude_deg=mesh_lats,
+        longitude_deg=longs,
         days,
-        lats,
-        longs
     )
-    plt.imshow(
-        hours
-    )
+
+    plt.imshow(hours)
     plt.xlabel('Day of year')
     plt.ylabel('Lattitude (deg)')
 
