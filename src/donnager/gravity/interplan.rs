@@ -38,58 +38,58 @@ pub fn calc_esc_vel(
     return (grav_param * (2. / orb_radius_0 - 1. / mean_radius)).sqrt();
 }
 
-/// Calculate delta v for mission in range
-/// 
-/// Inputs                                                   
-/// ------
-/// start_date_time: `DateTime<Utc>`
-///     Start datetime for mission
-/// 
-/// stop_date_time: `DateTime<Utc>`
-///     stop datetime for mission
-/// 
-/// orbit_1: `Orbit`
-///     Orbit of starting planet
-/// 
-/// orbit_2: `Orbit`
-///     Orbit of ending planet
-/// 
-/// n_evals: `u32`
-/// 
-/// rtol: `f64`
-/// 
-/// numiter: `i32`
-pub fn calc_mission_delta_v(
-    start_date_time: DateTime<Utc>,
-    stop_date_time: DateTime<Utc>,
-    orbit_i: kepler::Orbit,
-    orbit_f: kepler::Orbit,
-    n_evals: u32,
-    rtol: f64,
-    numiter: i32
-) -> f64 {
-    let t_start: f64 = start_date_time.timestamp() as f64;
-    let t_end: f64 = stop_date_time.timestamp() as f64;
-    let time_step: f64 = (t_end - t_start) / n_evals as f64;
-    let eval_times: [f64; 2] = [t_start, t_end];  
-    for i_val in 0..n_evals{
-        let tof: f64 = time_step * i_val as f64;
-        let dvs: Vec<(Vector3<f64>, Vector3<f64>)> = parallel_lambert(
-            orbit_i, 
-            orbit_f, 
-            rtol, 
-            numiter, 
-            &eval_times,
-            tof
-        );
-        // Iterate across eval times
-        // 
-        // let dv_tot = dvs[i_time, 0].norm() + dvs[i_time, 1].norm();
-    }
+// /// Calculate delta v for mission in range
+// /// 
+// /// Inputs                                                   
+// /// ------
+// /// start_date_time: `DateTime<Utc>`
+// ///     Start datetime for mission
+// /// 
+// /// stop_date_time: `DateTime<Utc>`
+// ///     stop datetime for mission
+// /// 
+// /// orbit_1: `Orbit`
+// ///     Orbit of starting planet
+// /// 
+// /// orbit_2: `Orbit`
+// ///     Orbit of ending planet
+// /// 
+// /// n_evals: `u32`
+// /// 
+// /// rtol: `f64`
+// /// 
+// /// numiter: `i32`
+// pub fn calc_mission_delta_v(
+//     start_date_time: DateTime<Utc>,
+//     stop_date_time: DateTime<Utc>,
+//     orbit_i: kepler::Orbit,
+//     orbit_f: kepler::Orbit,
+//     n_evals: u32,
+//     rtol: f64,
+//     numiter: i32
+// ) -> f64 {
+//     let t_start: f64 = start_date_time.timestamp() as f64;
+//     let t_end: f64 = stop_date_time.timestamp() as f64;
+//     let time_step: f64 = (t_end - t_start) / n_evals as f64;
+//     let eval_times: [f64; 2] = [t_start, t_end];  
+//     for i_val in 0..n_evals{
+//         let tof: f64 = time_step * i_val as f64;
+//         let dvs: Vec<(Vector3<f64>, Vector3<f64>)> = parallel_lambert(
+//             orbit_i, 
+//             orbit_f, 
+//             rtol, 
+//             numiter, 
+//             &eval_times,
+//             tof
+//         );
+//         // Iterate across eval times
+//         // 
+//         // let dv_tot = dvs[i_time, 0].norm() + dvs[i_time, 1].norm();
+//     }
 
 
-    return dv_tot
-}
+//     return dv_tot
+// }
 
 pub fn parallel_lambert(
     orbit_i: kepler::Orbit, 
@@ -144,13 +144,13 @@ pub fn parallel_lambert(
             numiter
         );
 
-        let dv_dpt: Vector3<f64> = helio_vs.1 - v_i;
-        let dv_arr: Vector3<f64> = helio_vs.2 - v_f;
+        let dv_dpt: Vector3<f64> = helio_vs.0 - v_i;
+        let dv_arr: Vector3<f64> = helio_vs.1 - v_f;
                     
         return (dv_dpt, dv_arr)
     });
 
-    let dvs: Vec<Vector3<f64>> = parallel_val_times.collect();
+    let dvs: Vec<_> = parallel_val_times.collect();
     return dvs
         
 }
@@ -251,7 +251,7 @@ pub fn lambert_solve(
         is_max, 
         rtol, 
         n_iter
-    );
+    ).unwrap();
 
     let x: f64 = xy[x_idx];
     let y: f64 = xy[y_idx];
@@ -298,24 +298,32 @@ fn find_xy(
     is_max: bool,
     rtol: f64,
     n_iter: i32
-) ->  Vec<f64>{
+) ->  Result<Vec<f64>, &'static str>{
     let mut m_max: f64 = time / PI; // floor to int
-    let t_00: f64 = lambda.acos() + lambda * (1. - lambda.powi(2)).sqrt();
+    let t_00: f64 = _lambda_to_t_0(lambda);
 
-    let mut t_min:  f64;
+    let mut t_min: f64 = 0.0;
     // Refine maximum number of revolutions if necessary
     if (time < t_00 + m_max * PI) && (m_max > 0.0){
-        _compute_t_min(lambda, &mut t_min, m_max);
+
+        _compute_t_min(
+            lambda, 
+            &mut t_min, 
+            m_max, 
+            rtol, 
+            n_iter
+        );
+
         if time < t_min{
             m_max = m_max - 1.0;
         }
     }
 
     if mean_motion > m_max{
-        // FIXME-TD: error out
+        Err::<Vec<f64>, &str>("Mean motion > max M");
     }
 
-    //  Initial guess
+    // Initial guess
     let x_0: f64 = _initial_guess(
         time, 
         lambda, 
@@ -323,7 +331,7 @@ fn find_xy(
         is_max
     );
 
-    //  Start Householder iterations from x_0 and find x, y
+    // Start Householder iterations from x_0 and find x, y
     let x: f64 = householder(
         x_0, 
         time, 
@@ -332,8 +340,9 @@ fn find_xy(
         rtol, 
         n_iter
     );
+
     let y: f64 = _compute_y(x, lambda);
-    return vec![x, y]
+    Ok(vec![x, y])
 
 }
 
@@ -345,11 +354,11 @@ fn _initial_guess(
     mean_motion:f64, 
     is_max: bool
 ) -> f64 {
-    let mut x_0: f64;
+    let x_0: f64;
 
     if mean_motion == 0.0 {
         // Singular Revolution
-        let t_00: f64 = lambda.acos() + lambda * (1. - lambda.powi(2)).sqrt();
+        let t_00: f64 = _lambda_to_t_0(lambda);
         let t_0: f64 = t_00 + mean_motion * PI;  
         let t_1: f64 = (2. as f64).powf(1. - lambda.powi(3)) / 3.;
 
@@ -371,7 +380,7 @@ fn _initial_guess(
             ((mean_motion +  1.) * PI) / (8. * time)
         ).powf(2. / 3.);
 
-        let v_r: f64= (
+        let v_r: f64 = (
             (8. * time) / (mean_motion * PI)
         ).powf(2. / 3.);   
         
@@ -390,45 +399,99 @@ fn _initial_guess(
     return x        
 }
 
+/// Map between lambda and t_0
+fn _lambda_to_t_0(lambda: f64) -> f64 {
+    lambda.acos() + lambda * (1. - lambda.powi(2)).sqrt()
+}
+
 /// Computer minimum T
-fn _compute_t_min(lambda: f64, t_min: &mut f64, m_max: f64) {
+fn _compute_t_min(
+    lambda: f64, 
+    t_min: &mut f64, 
+    m_max: f64, 
+    rtol: f64,
+    n_iter: i32
+) {
     if lambda == 1.0{
         let x_t_min: f64 = 0.0;
+        let y = _compute_y(x_t_min, lambda);
         *t_min = _tof_equation(
             x_t_min, 
-            0.0, 
+            y,
             lambda, 
             m_max
         );
-    }else{
+    } else {
         if m_max == 0.0 {
             *t_min = 0.0;
         }
         else{
             let x_i: f64 = 0.1;
-            let t_i: f64 = _tof_equation(
-                x_i, 
-                0.0, 
-                lambda,
-                m_max
-            );
+            let y_i = _compute_y(x_i, lambda);
 
             let x_t_min: f64 = _halley(
                 x_i, 
-                t_i, 
+                y_i, 
                 lambda, 
+                m_max,
                 rtol, 
-                numiter
+                n_iter
             );
 
+            let y_t_min = _compute_y(x_t_min, lambda);
             *t_min = _tof_equation(
                 x_t_min, 
-                0.0, 
+                y_t_min,
                 lambda,
                 m_max
             );
         }
     }
+}
+
+///
+fn _halley(
+    x_i: f64, 
+    y_i: f64, 
+    lambda: f64, 
+    m_max: f64,
+    rtol: f64, 
+    n_iter: i32
+) -> f64 {
+    let mut x_iter = x_i;
+    for _ in 1..n_iter
+    {
+        let t = _tof_equation(
+            x_iter, 
+            y_i,
+            lambda,
+            m_max
+        );
+        let fder = _tof_equation_d(
+            x_iter, 
+            y_i, 
+            t, 
+            lambda
+        );
+        let fder2 = _tof_equation_d2(
+            x_iter, 
+            y_i, 
+            t, 
+            fder, 
+            lambda
+        );
+
+        let x: f64 = x_i - 2_f64 * t * fder / (2_f64 * (fder2).powi(2) - t * fder2);
+        
+        if (x - x_iter).abs() < rtol{
+            return x
+        }
+
+        x_iter = x;
+    }
+
+    return x_iter
+
 }
 
 /// Calculate time of flight equations
@@ -449,12 +512,11 @@ fn _compute_t_min(lambda: f64, t_min: &mut f64, m_max: f64) {
 ///     Time of flight
 fn _tof_equation(
     x: f64, 
-    T0: f64, 
+    y: f64,
     lambda: f64, 
     mean_motion: f64
 )-> f64 {
-    let y: f64 = (1. - lambda.powi(2) * (1. - x.powi(2))).sqrt();
-    let mut time_: f64;
+    let time_: f64;
 
     let cond_0: bool = (0.6 as f64).sqrt() < x;
     let cond_1: bool = mean_motion == 0.0;
@@ -467,7 +529,7 @@ fn _tof_equation(
         time_ = (eta.powi(3) * q + 4. * lambda * eta) * 0.5;
 
     } else {
-        let mut psi: f64;
+        let psi: f64;
         if -1. <= x && x < 1. {
             psi = (x * y + lambda * (1. - x.powi(2))).acos();
 
@@ -484,7 +546,7 @@ fn _tof_equation(
         time_ = (((psi + mean_motion * PI)/sqrt_z) - x + lambda * y) / z
         
     }
-    return time_ - T0
+    return time_
 
 }
 
@@ -497,19 +559,19 @@ fn householder(
     rtol: f64,
     n_iter: i32
 ) -> f64 {
-    let mut x_0: f64  = x_0;
+    let mut x_0: f64 = x_0;
+
     for _ in 1..n_iter
     {
         let y: f64 = _compute_y(x_0, lambda);
-        let fval = _tof_equation_y(
+        let fval = _tof_equation(
             x_0, 
-            y, 
-            time, 
+            y,
             lambda, 
             mean_motion
         );
 
-        let t: f64 = fval + time;
+        let t: f64 = fval - time;
         let fder: f64 = _tof_equation_d(
             x_0, 
             y, 
@@ -526,7 +588,6 @@ fn householder(
         let fder3: f64 = _tof_equation_d3(
             x_0, 
             y, 
-            t, 
             fder, 
             fder2, 
             lambda
@@ -546,7 +607,7 @@ fn householder(
         x_0 = x
 
     }
-    return x
+    return x_0
 
 }
 
@@ -587,7 +648,6 @@ fn _tof_equation_d2(
 fn _tof_equation_d3(
     x_0: f64, 
     y: f64, 
-    time: f64, 
     fder: f64, 
     fder2: f64, 
     lambda: f64
