@@ -4,8 +4,8 @@ Space time related functions
 
 use nalgebra::{Vector3, Matrix3};
 use std::f64::consts::PI;
-use chrono::{DateTime, NaiveDateTime, NaiveDate, NaiveTime, Datelike, Timelike, Utc};
-use polars::prelude::*;
+use chrono::prelude::*;
+// use polars::prelude::*;
 
 use crate::donnager::constants as cst;
 
@@ -256,44 +256,44 @@ impl SurfacePoint{
 
 }
 
-/// Get ephemeris dataframe
-pub fn get_ephemeris() -> DataFrame {
+// /// Get ephemeris dataframe
+// pub fn get_ephemeris() -> DataFrame {
 
-    let ephemeris = df! (
-        "number" => &[1, 2, 3, 4, 5, 6, 7, 8],
-        "name" => &[
-            "Mercury", "Venus", "Earth", "Mars", 
-            "Jupiter", "Saturn", "Uranus", "Neptune"],
-        "group" => &[
-            "Inner", "Inner", "Inner", "Inner", 
-            "Outer", "Outer", "Outer", "Outer"],
-        "type" => &[
-            "Rocky", "Rocky", "Rocky", "Rocky", 
-            "Gas Giant", "Gas Giant", "Ice Giant", "Ice Giant"],
-        "mass" => &[
-            cst::MERCURY::MASS, 
-            cst::VENUS::MASS, 
-            cst::EARTH::MASS, 
-            cst::MARS::MASS, 
-            cst::JUPITER::MASS, 
-            cst::SATURN::MASS, 
-            cst::URANUS::MASS, 
-            cst::NEPTUNE::MASS
-        ],
-        "equatorial_radius" => &[
-            cst::MERCURY::RADIUS_EQUATOR,
-            cst::VENUS::RADIUS_EQUATOR,
-            cst::EARTH::RADIUS_EQUATOR,
-            cst::MARS::RADIUS_EQUATOR,
-            cst::JUPITER::RADIUS_EQUATOR,
-            cst::SATURN::RADIUS_EQUATOR,
-            cst::URANUS::RADIUS_EQUATOR,
-            cst::NEPTUNE::RADIUS_EQUATOR
-        ],
-    ).unwrap();
+//     let ephemeris = df! (
+//         "number" => &[1, 2, 3, 4, 5, 6, 7, 8],
+//         "name" => &[
+//             "Mercury", "Venus", "Earth", "Mars", 
+//             "Jupiter", "Saturn", "Uranus", "Neptune"],
+//         "group" => &[
+//             "Inner", "Inner", "Inner", "Inner", 
+//             "Outer", "Outer", "Outer", "Outer"],
+//         "type" => &[
+//             "Rocky", "Rocky", "Rocky", "Rocky", 
+//             "Gas Giant", "Gas Giant", "Ice Giant", "Ice Giant"],
+//         "mass" => &[
+//             cst::MERCURY::MASS, 
+//             cst::VENUS::MASS, 
+//             cst::EARTH::MASS, 
+//             cst::MARS::MASS, 
+//             cst::JUPITER::MASS, 
+//             cst::SATURN::MASS, 
+//             cst::URANUS::MASS, 
+//             cst::NEPTUNE::MASS
+//         ],
+//         "equatorial_radius" => &[
+//             cst::MERCURY::RADIUS_EQUATOR,
+//             cst::VENUS::RADIUS_EQUATOR,
+//             cst::EARTH::RADIUS_EQUATOR,
+//             cst::MARS::RADIUS_EQUATOR,
+//             cst::JUPITER::RADIUS_EQUATOR,
+//             cst::SATURN::RADIUS_EQUATOR,
+//             cst::URANUS::RADIUS_EQUATOR,
+//             cst::NEPTUNE::RADIUS_EQUATOR
+//         ],
+//     ).unwrap();
 
-    return ephemeris
-}
+//     return ephemeris
+// }
 
 
 /// Calculate inertial to corotational frame rotation matrix
@@ -349,28 +349,31 @@ pub fn calc_earth_day_length(
     longitude_deg: f64,
     julian_day: i32
 ) -> f64 {
+    let cycle_to_deg = cst::CYCLES_TO_DEGREES;
+    let cycle_to_rad = cycle_to_deg * cst::RAD_TO_DEG;
+    let ax_tilt = cst::EARTH::AXIAL_TILT;
+
     let j2000_days: f64 = (julian_day as f64) - cst::J2000_DAY;
-    let j_star: f64 = j2000_days - longitude_deg / cst::CYCLES_TO_DEGREES;
+    let j_star: f64 = j2000_days - longitude_deg / cycle_to_deg;
     
     // FIXME-TD: remove `magic numbers`
-    let m: f64 = (357.5291 + 0.98560028 * j_star) % cst::CYCLES_TO_DEGREES;
+    let m: f64 = (357.5291 + 0.98560028 * j_star) % cycle_to_deg;
     let equat_center: f64 = 1.9148*(
         m.sin()) + 0.02*((2.*m).sin()) + 0.0003*((3.*m).sin()
     );
     let earth_tilt_adjust: f64 = (
-        m + equat_center + cst::CYCLES_TO_DEGREES / 2. + 
-        cst::EARTH::ARG_PERIHELION) % cst::CYCLES_TO_DEGREES;
+        m + equat_center + cycle_to_deg / 2. + 
+        cst::EARTH::ARG_PERIHELION) % cycle_to_deg;
 
-    let sun_declination_rad: f64 = (
-        earth_tilt_adjust.sin() * (cst::EARTH::AXIAL_TILT).sin()
-    ).asin();
-    let tan_lattitude: f64 = (lattitude_deg * cst::DEG_TO_RAD).tan();
-    let hour_angle_rad: f64 = (
-        -(sun_declination_rad).tan() * tan_lattitude
-    ).acos();
-    let hours_per_radian: f64 = (
-        cst::EARTH::SOLAR_DAY / cst::CYCLES_TO_DEGREES * cst::RAD_TO_DEG
-    );
+    let sun_dec_sin: f64 = earth_tilt_adjust.sin() * ax_tilt.sin();
+    let sun_dec_rad: f64 = sun_dec_sin.asin();
+
+    let tan_lat: f64 = (lattitude_deg * cst::DEG_TO_RAD).tan();
+    let hour_angle_cos: f64 = -(sun_dec_rad).tan() * tan_lat;
+    let hour_angle_rad: f64 = hour_angle_cos.acos();
+
+    let hours_per_radian: f64 = cst::EARTH::SOLAR_DAY / cycle_to_deg * cycle_to_rad;
+
     let daylight_hours: f64 = hour_angle_rad * hours_per_radian;
     return daylight_hours
 }
@@ -585,7 +588,7 @@ pub fn ymd_hms_to_datetime(
     let time: NaiveTime = NaiveTime::from_hms_opt(hour, min, sec).unwrap();
 
     let dt: NaiveDateTime = NaiveDateTime::new(date, time);
-    let date_time: DateTime::<Utc> = DateTime::<Utc>::from_utc(dt, Utc); 
+    let date_time: DateTime::<Utc> = DateTime::from_naive_utc_and_offset(dt, Utc); 
     return date_time
 }
 
