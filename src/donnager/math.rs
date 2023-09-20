@@ -57,11 +57,11 @@ pub fn stumpff_analytic(t:  f64) -> Vec<f64> {
 }
 
 
-fn error_ck(t: f64, k:  u32,  n:  u32) -> f64{
-    let base: u32 = 2 * n + k  + 2;
-    let eps: f64 = (t.powi(n as i32) / (factorial(base) as f64)).abs() ;
-    return eps
-}
+// fn error_ck(t: f64, k:  u32,  n:  u32) -> f64{
+//     let base: u32 = 2 * n + k  + 2;
+//     let eps: f64 = (t.powi(n as i32) / (factorial(base) as f64)).abs() ;
+//     return eps
+// }
 
 /// Factorial
 /// 

@@ -44,7 +44,7 @@ fn main() {
     };
 
     let p_lla: Vector3<f64> = xyzt::ecef_to_lla(
-        motion_ecef[0], 
+        motion_ecef, 
         earth
     );
     

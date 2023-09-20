@@ -1,8 +1,7 @@
 /*
 Interplanetary Mission Planner
 */
-use std::{f64::consts::PI, error::Error};
-use chrono::{DateTime, Utc};
+use std::f64::consts::PI;
 use nalgebra::{Vector3};
 use rayon::prelude::*;
 
@@ -223,8 +222,8 @@ pub fn lambert_solve(
     let is_clockwise: bool = u_h[z_idx] < 0.0;
     let min: f64 = (1. as f64).min(c_norm / semi_perim);
     let mut lambda_mut: f64 = prograde_sign * (1.0 - min).sqrt();
-    let mut u_t_i_mut: Vector3<f64>;
-    let mut u_t_f_mut: Vector3<f64>;
+    let u_t_i_mut: Vector3<f64>;
+    let u_t_f_mut: Vector3<f64>;
 
     if is_clockwise {
         lambda_mut = -lambda_mut;
@@ -320,7 +319,7 @@ fn find_xy(
     }
 
     if mean_motion > m_max{
-        Err::<Vec<f64>, &str>("Mean motion > max M");
+        let _ = Err::<Vec<f64>, &str>("Mean motion > max M");
     }
 
     // Initial guess
@@ -686,5 +685,47 @@ mod interplan_tests {
     //     // let stop_date
     // }
 
+    #[test]
+    fn test_find_xy(){
+        let time = 0.;
+        let mean_motion = 50.234;
+        let lambda = 0.;
+        let is_max = true;
+        let rtol = 0.00000001;
+        let n_iter  = 1000;
 
+        let xy = find_xy(
+            time,
+            mean_motion,
+            lambda,
+            is_max,
+            rtol,
+            n_iter
+        );
+    }
+
+
+    #[test]
+    fn test_lambert_solve(){
+
+        let grav_param = cst::EARTH::GRAV_PARAM;
+        let r_i: Vector3<f64> = Vector3::from_vec(vec![0. as f64, 0. as f64, 1.5 * cst::EARTH::RADIUS_EQUATOR]);
+        let r_f: Vector3<f64> = Vector3::from_vec(vec![0. as f64, 1.4 * cst::EARTH::RADIUS_EQUATOR, 0. as f64]);
+        let tof  = 235.8776;
+        let prograde_sign = 1.;
+        let is_max= true;
+        let rtol = 1e-6;
+        let n_iter = 1000;
+
+        let solve = lambert_solve(
+            grav_param,
+            r_i,
+            r_f,
+            tof,
+            prograde_sign,
+            is_max,
+            rtol,
+            n_iter,
+        );
+    }
 }

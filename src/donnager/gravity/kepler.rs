@@ -397,8 +397,6 @@ impl Orbit {
             },
             xyzt::ReferenceFrames::RotationalCartesian => {
                 let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_inertial_rotam();
-                let eci_pos: Vector3<f64> = pfcl_eci_rotam * pos;
-                let eci_vel: Vector3<f64> = pfcl_eci_rotam * vel;
 
                 let new_time: f64 = self.epoch.timestamp() as f64 + time_since_epoch;
                 // FIXME-TD: vector of datetime
@@ -426,7 +424,6 @@ impl Orbit {
             xyzt::ReferenceFrames::Planetodetic => {
                 let pfcl_eci_rotam: Matrix3<f64> = self.calc_pfcl_inertial_rotam();
                 let eci_pos: Vector3<f64> = pfcl_eci_rotam * pos;
-                let eci_vel: Vector3<f64> = pfcl_eci_rotam * vel;
 
                 let new_time: f64 = self.epoch.timestamp() as f64 + time_since_epoch;
                 let new_epoch_datetime: DateTime<Utc> = Utc.timestamp_opt(

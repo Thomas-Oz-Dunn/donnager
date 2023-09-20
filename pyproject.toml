@@ -7,7 +7,7 @@ build-backend = "maturin"
 name = "donnager"
 description = "Blazingly fast astrodynamics calculations in Python and Rust"
 readme = "README.md"
-license = { file = "LICENSE" }
+license = { file = "LICENSE.txt" }
 requires-python = ">=3.7"
 
 [tool.maturin]

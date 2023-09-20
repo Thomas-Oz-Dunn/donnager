@@ -14,10 +14,6 @@ edition = "2021"
 name = "donnager"
 
 [[bin]]
-name = "aldrin_cyclers"
-path = "src/demos/aldrin_cycle.rs"
-
-[[bin]]
 name = "launch_cost"
 path = "src/demos/launch_cost.rs"
 
@@ -29,10 +25,6 @@ path = "src/demos/n_body.rs"
 name = "orbital_sim"
 path = "src/demos/orbital_sim.rs"
 
-[[bin]]
-name = "next_overhead_pass"
-path = "src/demos/next_overhead_pass.rs"
-
 [dependencies]
 nalgebra = "0.31.4"
 plotters = "0.3.4"
@@ -40,4 +32,4 @@ chrono = "0.4.23"
 # polars = "0.31.0"
 rayon = "1.7.0"
 parse-tle = "0.1.1"
-clap = "4.4.0"
+clap = { version = "4.4.0", features = ["derive"] }
