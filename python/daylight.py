@@ -14,7 +14,7 @@ if __name__ == '__main__':
     hours = dgr.calc_earth_day_length(
         lattitude_deg=mesh_lats,
         longitude_deg=longs,
-        days,
+        days=mesh_days,
     )
 
     plt.imshow(hours)
