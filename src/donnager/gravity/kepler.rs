@@ -14,13 +14,6 @@ use crate::donnager::{
     constants as cst
 };
 
-
-#[pymodule]
-#[pyo03(name="kepler")]
-fn interplan(_py: Python<'_>, m:  &PyModule) -> PyResult<()>{
-    m.add_class::<Orbit>?;
-    Ok(())
-}
 pub struct Maneuver{
     pub delta_v: Vector3<f64>,
     pub act_time: f64
