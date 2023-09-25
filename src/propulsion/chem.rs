@@ -1,7 +1,7 @@
 /*
 Chemistry calculations
 */
-use crate::donnager::propulsion::atom;
+use crate::propulsion::atom;
 
 pub struct Chemical{
     name: String,

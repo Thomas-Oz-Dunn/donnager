@@ -11,6 +11,7 @@ repository = "https://github.com/Thomas-Oz-Dunn/donnager"
 edition = "2021"
 
 [lib]
+path = "src/mod.rs"
 name = "donnager"
 crate-type = ["cdylib"]
 

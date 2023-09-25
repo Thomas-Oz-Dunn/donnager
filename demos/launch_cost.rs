@@ -4,7 +4,7 @@ Fuel calculations for launch
 
 use nalgebra::Vector3;
 
-use donnager::donnager::{
+use donnager::{
     constants as cst, 
     spacetime as xyzt, 
     propulsion as prop, 

@@ -5,7 +5,7 @@ use std::f64::consts::PI;
 use nalgebra::{Vector3};
 use rayon::prelude::*;
 
-use crate::donnager::{
+use crate::{
     gravity::kepler as kepler, 
     spacetime as xyzt,
     math as math
