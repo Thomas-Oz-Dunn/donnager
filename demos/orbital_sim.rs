@@ -4,7 +4,7 @@ Orbital systems modelling Application in Rust
 use std::{fs::File, io::{BufWriter, Write}};
 use nalgebra::Vector3;
 
-use donnager::{
+use donnager_rs::{
     gravity as grav, 
     spacetime as xyzt, 
     constants as cst

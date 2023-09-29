@@ -5,7 +5,7 @@ Effects and interactions of the electromagnetic field
 use std::f64::consts::PI;
 use nalgebra::Vector3;
 
-use crate::constants as cst;
+use crate::donnager_rs::constants as cst;
 
 /// Calculate apparent brightness of object
 /// 

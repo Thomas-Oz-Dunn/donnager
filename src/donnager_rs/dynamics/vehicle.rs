@@ -4,7 +4,7 @@ Vehicle modelling
 
 use nalgebra::Vector3;
 
-use crate::{
+use crate::donnager_rs::{
     propulsion as prop, 
     spacetime as xyzt
 };
