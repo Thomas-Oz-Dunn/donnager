@@ -11,20 +11,21 @@ repository = "https://github.com/Thomas-Oz-Dunn/donnager"
 edition = "2021"
 
 [lib]
-name = "donnager_rs"
-crate-type = ["cdylib"]
+name = "donnager"
+# Debug python c dynamic library and rust nativve library
+# crate_type = ['cdylib]
 
 [[bin]]
 name = "launch_cost"
-path = "demos/launch_cost.rs"
+path = "src/bin/launch_cost.rs"
 
 [[bin]]
 name = "n_body"
-path = "demos/n_body.rs"
+path = "src/bin/n_body.rs"
 
 [[bin]]
 name = "orbital_sim"
-path = "demos/orbital_sim.rs"
+path = "src/bin/orbital_sim.rs"
 
 [dependencies]
 nalgebra = "0.31.4"

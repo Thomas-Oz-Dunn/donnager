@@ -9,7 +9,7 @@ use plotters::prelude::*;
 use std::{f64::consts::PI, vec, ops::Range};
 use parse_tle::tle::*;
 
-use crate::donnager_rs::{
+use crate::donnager::{
     spacetime as xyzt, 
     constants as cst
 };

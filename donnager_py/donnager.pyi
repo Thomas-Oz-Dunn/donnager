@@ -1,5 +1,6 @@
 # rust-python interface file 
 import numpy as np
+import donnagerpy
 
 def date_to_julian_day_num(
     year: int,
@@ -34,3 +35,4 @@ def calc_earth_day_length(
     
     julian_day
     """
+    donnagerpy.calc_earth_day_length()

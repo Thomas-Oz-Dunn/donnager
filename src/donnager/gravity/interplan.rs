@@ -5,7 +5,7 @@ use std::f64::consts::PI;
 use nalgebra::{Vector3};
 use rayon::prelude::*;
 
-use crate::donnager_rs::{
+use crate::donnager::{
     gravity::kepler as kepler, 
     spacetime as xyzt,
     math as math
@@ -661,7 +661,7 @@ fn _tof_equation_d3(
 mod interplan_tests {
 
     use super::*;
-    use crate::donnager_rs::constants as cst;
+    use crate::donnager::constants as cst;
 
     #[test]
     fn test_calc_esc_vel()

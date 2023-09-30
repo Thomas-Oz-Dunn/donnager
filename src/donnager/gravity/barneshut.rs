@@ -5,7 +5,7 @@ Barnes hut multibody propogator
 pub const TOLERANCE: f64 = 1e-16;
 
 use nalgebra::Vector3;
-use crate::donnager_rs::{
+use crate::donnager::{
     spacetime as xyzt, 
     constants as cst
 };

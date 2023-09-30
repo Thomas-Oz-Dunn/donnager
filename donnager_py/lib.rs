@@ -1,8 +1,5 @@
 
-
 use pyo3::prelude::*;
-
-use donnager as donnager_rs;
 
 #[pyfunction]
 fn calc_earth_day_length(
@@ -10,7 +7,7 @@ fn calc_earth_day_length(
     longitude_deg: f64, 
     julian_day: i32
 ) -> PyResult<f64> {
-    let hours = donnager_rs::spacetime::calc_earth_day_length(
+    let hours = spacetime::calc_earth_day_length(
         lattitude_deg, 
         longitude_deg, 
         julian_day);

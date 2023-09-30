@@ -1,1 +1,1 @@
-pub mod donnager_rs;
+pub mod donnager;

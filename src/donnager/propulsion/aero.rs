@@ -2,7 +2,7 @@
 Fluid dynamics
 */
 
-use crate::donnager_rs::constants as cst;
+use crate::donnager::constants as cst;
 
 /// Calculate mass flow of nozzle
 /// 

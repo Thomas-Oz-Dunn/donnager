@@ -2,7 +2,7 @@
 Atomic physics functions
 */
 
-use crate::donnager_rs::constants as cst;
+use crate::donnager::constants as cst;
 
 pub struct Element{
     pub name: &'static str,
