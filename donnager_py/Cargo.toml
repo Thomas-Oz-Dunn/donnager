@@ -1,0 +1,15 @@
+# Donnager manifest file
+
+[package]
+name = "donnager_py"
+version = "0.1.0"
+license = "MIT"
+
+edition = "2021"
+
+[lib]
+name = "donnager"
+rate_type = ['cdylib']
+
+[dependencies.donnager]
+path = '../src'

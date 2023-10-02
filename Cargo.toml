@@ -12,8 +12,6 @@ edition = "2021"
 
 [lib]
 name = "donnager"
-# Debug python c dynamic library and rust nativve library
-# crate_type = ['cdylib]
 
 [[bin]]
 name = "launch_cost"
