@@ -15,7 +15,7 @@ fn calc_earth_day_length(
 }
 
 #[pymodule]
-fn donnagerpy(
+fn donnager_py(
     _py: Python<'_>, 
     m: &PyModule
 )-> PyResult<()> {

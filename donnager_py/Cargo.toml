@@ -8,7 +8,8 @@ license = "MIT"
 edition = "2021"
 
 [lib]
-name = "donnager"
+name = "donnager_py"
+path = './lib.rs'
 rate_type = ['cdylib']
 
 [dependencies.donnager]
