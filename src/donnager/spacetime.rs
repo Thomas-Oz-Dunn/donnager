@@ -329,20 +329,8 @@ pub fn calc_earth_day_length(
     longitude_deg: f64,
     julian_day: i32
 ) -> f64 {
-    let j2000_days: f64 = (julian_day as f64) - cst::J2000_DAY;
-    let j_star: f64 = j2000_days - longitude_deg / cst::CYCLES_TO_DEGREES;
-    
-    // FIXME-TD: remove `magic numbers`
-    let m: f64 = (357.5291 + 0.98560028 * j_star) % cst::CYCLES_TO_DEGREES;
-    let equat_center: f64 = 1.9148*(m.sin()) + 0.02*((2.*m).sin()) + 0.0003*((3.*m).sin());
-    let earth_tilt_adjust: f64 = (
-        m + equat_center + cst::CYCLES_TO_DEGREES / 2. + 
-        cst::EARTH::ARG_PERIHELION) % cst::CYCLES_TO_DEGREES;
-
-    let sun_declination_rad: f64 = (
-        earth_tilt_adjust.sin() * (cst::EARTH::AXIAL_TILT).sin()).asin();
     let tan_lattitude: f64 = (lattitude_deg * cst::DEG_TO_RAD).tan();
-    let hour_angle_rad: f64 = (-(sun_declination_rad).tan() * tan_lattitude).acos();
+    let hour_angle_rad: f64 = (-(calc_sun_declination_from_long(julian_day, longitude_deg)).tan() * tan_lattitude).acos();
     let hours_per_radian: f64 = cst::EARTH::SOLAR_DAY / cst::CYCLES_TO_DEGREES * cst::RAD_TO_DEG;
     let daylight_hours: f64 = hour_angle_rad * hours_per_radian;
     return daylight_hours
@@ -769,6 +757,64 @@ pub fn enu_to_ecef(
     let ecef: Vector3<f64> = vec_ecef - pos_ecef;
     return ecef
 }
+
+pub fn is_eclipsed(
+    body_radius: f64,
+    object_radius: f64
+) -> bool {
+    let sun_vec;
+
+    let right_asc_sun: f64;
+    let dec_sun: f64;
+
+    let phi_eclipse: f64 = PI - (body_radius/(object_radius)).asin();
+    let phi_sun_body_obj: f64 = 
+    return false;
+}
+
+
+pub fn calc(julian_day: i32){
+    let j2000_days: f64 = (julian_day as f64) - cst::J2000_DAY;
+    let mean_long_deg: f64 = 280.460 + 0.98560028 * j2000_days;
+    let mean_anom_rad: f64 = cst::to_radians(357.5291 + 0.98560028 * j2000_days);
+
+    let ecliptic_long_rad: f64 = mean_long_deg + calc_ecliptic_lon(mean_anom_rad) * cst::DEG_TO_RAD;
+    let ecliptic_lat: f64 = calc_ecliptic_lat(mean_anom_rad);
+
+    let obliquity: f64 = 23.439 - 0.0000004 * j2000_days;
+    let right_asvc: f64 = (obliquity.cos() * ecliptic_long_rad.sin()).atan2(ecliptic_long_rad.cos());
+    let declin: f64 = (obliquity.sin() * ecliptic_long_rad.sin()).asin();
+
+}
+
+pub fn calc_ecliptic_lon(mean_anom_rad: f64) -> f64 {
+    return 1.9148 * mean_anom_rad.sin() + 0.02 * (2.*mean_anom_rad).sin();
+}
+
+pub fn calc_ecliptic_lat(mean_anom_rad: f64) -> f64 {
+    return 0.0003 * (3.*mean_anom_rad).sin();
+}
+
+pub fn calc_sun_declination_from_long(
+    julian_day: i32, 
+    longitude_deg: f64
+) -> f64 {
+    let j2000_days: f64 = (julian_day as f64) - cst::J2000_DAY;
+    let j_day_and_long: f64 = j2000_days - longitude_deg / cst::CYCLES_TO_DEGREES;
+    
+    // FIXME-TD: define `magic numbers`
+    let mean_anom_rad: f64 = (357.5291 + 0.98560028 * j_day_and_long) % cst::CYCLES_TO_DEGREES;
+    let equat_center: f64 = calc_ecliptic_lon(mean_anom_rad) + calc_ecliptic_lat(mean_anom_rad);
+
+    // FIXME-TD: check
+    let earth_tilt_adjust: f64 = (
+        mean_anom_rad + equat_center + PI + cst::EARTH::ARG_PERIHELION) % (2. * PI);
+
+    let sun_declination_rad: f64 = (earth_tilt_adjust.sin() * cst::EARTH::AXIAL_TILT.sin()).asin();
+    return sun_declination_rad;
+}
+
+
 
 #[cfg(test)]
 mod spacetime_tests {

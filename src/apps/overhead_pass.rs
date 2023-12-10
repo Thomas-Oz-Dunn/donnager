@@ -56,6 +56,6 @@ fn main() {
         p_ecef, 
         cst::EARTH::RADIUS_EQUATOR, 
         cst::EARTH::SURFACE_ECC
-    );
+    ); 
 
 }
