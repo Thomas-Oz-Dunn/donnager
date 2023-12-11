@@ -288,21 +288,18 @@ pub fn get_ephemeris() -> DataFrame {
 ///     Rotation rate of body in radians per day
 pub fn calc_inertial_rotational_rotam(
     date_time: DateTime<Utc>,
-    rot_rate_rad_day: f64
+    rad_per_day: f64
 ) -> Matrix3<f64> {
-    let year = date_time.year();
-    let month = date_time.month() as i32;
-    let day = date_time.day() as i32;
+    let year: u32 = date_time.year() as u32;
+    let month: u32 = date_time.month();
+    let day: u32 = date_time.day();
 
-    let hours = date_time.hour() as f64;
-    let minutes = date_time.minute() as f64;
-    let seconds = date_time.second() as f64;
+    let hours: u32 = date_time.hour();
+    let minutes: u32 = date_time.minute();
+    let seconds: u32 = date_time.second();
 
-    let julian_day: f64 = date_to_julian_day_num(year, month, day) as f64;
-
-    let sidereal_time: f64 = (hours + (minutes + seconds / 60.) / 60.) / 24.;
-    let theta: f64 = 
-        rot_rate_rad_day * (julian_day + sidereal_time - cst::J2000_DAY);
+    let j2000_days = ymdhms_to_j2000days(year, month, day, hours, minutes, seconds);
+    let theta: f64 = rad_per_day * j2000_days;
 
     let rotam: Matrix3<f64> = Matrix3::<f64>::new(
         theta.cos(), -theta.sin(), 0.,
@@ -310,6 +307,20 @@ pub fn calc_inertial_rotational_rotam(
         0., 0., 1.);
 
     return rotam
+}
+
+fn ymdhms_to_j2000days(
+    year: u32, 
+    month: u32, 
+    day: u32, 
+    hours: u32, 
+    minutes: u32, 
+    seconds: u32
+) -> f64 {
+    let julian_day: f64 = date_to_julian_day_num(year, month, day) as f64;
+    let sidereal_time: f64 = (hours + (minutes + seconds / 60) / 60) as f64 / 24.;
+    let j2000_days: f64 = julian_day + sidereal_time - cst::J2000_DAY;
+    return j2000_days;
 }
 
 /// Calculate hours of sunlight at lattitude
@@ -327,10 +338,10 @@ pub fn calc_inertial_rotational_rotam(
 pub fn calc_earth_day_length(
     lattitude_deg: f64,
     longitude_deg: f64,
-    julian_day: i32
+    j2000_days: f64
 ) -> f64 {
     let tan_lattitude: f64 = (lattitude_deg * cst::DEG_TO_RAD).tan();
-    let hour_angle_rad: f64 = (-(calc_sun_declination_from_long(julian_day, longitude_deg)).tan() * tan_lattitude).acos();
+    let hour_angle_rad: f64 = (-(calc_sun_declination_from_long(j2000_days, longitude_deg)).tan() * tan_lattitude).acos();
     let hours_per_radian: f64 = cst::EARTH::SOLAR_DAY / cst::CYCLES_TO_DEGREES * cst::RAD_TO_DEG;
     let daylight_hours: f64 = hour_angle_rad * hours_per_radian;
     return daylight_hours
@@ -446,14 +457,13 @@ fn check_if_leap_year(year: i32) -> bool {
 /// day: `i32`
 ///     Day of month
 pub fn date_to_julian_day_num(
-    year: i32,
-    month: i32,
-    day: i32
-) -> i32 {
+    year: u32,
+    month: u32,
+    day: u32
+) -> u32 {
     // FIXME-TD: fix magic numbers
-
-    let del_month: i32 = (month - 14) / 12; // Adjusts for jul & aug
-    let julian_day_num: i32 = (1461 * (year + 4800 + del_month))/4 
+    let del_month: u32 = (month - 14) / 12; // Adjusts for jul & aug
+    let julian_day_num: u32 = (1461 * (year + 4800 + del_month))/4 
         + (367 * (month - 2 - 12 * (del_month)))/12 
         - (3 * ((year + 4900 + del_month) / 100))/4 
         + day - 32075;
@@ -759,62 +769,78 @@ pub fn enu_to_ecef(
 }
 
 pub fn is_eclipsed(
+    date_time: DateTime<Utc>,
     body_radius: f64,
     object_radius: f64
-) -> bool {
-    let sun_vec;
+) -> bool {  
+    let year: u32 = date_time.year() as u32;
+    let month: u32 = date_time.month();
+    let day: u32 = date_time.day();
 
-    let right_asc_sun: f64;
-    let dec_sun: f64;
+    let hours: u32 = date_time.hour();
+    let minutes: u32 = date_time.minute();
+    let seconds: u32 = date_time.second();
 
-    let phi_eclipse: f64 = PI - (body_radius/(object_radius)).asin();
-    let phi_sun_body_obj: f64 = 
+    let j2000_days: f64 = ymdhms_to_j2000days(year, month, day, hours, minutes, seconds);
+    let sun_eci: Vector3<f64>  = calc_sun_norm_eci_vec(j2000_days);
+
+    let right_asc: f64 = sun_eci[1].atan2(sun_eci[0]);
+    let declin: f64 = sun_eci[2].asin();
+    
+    let phi_eclipse: f64 = PI - (body_radius / object_radius).asin();
+    
     return false;
 }
 
 
-pub fn calc(julian_day: i32){
-    let j2000_days: f64 = (julian_day as f64) - cst::J2000_DAY;
-    let mean_long_deg: f64 = 280.460 + 0.98560028 * j2000_days;
-    let mean_anom_rad: f64 = cst::to_radians(357.5291 + 0.98560028 * j2000_days);
+pub fn calc_sun_norm_eci_vec(
+    j2000_days: f64
+) -> Vector3<f64> {
+    let mean_long: f64 = cst::to_radians(280.460 + 0.98560028 * j2000_days);
+    let mean_anom: f64 = calc_julian_day_mean_anom(j2000_days);
 
-    let ecliptic_long_rad: f64 = mean_long_deg + calc_ecliptic_lon(mean_anom_rad) * cst::DEG_TO_RAD;
-    let ecliptic_lat: f64 = calc_ecliptic_lat(mean_anom_rad);
+    let ecliptic_long: f64 = mean_long + calc_ecliptic_lon(mean_anom);
 
-    let obliquity: f64 = 23.439 - 0.0000004 * j2000_days;
-    let right_asvc: f64 = (obliquity.cos() * ecliptic_long_rad.sin()).atan2(ecliptic_long_rad.cos());
-    let declin: f64 = (obliquity.sin() * ecliptic_long_rad.sin()).asin();
+    let obliquity: f64 = -(cst::EARTH::AXIAL_TILT + 0.0000004 * j2000_days);
 
-}
+    let eci_x_norm: f64 = ecliptic_long.cos();
+    let eci_y_norm: f64 = ecliptic_long.sin() * obliquity.cos();
+    let eci_z_norm: f64 = ecliptic_long.sin() * obliquity.sin();
 
-pub fn calc_ecliptic_lon(mean_anom_rad: f64) -> f64 {
-    return 1.9148 * mean_anom_rad.sin() + 0.02 * (2.*mean_anom_rad).sin();
-}
+    return Vector3::new(eci_x_norm, eci_y_norm, eci_z_norm);
 
-pub fn calc_ecliptic_lat(mean_anom_rad: f64) -> f64 {
-    return 0.0003 * (3.*mean_anom_rad).sin();
 }
 
 pub fn calc_sun_declination_from_long(
-    julian_day: i32, 
+    j2000_days: f64, 
     longitude_deg: f64
 ) -> f64 {
-    let j2000_days: f64 = (julian_day as f64) - cst::J2000_DAY;
     let j_day_and_long: f64 = j2000_days - longitude_deg / cst::CYCLES_TO_DEGREES;
     
-    // FIXME-TD: define `magic numbers`
-    let mean_anom_rad: f64 = (357.5291 + 0.98560028 * j_day_and_long) % cst::CYCLES_TO_DEGREES;
+    // FIXME-TD: Check cycles to radians conversion
+    let mean_anom_rad: f64 = calc_julian_day_mean_anom(j_day_and_long);
     let equat_center: f64 = calc_ecliptic_lon(mean_anom_rad) + calc_ecliptic_lat(mean_anom_rad);
 
-    // FIXME-TD: check
-    let earth_tilt_adjust: f64 = (
-        mean_anom_rad + equat_center + PI + cst::EARTH::ARG_PERIHELION) % (2. * PI);
+    // FIXME-TD: double check
+    let earth_tilt_adjust: f64 = (mean_anom_rad + equat_center + PI + cst::EARTH::ARG_PERIHELION) % (2. * PI);
 
     let sun_declination_rad: f64 = (earth_tilt_adjust.sin() * cst::EARTH::AXIAL_TILT.sin()).asin();
     return sun_declination_rad;
 }
 
+pub fn calc_julian_day_mean_anom(j2000_days: f64) -> f64 {
+    let deg_per_jday: f64 = 0.98560028;
+    let j2000_mean_anom_deg: f64 = 357.5291;
+    return cst::to_radians(j2000_mean_anom_deg + deg_per_jday * j2000_days);
+}
 
+pub fn calc_ecliptic_lon(mean_anom_rad: f64) -> f64 {
+    return cst::to_radians(1.9148 * mean_anom_rad.sin() + 0.02 * (2. * mean_anom_rad).sin());
+}
+
+pub fn calc_ecliptic_lat(mean_anom_rad: f64) -> f64 {
+    return cst::to_radians(0.0003 * (3. * mean_anom_rad).sin());
+}
 
 #[cfg(test)]
 mod spacetime_tests {
@@ -832,25 +858,31 @@ mod spacetime_tests {
 
     #[test]
     fn test_julian_day(){
-        let year: i32 = 2023;
-        let month: i32 = 2;
-        let day: i32 = 5;
+        let year: u32 = 2023;
+        let month: u32 = 2;
+        let day: u32 = 5;
 
-        let julian_day: i32 = date_to_julian_day_num(year, month, day);
+        let julian_day: u32 = date_to_julian_day_num(year, month, day);
         assert_eq!(julian_day, 2459981);
     
     }
 
     #[test]
     fn test_earth_day_length(){
-        let year: i32 = 2023;
-        let month: i32 = 3;
-        let day: i32 = 5;
+        let year: u32 = 2023;
+        let month: u32 = 3;
+        let day: u32 = 5;
         let long_deg: f64 = -83.7101;
         let lat_deg: f64 = 42.2929; 
+        let j2000_days: f64 = ymdhms_to_j2000days(
+            year, month, day, 0, 0, 0
+        );
 
-        let julian_day: i32 = date_to_julian_day_num(year, month, day);
-        let day_light_hrs: f64 = calc_earth_day_length(lat_deg, long_deg, julian_day);
+        let day_light_hrs: f64 = calc_earth_day_length(
+            lat_deg, 
+            long_deg, 
+            j2000_days
+        );
         assert_eq!(day_light_hrs, 8.403851475586468);
 
     }

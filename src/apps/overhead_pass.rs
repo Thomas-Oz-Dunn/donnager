@@ -40,6 +40,11 @@ fn main() {
     }
 
 
+
+
+    let j2000_days: f64 = julian_day - cst::J2000_DAY;
+
+
     let observer_ecef: Vector3<f64> = xyzt::planetodetic_to_cartesian_rotational(
         observer_lla, 
         cst::EARTH::RADIUS_EQUATOR, 

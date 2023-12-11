@@ -2,7 +2,6 @@
 Constants
 */
 
-// TODO-TD: Provide sources for every constant
 use std::f64::consts::PI;
 
 pub const CYCLES_TO_DEGREES: f64 = 360.;
@@ -47,6 +46,8 @@ pub const MILLI: f64 = 1e-3;
 pub const MICRO: f64 = 1e-6;
 pub const NANO: f64 = 1e-9;
 
+/// Astronomical Unit
+pub const AU: f64 = EARTH::ORBIT_SEMI_MAJOR;
 
 /// Newtonian Gravitational constant
 /// 
@@ -128,10 +129,10 @@ impl EARTH {
     pub const SIDEREAL_DAY: f64 = 23.9344696; // hours
     pub const ROT_RATE: f64 = 7.2921150e-5; // radians per second;
     pub const DAYS_PER_YEAR: f64 = 365.25;
-    pub const AXIAL_TILT: f64 = -23.44;
+    pub const AXIAL_TILT: f64 = -23.439;
 
     /// Orbital characteristics
-    pub const ORBIT_SEMI_MAJOR: f64 = 149.60e6; // km
+    pub const ORBIT_SEMI_MAJOR: f64 = 1.495978707e8; // km
     pub const ORBIT_ECC: f64 = 0.0167086;
     pub const ARG_PERIHELION: f64 = 102.9372 * DEG_TO_RAD;
     pub const INC: f64 = 0.0 * DEG_TO_RAD;
