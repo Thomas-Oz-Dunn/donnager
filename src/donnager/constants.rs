@@ -60,7 +60,8 @@ pub const GRAV_CONST: f64 = 6.6743015e-11; // m^3 * kg^-1 * s^-2
 /// Source:
 /// https://en.wikipedia.org/wiki/J2000
 pub const J2000_DAY: f64 = 2451545.0;
-
+pub const J2000_EARTH_MEAN_ANOMALY: f64 = 1.98627277778;
+pub const EARTH_MEAN_ANOMALY_PER_JDAY: f64 = 0.00547555711;
 
 /// Physical Constants of the Sun
 /// 

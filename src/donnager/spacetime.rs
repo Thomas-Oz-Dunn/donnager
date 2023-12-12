@@ -763,7 +763,8 @@ pub fn enu_to_ecef(
     let pos_ecef: Vector3<f64> = planetodetic_to_cartesian_rotational(
         pos_lla,
         equatorial_radius,
-        eccentricity);
+        eccentricity,
+    );
     let ecef: Vector3<f64> = vec_ecef - pos_ecef;
     return ecef
 }
@@ -781,12 +782,21 @@ pub fn is_eclipsed(
     let minutes: u32 = date_time.minute();
     let seconds: u32 = date_time.second();
 
-    let j2000_days: f64 = ymdhms_to_j2000days(year, month, day, hours, minutes, seconds);
-    let sun_eci: Vector3<f64>  = calc_sun_norm_eci_vec(j2000_days);
+    let j2000_days: f64 = ymdhms_to_j2000days(
+        year, 
+        month, 
+        day, 
+        hours, 
+        minutes, 
+        seconds,
+    );
+
+    let sun_eci: Vector3<f64> = calc_sun_norm_eci_vec(j2000_days);
+    let norma: Vector3<f64> = 
 
     let right_asc: f64 = sun_eci[1].atan2(sun_eci[0]);
     let declin: f64 = sun_eci[2].asin();
-    
+        
     let phi_eclipse: f64 = PI - (body_radius / object_radius).asin();
     
     return false;
@@ -796,16 +806,17 @@ pub fn is_eclipsed(
 pub fn calc_sun_norm_eci_vec(
     j2000_days: f64
 ) -> Vector3<f64> {
-    let mean_long: f64 = cst::to_radians(280.460 + 0.98560028 * j2000_days);
+    let mean_lon_deg: f64 = 280.460 + 0.98560028 * j2000_days;
+    let mean_lon: f64 = cst::to_radians(mean_lon_deg);
     let mean_anom: f64 = calc_julian_day_mean_anom(j2000_days);
 
-    let ecliptic_long: f64 = mean_long + calc_ecliptic_lon(mean_anom);
+    let ecliptic_lon: f64 = mean_lon + calc_ecliptic_lon(mean_anom);
 
     let obliquity: f64 = -(cst::EARTH::AXIAL_TILT + 0.0000004 * j2000_days);
 
-    let eci_x_norm: f64 = ecliptic_long.cos();
-    let eci_y_norm: f64 = ecliptic_long.sin() * obliquity.cos();
-    let eci_z_norm: f64 = ecliptic_long.sin() * obliquity.sin();
+    let eci_x_norm: f64 = ecliptic_lon.cos();
+    let eci_y_norm: f64 = ecliptic_lon.sin() * obliquity.cos();
+    let eci_z_norm: f64 = ecliptic_lon.sin() * obliquity.sin();
 
     return Vector3::new(eci_x_norm, eci_y_norm, eci_z_norm);
 
@@ -815,27 +826,32 @@ pub fn calc_sun_declination_from_long(
     j2000_days: f64, 
     longitude_deg: f64
 ) -> f64 {
-    let j_day_and_long: f64 = j2000_days - longitude_deg / cst::CYCLES_TO_DEGREES;
-    
-    // FIXME-TD: Check cycles to radians conversion
-    let mean_anom_rad: f64 = calc_julian_day_mean_anom(j_day_and_long);
-    let equat_center: f64 = calc_ecliptic_lon(mean_anom_rad) + calc_ecliptic_lat(mean_anom_rad);
+    let j_day_and_long: f64 = j2000_days - longitude_deg * cst::DEG_TO_RAD;
+    let mean_anom: f64 = calc_julian_day_mean_anom(j_day_and_long);
+    let ecliptic_lon: f64 = calc_ecliptic_lon(mean_anom);
+    let ecliptic_lat: f64 = calc_ecliptic_lat(mean_anom);
+    let equat_center: f64 = ecliptic_lon + ecliptic_lat;
 
     // FIXME-TD: double check
-    let earth_tilt_adjust: f64 = (mean_anom_rad + equat_center + PI + cst::EARTH::ARG_PERIHELION) % (2. * PI);
+    let tilt_factor: f64 = (
+        mean_anom + equat_center + PI + cst::EARTH::ARG_PERIHELION
+    ) % (2. * PI);
 
-    let sun_declination_rad: f64 = (earth_tilt_adjust.sin() * cst::EARTH::AXIAL_TILT.sin()).asin();
+    let sin_max_tilt: f64 = cst::EARTH::AXIAL_TILT.sin();
+    let earth_tilt_sin: f64 = tilt_factor.sin() * sin_max_tilt;
+    let sun_declination_rad: f64 = earth_tilt_sin.asin();
     return sun_declination_rad;
 }
 
 pub fn calc_julian_day_mean_anom(j2000_days: f64) -> f64 {
-    let deg_per_jday: f64 = 0.98560028;
-    let j2000_mean_anom_deg: f64 = 357.5291;
-    return cst::to_radians(j2000_mean_anom_deg + deg_per_jday * j2000_days);
+    let rad_per_jday: f64 = cst::EARTH_MEAN_ANOMALY_PER_JDAY;
+    return cst::J2000_EARTH_MEAN_ANOMALY + rad_per_jday * j2000_days;
 }
 
 pub fn calc_ecliptic_lon(mean_anom_rad: f64) -> f64 {
-    return cst::to_radians(1.9148 * mean_anom_rad.sin() + 0.02 * (2. * mean_anom_rad).sin());
+    let u_1_deg: f64 = 1.9148 * mean_anom_rad.sin();
+    let u_2_deg: f64 = 0.02 * (2. * mean_anom_rad).sin();
+    return cst::to_radians(u_1_deg + u_2_deg);
 }
 
 pub fn calc_ecliptic_lat(mean_anom_rad: f64) -> f64 {
