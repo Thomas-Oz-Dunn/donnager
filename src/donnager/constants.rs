@@ -119,8 +119,10 @@ pub struct EARTH;
 impl EARTH {
     /// Mass of the Earth in kilograms
     pub const MASS: f64 = 5.972e24; // kg
+
     /// Radius of Earth at equator in meters
     pub const RADIUS_EQUATOR: f64 = 6.378137e6; // m
+
     pub const RADIUS_POLE: f64 = 6.3567e6;
     
     /// Earth centered gravitational parameter
@@ -128,7 +130,9 @@ impl EARTH {
     pub const SURFACE_ECC: f64 = 0.08182;
     pub const SOLAR_DAY: f64 = 24.;
     pub const SIDEREAL_DAY: f64 = 23.9344696; // hours
-    pub const ROT_RATE: f64 = 7.2921150e-5; // radians per second;
+
+    /// Radians per second
+    pub const ROT_RATE: f64 = 7.2921150e-5;
     pub const DAYS_PER_YEAR: f64 = 365.25;
     pub const AXIAL_TILT: f64 = -23.439;
 
