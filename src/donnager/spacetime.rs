@@ -234,13 +234,12 @@ impl SurfacePoint{
         return delta_v
     }
 
-
 }
 
 /// Get ephemeris dataframe
-pub fn get_ephemeris() -> DataFrame {
+pub fn get_ephemeris_df() -> DataFrame {
 
-    let ephemeris = df! (
+    let ephemeris: DataFrame = df! (
         "number" => &[1, 2, 3, 4, 5, 6, 7, 8],
         "name" => &[
             "Mercury", "Venus", "Earth", "Mars", 
@@ -271,6 +270,16 @@ pub fn get_ephemeris() -> DataFrame {
             cst::URANUS::RADIUS_EQUATOR,
             cst::NEPTUNE::RADIUS_EQUATOR
         ],
+        "grav_param" => &[
+            cst::MERCURY::GRAV_PARAM,
+            cst::VENUS::GRAV_PARAM,
+            cst::EARTH::GRAV_PARAM,
+            cst::MARS::GRAV_PARAM,
+            cst::JUPITER::GRAV_PARAM,
+            cst::SATURN::GRAV_PARAM,
+            cst::URANUS::GRAV_PARAM,
+            cst::NEPTUNE::GRAV_PARAM,
+        ],
     ).unwrap();
 
     return ephemeris
@@ -289,18 +298,8 @@ pub fn get_ephemeris() -> DataFrame {
 pub fn calc_inertial_rotational_rotam(
     date_time: DateTime<Utc>,
     rad_per_day: f64
-) -> Matrix3<f64> {
-    let year: u32 = date_time.year() as u32;
-    let month: u32 = date_time.month();
-    let day: u32 = date_time.day();
-
-    let hours: u32 = date_time.hour();
-    let minutes: u32 = date_time.minute();
-    let seconds: u32 = date_time.second();
-
-    let j2000_days = ymdhms_to_j2000days(year, month, day, hours, minutes, seconds);
-    let theta: f64 = rad_per_day * j2000_days;
-
+) -> Matrix3<f64> { 
+    let theta: f64 = rad_per_day * datetime_to_j2000days(date_time);
     let rotam: Matrix3<f64> = Matrix3::<f64>::new(
         theta.cos(), -theta.sin(), 0.,
         theta.sin(), theta.cos(), 0.,
@@ -773,6 +772,17 @@ pub fn is_eclipsed_by_earth(
     p_eci: Vector3<f64>,
     date_time: DateTime<Utc>,
 ) -> bool {  
+    let j2000_days: f64 = datetime_to_j2000days(date_time);
+
+    let sun_eci: Vector3<f64> = calc_sun_norm_eci_vec(j2000_days);
+    let beta: f64 = sun_eci.dot(&p_eci).asin();
+
+    // TODO-TD: increase precision in radius calculation
+    let beta_eclipse: f64 = PI - (cst::EARTH::RADIUS_EQUATOR / p_eci.norm()).asin();
+    return beta > beta_eclipse;
+}
+
+fn datetime_to_j2000days(date_time: DateTime<Utc>) -> f64 {
     let year: u32 = date_time.year() as u32;
     let month: u32 = date_time.month();
     let day: u32 = date_time.day();
@@ -789,13 +799,7 @@ pub fn is_eclipsed_by_earth(
         minutes, 
         seconds,
     );
-
-    let sun_eci: Vector3<f64> = calc_sun_norm_eci_vec(j2000_days);
-    let beta: f64 = sun_eci.dot(&p_eci).asin();
-
-    // TODO-TD: increase precision in radius calculation
-    let beta_eclipse: f64 = PI - (cst::EARTH::RADIUS_EQUATOR / p_eci.norm()).asin();
-    return beta > beta_eclipse;
+    return j2000_days;
 }
 
 
@@ -887,7 +891,12 @@ mod spacetime_tests {
         let long_deg: f64 = -83.7101;
         let lat_deg: f64 = 42.2929; 
         let j2000_days: f64 = ymdhms_to_j2000days(
-            year, month, day, 0, 0, 0
+            year, 
+            month, 
+            day, 
+            0, 
+            0, 
+            0
         );
 
         let day_light_hrs: f64 = calc_earth_day_length(
