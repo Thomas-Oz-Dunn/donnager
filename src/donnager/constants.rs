@@ -136,10 +136,10 @@ impl EARTH {
     pub const ORBIT_SEMI_MAJOR: f64 = 1.495978707e8; // km
     pub const ORBIT_ECC: f64 = 0.0167086;
     pub const ARG_PERIHELION: f64 = 102.9372 * DEG_TO_RAD;
-    pub const INC: f64 = 0.0 * DEG_TO_RAD;
-    pub const RAAN: f64 = 0.0 * DEG_TO_RAD;
+    pub const INC: f64 = 0.0;
+    pub const RAAN: f64 = 0.0;
     pub const MEAN_MOTION: f64 = 0.98560028; // radians per day
-    pub const MEAN_ANOMALY: f64 = 0.0; // radians
+    pub const MEAN_ANOMALY: f64 = 0.0;
 }
 
 pub struct MOON;
@@ -150,9 +150,9 @@ impl MOON{
 
     pub const ORBIT_SEMI_MAJOR: f64 = 384400.0; // km   
     pub const ORBIT_ECC: f64 = 0.0549;
-    pub const INC: f64 = 5.145;
-    pub const RAAN: f64 = 125.08;
-    pub const ARG_PERIGEE: f64 = 318.15;
+    pub const INC: f64 = 5.145* DEG_TO_RAD;
+    pub const RAAN: f64 = 125.08 * DEG_TO_RAD;
+    pub const ARG_PERIGEE: f64 = 318.15 * DEG_TO_RAD;
 }
 
 

@@ -769,10 +769,9 @@ pub fn enu_to_ecef(
     return ecef
 }
 
-pub fn is_eclipsed(
+pub fn is_eclipsed_by_earth(
+    p_eci: Vector3<f64>,
     date_time: DateTime<Utc>,
-    body_radius: f64,
-    p_eci: Vector3<f64>
 ) -> bool {  
     let year: u32 = date_time.year() as u32;
     let month: u32 = date_time.month();
@@ -792,11 +791,11 @@ pub fn is_eclipsed(
     );
 
     let sun_eci: Vector3<f64> = calc_sun_norm_eci_vec(j2000_days);
+    let beta: f64 = sun_eci.dot(&p_eci).asin();
 
-    let beta: f64 = (sun_eci.dot(&p_eci)).asin();
-    let beta_eclipse: f64 = PI - (body_radius / p_eci.norm()).asin();
-    
-    return beta < beta_eclipse;
+    // TODO-TD: increase precision in radius calculation
+    let beta_eclipse: f64 = PI - (cst::EARTH::RADIUS_EQUATOR / p_eci.norm()).asin();
+    return beta > beta_eclipse;
 }
 
 
