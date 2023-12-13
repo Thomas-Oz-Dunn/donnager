@@ -772,7 +772,7 @@ pub fn enu_to_ecef(
 pub fn is_eclipsed(
     date_time: DateTime<Utc>,
     body_radius: f64,
-    object_radius: f64
+    p_eci: Vector3<f64>
 ) -> bool {  
     let year: u32 = date_time.year() as u32;
     let month: u32 = date_time.month();
@@ -792,14 +792,11 @@ pub fn is_eclipsed(
     );
 
     let sun_eci: Vector3<f64> = calc_sun_norm_eci_vec(j2000_days);
-    let norma: Vector3<f64> = 
 
-    let right_asc: f64 = sun_eci[1].atan2(sun_eci[0]);
-    let declin: f64 = sun_eci[2].asin();
-        
-    let phi_eclipse: f64 = PI - (body_radius / object_radius).asin();
+    let beta: f64 = (sun_eci.dot(&p_eci)).asin();
+    let beta_eclipse: f64 = PI - (body_radius / p_eci.norm()).asin();
     
-    return false;
+    return beta < beta_eclipse;
 }
 
 
