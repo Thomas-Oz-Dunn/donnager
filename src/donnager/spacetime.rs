@@ -540,7 +540,10 @@ pub fn ymd_hms_to_datetime(
     let time: NaiveTime = NaiveTime::from_hms_opt(hour, min, sec).unwrap();
 
     let dt: NaiveDateTime = NaiveDateTime::new(date, time);
-    let date_time: DateTime::<Utc> = DateTime::<Utc>::from_utc(dt, Utc); 
+    let date_time: DateTime::<Utc> = DateTime::from_naive_utc_and_offset(
+        dt, 
+        Utc
+    ); 
     return date_time
 }
 
