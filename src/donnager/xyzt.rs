@@ -459,13 +459,18 @@ pub fn date_to_julian_day_num(
     year: u32,
     month: u32,
     day: u32
-) -> u32 {
+) -> i32 {
+    // Be careful with Sign 
+    let i_y: i32 = year as i32;
+    let i_m: i32 = month as i32;
+    let i_d: i32 = day as i32;
+    
     // FIXME-TD: fix magic numbers
-    let del_month: u32 = (month - 14) / 12; // Adjusts for jul & aug
-    let julian_day_num: u32 = (1461 * (year + 4800 + del_month))/4 
-        + (367 * (month - 2 - 12 * (del_month)))/12 
-        - (3 * ((year + 4900 + del_month) / 100))/4 
-        + day - 32075;
+    let del_month: i32 = (i_m - 14) / 12; // Adjusts for jul & aug
+    let julian_day_num: i32 = (1461 * (i_y + 4800 + del_month))/4 
+        + (367 * (i_m - 2 - 12 * (del_month)))/12 
+        - (3 * ((i_y + 4900 + del_month) / 100))/4 
+        + i_d - 32075;
 
     return julian_day_num
 }
@@ -777,7 +782,7 @@ pub fn enu_to_azelrad(
 ) -> Vector3<f64> {
     let dis: f64 = p_enu.norm();
     let az: f64 = (p_enu[0]).atan2(p_enu[1]);
-    let el: f64 = (p_enu[3] / dis).asin();
+    let el: f64 = (p_enu[2] / dis).asin();
     return  Vector3::<f64>::new(az, el, dis);
 }
 
@@ -892,7 +897,7 @@ mod spacetime_tests {
         let month: u32 = 2;
         let day: u32 = 5;
 
-        let julian_day: u32 = date_to_julian_day_num(year, month, day);
+        let julian_day: i32 = date_to_julian_day_num(year, month, day);
         assert_eq!(julian_day, 2459981);
     
     }

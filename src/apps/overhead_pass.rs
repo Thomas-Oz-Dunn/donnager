@@ -15,16 +15,15 @@ fn main() {
     let observer_lla: Vector3<f64> = Vector3::new(
         28.396837, 
         -80.605659, 
-        0.0
+        10.
     );
     
-    let iss_str: &str = "
-    ISS (ZARYA)
-    1 25544U 98067A   08264.51782528 -.00002182  00000-0 -11606-4 0  2927
-    2 25544  51.6416 247.4627 0006703 130.5360 325.0288 15.72125391563537";
+    let sample_tle: &str = 
+    "POLAR                   
+    1 23802U 96013A   23343.66857320  .00000239  00000+0  00000+0 0  9998
+    2 23802  78.9918 236.4491 5800292 240.2923  50.2600  1.29847017132903";
 
-
-    let days_to_search: i64 = 7;
+    let days_to_search: i64 = 10;
     let is_verbose: bool = true;
 
     // ^ parse cli
@@ -39,7 +38,7 @@ fn main() {
         cst::EARTH::SURFACE_ECC
     );
 
-    let tle: tle::TLE = tle::parse(iss_str);
+    let tle: tle::TLE = tle::parse(sample_tle);
 
     let class_level: sgp4::Classification = match tle.classification.as_str() {
         "U" => sgp4::Classification::Unclassified,
@@ -120,7 +119,9 @@ fn main() {
         ); 
 
         let is_overhead: bool = p_enu[2] >= 0.;
-
+        if is_verbose && is_overhead {
+            println!("Look up")
+        }
         let observer_eci: Vector3<f64>  = eci_to_ecef.transpose() * observer_ecef;
         let is_night: bool = xyzt::is_eclipsed_by_earth(
             observer_eci, 
@@ -136,7 +137,7 @@ fn main() {
             let azelra: Vector3<f64> = xyzt::enu_to_azelrad(p_enu);
             azelrad.append(&mut vec![azelra]);
             times.append(&mut vec![eval_date_time]);
-            
+
             if is_verbose {
                 println!("{azelra}");
                 println!("{eval_date_time}");
