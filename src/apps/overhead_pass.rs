@@ -1,6 +1,6 @@
 use sgp4;
 use nalgebra::{Matrix3, Vector3};
-use chrono::{DateTime, Utc, NaiveDate, NaiveTime, NaiveDateTime};
+use chrono::{DateTime, Utc, NaiveDate, NaiveTime, NaiveDateTime, Duration};
 use parse_tle::tle;
 
 use donnager::donnager::{xyzt, constants as cst};
@@ -25,12 +25,20 @@ fn main() {
 
 
     let days_to_search: i64 = 7;
+    let is_verbose: bool = true;
 
     // ^ parse cli
 
     // v setup
 
     let now: DateTime<Utc> = Utc::now();
+    
+    let observer_ecef: Vector3<f64> = xyzt::planetodetic_to_cartesian_rotational(
+        observer_lla, 
+        cst::EARTH::RADIUS_EQUATOR, 
+        cst::EARTH::SURFACE_ECC
+    );
+
     let tle: tle::TLE = tle::parse(iss_str);
 
     let class_level: sgp4::Classification = match tle.classification.as_str() {
@@ -81,66 +89,59 @@ fn main() {
         &elements
     ).unwrap();
 
-
-    let min_0: i64 = (now - epoch.and_utc()).num_minutes();
-    let min_f: i64 = days_to_search * 24 * 60 + min_0;
+    let min_observer: i64 = (now - epoch.and_utc()).num_minutes();
+    let min_dur: i64 = days_to_search * 24 * 60;
     
     // ^ setup
 
     // v run
 
     // TODO-TD: Use .map()
-    let mut p_eci: Vec<Vector3<f64>> = vec![];
+    let mut azelrad: Vec<Vector3<f64>> = vec![];
+    let mut times: Vec<DateTime<Utc>> = vec![];
 
-    for min in min_0..min_f {
-        let minutes_since_epoch: sgp4::MinutesSinceEpoch = sgp4::MinutesSinceEpoch(min as f64);
-        let pos: [f64; 3] = constants.propagate(minutes_since_epoch).unwrap().position;
-        p_eci.append(&mut vec![Vector3::<f64>::new(pos[0], pos[1], pos[2])]);
-    }
-    // ^ run
+    for minut in 0..min_dur {
+        let eval_date_time: DateTime<Utc> = now + Duration::minutes(minut);
+        let min_since_epoch: sgp4::MinutesSinceEpoch = sgp4::MinutesSinceEpoch((minut + min_observer) as f64);
+        let pos: [f64; 3] = constants.propagate(min_since_epoch).unwrap().position;
+        let p_eci: Vector3<f64> = Vector3::<f64>::new(pos[0], pos[1], pos[2]);
 
-    // v output
+        let eci_to_ecef: Matrix3<f64> = xyzt::calc_inertial_rotational_rotam(
+            eval_date_time, 
+            cst::EARTH::ROT_RATE * 60. * 60. * 24. 
+        );
 
-    // TODO-TD: Vectorize and functionalize everything below for search space
+        let p_ecef: Vector3<f64> = eci_to_ecef * p_eci;
+        let p_enu: Vector3<f64> = xyzt::fixed_frame_to_enu(
+            observer_lla, 
+            p_ecef, 
+            cst::EARTH::RADIUS_EQUATOR, 
+            cst::EARTH::SURFACE_ECC
+        ); 
 
-    let observer_ecef: Vector3<f64> = xyzt::planetodetic_to_cartesian_rotational(
-        observer_lla, 
-        cst::EARTH::RADIUS_EQUATOR, 
-        cst::EARTH::SURFACE_ECC
-    );
+        let is_overhead: bool = p_enu[2] >= 0.;
 
-    let eci_to_ecef: Matrix3<f64> = xyzt::calc_inertial_rotational_rotam(
-        now, 
-        cst::EARTH::ROT_RATE * 60. * 60. * 24. 
-    );
+        let observer_eci: Vector3<f64>  = eci_to_ecef.transpose() * observer_ecef;
+        let is_night: bool = xyzt::is_eclipsed_by_earth(
+            observer_eci, 
+            eval_date_time
+        );
 
-    let p_ecef: Vector3<f64> = eci_to_ecef * p_eci;
-    let p_enu: Vector3<f64> = xyzt::fixed_frame_to_enu(
-        observer_lla, 
-        p_ecef, 
-        cst::EARTH::RADIUS_EQUATOR, 
-        cst::EARTH::SURFACE_ECC
-    ); 
+        let is_sunlit: bool = !xyzt::is_eclipsed_by_earth(
+            p_eci, 
+            eval_date_time
+        );
 
-    let is_overhead: bool = p_enu[2] >= 0.;
-    let observer_eci: Vector3<f64>  = eci_to_ecef.transpose() * observer_ecef;
-    let is_night: bool = xyzt::is_eclipsed_by_earth(
-        observer_eci, 
-        now
-    );
-    let is_sunlit: bool = !xyzt::is_eclipsed_by_earth(
-        p_eci, 
-        now
-    );
-    let is_visible: bool = is_sunlit && is_overhead && is_night;
-    if is_visible{
-        let azelrad: Vector3<f64> = xyzt::enu_to_azelrad(p_enu);
-        print!("{azelrad}");
-
-        let nowstring: String = now.to_string();
-        print!("{nowstring}");
-    } else {
-        // No sri
+        if is_sunlit && is_overhead && is_night{
+            let azelra: Vector3<f64> = xyzt::enu_to_azelrad(p_enu);
+            azelrad.append(&mut vec![azelra]);
+            times.append(&mut vec![eval_date_time]);
+            
+            if is_verbose {
+                println!("{azelra}");
+                println!("{eval_date_time}");
+            }
+        }
     }
 
 }
