@@ -1,7 +1,6 @@
-use nalgebra::Matrix3;
-use nalgebra::Vector3;
 use sgp4;
-use chrono::{DateTime, Utc};
+use nalgebra::{Matrix3, Vector3};
+use chrono::{DateTime, Utc, NaiveDate, NaiveTime, NaiveDateTime};
 use parse_tle::tle;
 
 use donnager::donnager::{xyzt, constants as cst};
@@ -18,21 +17,18 @@ fn main() {
         -80.605659, 
         0.0
     );
-
-    // Earth
-    let earth: xyzt::Body = xyzt::Body {
-        name: String::from("Earth"),
-        grav_param: cst::EARTH::GRAV_PARAM,
-        eq_radius: cst::EARTH::RADIUS_EQUATOR,
-        rotation_rate: cst::EARTH::ROT_RATE,
-        sidereal_day_hours: cst::EARTH::SIDEREAL_DAY,
-        eccentricity: cst::EARTH::SURFACE_ECC
-    };
     
     let iss_str: &str = "
     ISS (ZARYA)
     1 25544U 98067A   08264.51782528 -.00002182  00000-0 -11606-4 0  2927
     2 25544  51.6416 247.4627 0006703 130.5360 325.0288 15.72125391563537";
+
+
+    let days_to_search: i64 = 7;
+
+    // ^ parse cli
+
+    // v setup
 
     let now: DateTime<Utc> = Utc::now();
     let tle: tle::TLE = tle::parse(iss_str);
@@ -44,18 +40,29 @@ fn main() {
         _ => sgp4::Classification::Unclassified
     };
 
+    let (y, m, d, h, mi, s, milli) = tle.epoch.to_gregorian_utc();
+    
+    let nd: NaiveDate = NaiveDate::from_ymd_opt(
+        y, 
+        m as u32, 
+        d as u32
+    ).unwrap();
 
+    let t: NaiveTime = NaiveTime::from_hms_milli_opt(
+        h as u32, 
+        mi as u32, 
+        s as u32, 
+        milli
+    ).unwrap();
 
-    // NaiveDateTime = epoch_to_datetime(Epoch)
-
-
+    let epoch: NaiveDateTime = NaiveDateTime::new(nd, t);
 
     let elements: sgp4::Elements = sgp4::Elements{
         object_name: Some(tle.name),
         international_designator: Some(tle.international_designator),
         norad_id: tle.catalog_number.parse::<u64>().expect("None numerical value found"),
         classification: class_level,
-        datetime: tle.epoch,
+        datetime: epoch,
         mean_motion_dot: tle.mean_motion_1,
         mean_motion_ddot: tle.mean_motion_2,
         drag_term: tle.radiation_pressure,
@@ -74,16 +81,27 @@ fn main() {
         &elements
     ).unwrap();
 
-    // Search next 24 hours?
-    for min in 0..24*60 {
-        println!("t = {} min", min);
+
+    let min_0: i64 = (now - epoch.and_utc()).num_minutes();
+    let min_f: i64 = days_to_search * 24 * 60 + min_0;
+    
+    // ^ setup
+
+    // v run
+
+    // TODO-TD: Use .map()
+    let mut p_eci: Vec<Vector3<f64>> = vec![];
+
+    for min in min_0..min_f {
         let minutes_since_epoch: sgp4::MinutesSinceEpoch = sgp4::MinutesSinceEpoch(min as f64);
-        let prediction = constants.propagate(minutes_since_epoch).unwrap();
-        let p_eci: [f64; 3] = prediction.position;
+        let pos: [f64; 3] = constants.propagate(minutes_since_epoch).unwrap().position;
+        p_eci.append(&mut vec![Vector3::<f64>::new(pos[0], pos[1], pos[2])]);
     }
+    // ^ run
+
+    // v output
 
     // TODO-TD: Vectorize and functionalize everything below for search space
-    let p_eci: Vector3<f64> = Vector3::new(0., 0., 0.);
 
     let observer_ecef: Vector3<f64> = xyzt::planetodetic_to_cartesian_rotational(
         observer_lla, 
@@ -117,6 +135,8 @@ fn main() {
     let is_visible: bool = is_sunlit && is_overhead && is_night;
     if is_visible{
         let azelrad: Vector3<f64> = xyzt::enu_to_azelrad(p_enu);
+        print!("{azelrad}");
+
         let nowstring: String = now.to_string();
         print!("{nowstring}");
     } else {
