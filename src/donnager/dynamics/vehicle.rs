@@ -4,7 +4,7 @@ Vehicle modelling
 
 use nalgebra::Vector3;
 
-use crate::donnager::{propulsion as prop, spacetime as xyzt};
+use crate::donnager::{propulsion as prop, xyzt};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Vehicle{

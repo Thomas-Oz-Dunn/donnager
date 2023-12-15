@@ -7,7 +7,7 @@ use nalgebra::{Vector3};
 
 use crate::donnager::{
     gravity::kepler as kepler, 
-    spacetime as xyzt};
+    xyzt as xyzt};
 
 /// Calculate interplanestary mission escape velocity
 /// 

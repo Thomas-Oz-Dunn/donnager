@@ -6,7 +6,7 @@ use nalgebra::Vector3;
 
 use donnager::donnager::{
     gravity as grav, 
-    spacetime as xyzt, 
+    xyzt, 
     constants as cst};
 
 fn main() {

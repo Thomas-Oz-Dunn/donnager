@@ -4,8 +4,7 @@ use sgp4;
 use chrono::{DateTime, Utc};
 use parse_tle::tle;
 
-use donnager::donnager::spacetime as xyzt;
-use donnager::donnager::constants as cst;
+use donnager::donnager::{xyzt, constants as cst};
 
 fn main() {
 
@@ -45,7 +44,7 @@ fn main() {
         _ => sgp4::Classification::Unclassified
     };
 
-    
+
 
     // NaiveDateTime = epoch_to_datetime(Epoch)
 

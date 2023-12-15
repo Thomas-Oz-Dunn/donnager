@@ -15,7 +15,7 @@ pub mod dynamics;
 pub mod em;
 
 /// Spacetime related modules
-pub mod spacetime;
+pub mod xyzt;
 
 /// Gravity related module
 pub mod gravity;

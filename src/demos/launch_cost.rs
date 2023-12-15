@@ -6,7 +6,7 @@ use nalgebra::Vector3;
 
 use donnager::donnager::{
     constants as cst, 
-    spacetime as xyzt, 
+    xyzt, 
     propulsion as prop, 
     dynamics as dynam};
 

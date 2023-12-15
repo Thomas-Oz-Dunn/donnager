@@ -8,7 +8,7 @@ use chrono::{DateTime, TimeZone, Utc};
 use plotters::prelude::*;
 use std::{f64::consts::PI, vec, ops::Range};
 
-use crate::donnager::{spacetime as xyzt, constants as cst};
+use crate::donnager::{xyzt, constants as cst};
 
 pub struct Maneuver{
     pub delta_v: Vector3<f64>,
