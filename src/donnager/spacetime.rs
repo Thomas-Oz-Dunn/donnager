@@ -771,6 +771,17 @@ pub fn enu_to_ecef(
     return ecef
 }
 
+/// Convert East North Up vector to Azimuth, Elevation, and Radial Distance
+pub fn enu_to_azelrad(
+    p_enu: Vector3<f64>,
+) -> Vector3<f64> {
+    let dis: f64 = p_enu.norm();
+    let az: f64 = (p_enu[0]).atan2(p_enu[1]);
+    let el: f64 = (p_enu[3] / dis).asin();
+    return  Vector3::<f64>::new(az, el, dis);
+}
+
+
 pub fn is_eclipsed_by_earth(
     p_eci: Vector3<f64>,
     date_time: DateTime<Utc>,
