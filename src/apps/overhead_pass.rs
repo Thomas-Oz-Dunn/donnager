@@ -2,8 +2,123 @@ use sgp4;
 use nalgebra::{Matrix3, Vector3};
 use chrono::{DateTime, Utc, NaiveDate, NaiveTime, NaiveDateTime, Duration};
 use parse_tle::tle;
+use clap::{Parser, Args};
 
 use donnager::donnager::{xyzt, constants as cst};
+
+pub fn calc_overhead_passes(
+    observer_lla: Vector3<f64>,
+    days_to_search: i64,
+    object_name: Option<String>,
+    international_designator: Option<String>,
+    epoch: NaiveDateTime,
+    mean_motion_dot: f64,
+    mean_motion_ddot: f64,
+    drag_term: f64,
+    element_set_number: u64,
+    inclination: f64,
+    right_ascension: f64,
+    eccentricity: f64,
+    argument_of_perigee: f64,
+    mean_anomaly: f64,
+    mean_motion: f64,
+    revolution_number: u64,
+    ephemeris_type: u8,
+) -> (Vec<Vector3<f64>>, Vec<DateTime<Utc>>) {
+
+    let elements: sgp4::Elements = sgp4::Elements{
+        object_name: object_name,
+        international_designator: international_designator,
+        norad_id: 0,
+        classification: sgp4::Classification::Unclassified,
+        datetime: epoch,
+        mean_motion_dot: mean_motion_dot,
+        mean_motion_ddot: mean_motion_ddot,
+        drag_term: drag_term,
+        element_set_number: element_set_number,
+        inclination: inclination,
+        right_ascension: right_ascension,
+        eccentricity: eccentricity,
+        argument_of_perigee: argument_of_perigee,
+        mean_anomaly: mean_anomaly,
+        mean_motion: mean_motion,
+        revolution_number: revolution_number,
+        ephemeris_type: ephemeris_type,
+    }; 
+
+    let constants: sgp4::Constants = sgp4::Constants::from_elements(
+        &elements
+    ).unwrap();
+
+    let now: DateTime<Utc> = Utc::now();
+    
+    let observer_ecef: Vector3<f64> = xyzt::planetodetic_to_cartesian_rotational(
+        observer_lla, 
+        cst::EARTH::RADIUS_EQUATOR, 
+        cst::EARTH::SURFACE_ECC
+    );
+    
+    let min_observer: i64 = (now - epoch.and_utc()).num_minutes();
+    let min_dur: i64 = days_to_search * 24 * 60;
+    
+    // ^ setup
+
+    // v run
+
+    // TODO-TD: Use .map()
+    let mut azelrad: Vec<Vector3<f64>> = vec![];
+    let mut times: Vec<DateTime<Utc>> = vec![];
+
+    let now: DateTime<Utc> = Utc::now();
+    
+    let observer_ecef: Vector3<f64> = xyzt::planetodetic_to_cartesian_rotational(
+        observer_lla, 
+        cst::EARTH::RADIUS_EQUATOR, 
+        cst::EARTH::SURFACE_ECC
+    );
+
+    for minut in 0..min_dur {
+        let eval_date_time: DateTime<Utc> = now + Duration::minutes(minut);
+        let min_since_epoch: sgp4::MinutesSinceEpoch = sgp4::MinutesSinceEpoch((minut + min_observer) as f64);
+        let pos: [f64; 3] = constants.propagate(min_since_epoch).unwrap().position;
+        let p_eci: Vector3<f64> = Vector3::<f64>::new(pos[0], pos[1], pos[2]);
+
+        let eci_to_ecef: Matrix3<f64> = xyzt::calc_inertial_rotational_rotam(
+            eval_date_time, 
+            cst::EARTH::ROT_RATE * 60. * 60. * 24. 
+        );
+
+        let p_ecef: Vector3<f64> = eci_to_ecef * p_eci;
+        let p_enu: Vector3<f64> = xyzt::fixed_frame_to_enu(
+            observer_lla, 
+            p_ecef, 
+            cst::EARTH::RADIUS_EQUATOR, 
+            cst::EARTH::SURFACE_ECC
+        ); 
+
+        let is_overhead: bool = p_enu[2] >= 0.;
+        let observer_eci: Vector3<f64>  = eci_to_ecef.transpose() * observer_ecef;
+        let is_night: bool = xyzt::is_eclipsed_by_earth(
+            observer_eci, 
+            eval_date_time
+        );
+
+        let is_sunlit: bool = !xyzt::is_eclipsed_by_earth(
+            p_eci, 
+            eval_date_time
+        );
+
+        if is_sunlit && is_overhead && is_night{
+            let azelra: Vector3<f64> = xyzt::enu_to_azelrad(p_enu);
+            azelrad.append(&mut vec![azelra]);
+            times.append(&mut vec![eval_date_time]);
+        }
+    }
+
+    let results = (azelrad, times);
+    return results;
+}
+
 
 fn main() {
 
@@ -29,15 +144,6 @@ fn main() {
     // ^ parse cli
 
     // v setup
-
-    let now: DateTime<Utc> = Utc::now();
-    
-    let observer_ecef: Vector3<f64> = xyzt::planetodetic_to_cartesian_rotational(
-        observer_lla, 
-        cst::EARTH::RADIUS_EQUATOR, 
-        cst::EARTH::SURFACE_ECC
-    );
-
     let tle: tle::TLE = tle::parse(sample_tle);
 
     let class_level: sgp4::Classification = match tle.classification.as_str() {
@@ -62,87 +168,31 @@ fn main() {
         milli
     ).unwrap();
 
-    let epoch: NaiveDateTime = NaiveDateTime::new(nd, t);
+    let epoch: NaiveDateTime = NaiveDateTime::new(nd, t);       
+    let passes = calc_overhead_passes(
+        observer_lla,
+        days_to_search,
+        Some(tle.name),
+        Some(tle.international_designator),
+        epoch,
+        tle.mean_motion_1,
+        tle.mean_motion_2,
+        tle.radiation_pressure,
+        tle.element_set_number,
+        tle.inc,
+        tle.raan,
+        tle.eccentricity,
+        tle.arg_perigee,
+        tle.mean_anomaly,
+        tle.mean_motion,
+        tle.rev_num as u64,
+        tle.ephemeris_type,
+    );
 
-    let elements: sgp4::Elements = sgp4::Elements{
-        object_name: Some(tle.name),
-        international_designator: Some(tle.international_designator),
-        norad_id: tle.catalog_number.parse::<u64>().expect("None numerical value found"),
-        classification: class_level,
-        datetime: epoch,
-        mean_motion_dot: tle.mean_motion_1,
-        mean_motion_ddot: tle.mean_motion_2,
-        drag_term: tle.radiation_pressure,
-        element_set_number: tle.element_set_number,
-        inclination: tle.inc,
-        right_ascension: tle.raan,
-        eccentricity: tle.eccentricity,
-        argument_of_perigee: tle.arg_perigee,
-        mean_anomaly: tle.mean_anomaly,
-        mean_motion: tle.mean_motion,
-        revolution_number: tle.rev_num as u64,
-        ephemeris_type: tle.ephemeris_type,
-    }; 
-
-    let constants: sgp4::Constants = sgp4::Constants::from_elements(
-        &elements
-    ).unwrap();
-
-    let min_observer: i64 = (now - epoch.and_utc()).num_minutes();
-    let min_dur: i64 = days_to_search * 24 * 60;
-    
-    // ^ setup
-
-    // v run
-
-    // TODO-TD: Use .map()
-    let mut azelrad: Vec<Vector3<f64>> = vec![];
-    let mut times: Vec<DateTime<Utc>> = vec![];
-
-    for minut in 0..min_dur {
-        let eval_date_time: DateTime<Utc> = now + Duration::minutes(minut);
-        let min_since_epoch: sgp4::MinutesSinceEpoch = sgp4::MinutesSinceEpoch((minut + min_observer) as f64);
-        let pos: [f64; 3] = constants.propagate(min_since_epoch).unwrap().position;
-        let p_eci: Vector3<f64> = Vector3::<f64>::new(pos[0], pos[1], pos[2]);
-
-        let eci_to_ecef: Matrix3<f64> = xyzt::calc_inertial_rotational_rotam(
-            eval_date_time, 
-            cst::EARTH::ROT_RATE * 60. * 60. * 24. 
-        );
-
-        let p_ecef: Vector3<f64> = eci_to_ecef * p_eci;
-        let p_enu: Vector3<f64> = xyzt::fixed_frame_to_enu(
-            observer_lla, 
-            p_ecef, 
-            cst::EARTH::RADIUS_EQUATOR, 
-            cst::EARTH::SURFACE_ECC
-        ); 
-
-        let is_overhead: bool = p_enu[2] >= 0.;
-        if is_verbose && is_overhead {
-            println!("Look up")
+    if is_verbose{
+        for (pos, datetime) in passes.0.iter().zip(passes.1.iter()){
+            print!(datetime.as_str());
         }
-        let observer_eci: Vector3<f64>  = eci_to_ecef.transpose() * observer_ecef;
-        let is_night: bool = xyzt::is_eclipsed_by_earth(
-            observer_eci, 
-            eval_date_time
-        );
-
-        let is_sunlit: bool = !xyzt::is_eclipsed_by_earth(
-            p_eci, 
-            eval_date_time
-        );
-
-        if is_sunlit && is_overhead && is_night{
-            let azelra: Vector3<f64> = xyzt::enu_to_azelrad(p_enu);
-            azelrad.append(&mut vec![azelra]);
-            times.append(&mut vec![eval_date_time]);
-
-            if is_verbose {
-                println!("{azelra}");
-                println!("{eval_date_time}");
-            }
-        }
-    }
+    };
 
 }
