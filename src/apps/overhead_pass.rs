@@ -52,19 +52,9 @@ pub fn calc_overhead_passes(
 
     let now: DateTime<Utc> = Utc::now();
     
-    let observer_ecef: Vector3<f64> = xyzt::planetodetic_to_cartesian_rotational(
-        observer_lla, 
-        cst::EARTH::RADIUS_EQUATOR, 
-        cst::EARTH::SURFACE_ECC
-    );
-    
     let min_observer: i64 = (now - epoch.and_utc()).num_minutes();
     let min_dur: i64 = days_to_search * 24 * 60;
     
-    // ^ setup
-
-    // v run
-
     // TODO-TD: Use .map()
     let mut azelrad: Vec<Vector3<f64>> = vec![];
     let mut times: Vec<DateTime<Utc>> = vec![];
@@ -141,17 +131,7 @@ fn main() {
     let days_to_search: i64 = 10;
     let is_verbose: bool = true;
 
-    // ^ parse cli
-
-    // v setup
     let tle: tle::TLE = tle::parse(sample_tle);
-
-    let class_level: sgp4::Classification = match tle.classification.as_str() {
-        "U" => sgp4::Classification::Unclassified,
-        "C" => sgp4::Classification::Classified,
-        "S" => sgp4::Classification::Secret,
-        _ => sgp4::Classification::Unclassified
-    };
 
     let (y, m, d, h, mi, s, milli) = tle.epoch.to_gregorian_utc();
     
@@ -191,7 +171,9 @@ fn main() {
 
     if is_verbose{
         for (pos, datetime) in passes.0.iter().zip(passes.1.iter()){
-            print!(datetime.as_str());
+            print!("Pass : {:?}", pos);
+            print!("Time : {:?}", datetime);
+
         }
     };
 
